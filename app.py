@@ -292,7 +292,25 @@ st.markdown(
     div[data-testid="stFormSubmitButton"] > button p {
         color: #ffffff !important;
     }
-    </style>
+    
+    /* Streamlit 상단 검은 영역 제거 */
+    header[data-testid="stHeader"] {
+        display: none !important;
+        height: 0 !important;
+    }
+
+    div[data-testid="stToolbar"] {
+        display: none !important;
+    }
+
+    div[data-testid="stDecoration"] {
+        display: none !important;
+    }
+
+    .block-container {
+        padding-top: 1.2rem !important;
+    }
+</style>
     """,
     unsafe_allow_html=True,
 )
@@ -2694,56 +2712,331 @@ initialize_state()
 # =========================================================
 
 if not st.session_state.get("homepage_started", False):
-    st.markdown(
+    st.html(
         """
-        <div style="
-            padding: 3.2rem 2rem;
-            margin: 1rem 0 2rem 0;
-            border: 1px solid #e3e7eb;
-            border-radius: 22px;
-            background: linear-gradient(145deg, #ffffff 0%, #f4f7fa 100%);
+        <style>
+        .kh-home {
+            --kh-ink: #172033;
+            --kh-sub: #596579;
+            --kh-blue: #2563eb;
+            --kh-blue-dark: #1746b0;
+            --kh-line: #dfe6ef;
+            --kh-soft: #f5f8fc;
+        }
+
+        .kh-hero {
+            position: relative;
+            overflow: hidden;
+            padding: 4.4rem 3.2rem 3.8rem;
+            margin: 0.5rem 0 2.2rem;
+            border: 1px solid var(--kh-line);
+            border-radius: 28px;
+            background:
+                radial-gradient(circle at 85% 15%, #dce9ff 0, transparent 33%),
+                linear-gradient(145deg, #ffffff 0%, #f5f8fc 100%);
+            box-shadow: 0 18px 55px rgba(29, 54, 92, 0.08);
+        }
+
+        .kh-brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.55rem;
+            padding: 0.45rem 0.8rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #cfdbed;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.85);
+            color: #355174;
+            font-size: 0.88rem;
+            font-weight: 700;
+        }
+
+        .kh-compass {
+            display: inline-grid;
+            place-items: center;
+            width: 1.7rem;
+            height: 1.7rem;
+            border-radius: 50%;
+            background: var(--kh-blue);
+            color: #ffffff;
+            font-size: 0.9rem;
+        }
+
+        .kh-hero h1 {
+            max-width: 760px;
+            margin: 0;
+            color: var(--kh-ink);
+            font-size: clamp(2.35rem, 5.5vw, 4.25rem);
+            line-height: 1.16;
+            letter-spacing: -0.055em;
+        }
+
+        .kh-highlight {
+            color: var(--kh-blue);
+        }
+
+        .kh-hero p {
+            max-width: 650px;
+            margin: 1.5rem 0 0;
+            color: var(--kh-sub);
+            font-size: 1.12rem;
+            line-height: 1.85;
+            word-break: keep-all;
+        }
+
+        .kh-trust-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.65rem;
+            margin-top: 1.6rem;
+        }
+
+        .kh-trust {
+            padding: 0.48rem 0.72rem;
+            border-radius: 9px;
+            background: #ffffff;
+            border: 1px solid var(--kh-line);
+            color: #43516a;
+            font-size: 0.86rem;
+            font-weight: 650;
+        }
+
+        .kh-section-title {
+            margin: 2.6rem 0 0.45rem;
+            color: var(--kh-ink);
+            font-size: 1.65rem;
+            font-weight: 800;
+            letter-spacing: -0.035em;
+        }
+
+        .kh-section-copy {
+            margin-bottom: 1.35rem;
+            color: var(--kh-sub);
+            line-height: 1.7;
+        }
+
+        .kh-steps {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .kh-step {
+            min-height: 175px;
+            padding: 1.4rem;
+            border: 1px solid var(--kh-line);
+            border-radius: 18px;
+            background: #ffffff;
+        }
+
+        .kh-step-number {
+            display: inline-grid;
+            place-items: center;
+            width: 2.1rem;
+            height: 2.1rem;
+            margin-bottom: 1rem;
+            border-radius: 11px;
+            background: #eaf1ff;
+            color: var(--kh-blue-dark);
+            font-weight: 850;
+        }
+
+        .kh-step h3 {
+            margin: 0 0 0.55rem;
+            color: var(--kh-ink);
+            font-size: 1.08rem;
+        }
+
+        .kh-step p {
+            margin: 0;
+            color: var(--kh-sub);
+            font-size: 0.94rem;
+            line-height: 1.65;
+            word-break: keep-all;
+        }
+
+        .kh-note {
+            margin: 1.2rem 0 0;
+            padding: 1rem 1.15rem;
+            border-left: 4px solid #9db9ed;
+            border-radius: 8px;
+            background: var(--kh-soft);
+            color: #526076;
+            font-size: 0.88rem;
+            line-height: 1.65;
+        }
+
+        div.stButton > button[kind="secondary"] {
+            min-height: 3.5rem;
+            border-radius: 14px !important;
+            background: var(--kh-blue) !important;
+            border-color: var(--kh-blue) !important;
+            font-size: 1.05rem;
+            box-shadow: 0 10px 26px rgba(37, 99, 235, 0.18);
+        }
+
+        div.stButton > button[kind="secondary"]:hover {
+            background: var(--kh-blue-dark) !important;
+            border-color: var(--kh-blue-dark) !important;
+        }
+
+
+        .kh-cta-guide {
+            max-width: 680px;
+            margin: 2.5rem auto 1.1rem;
             text-align: center;
-        ">
-            <div style="font-size:3rem; margin-bottom:0.8rem;">🧭</div>
-            <h1 style="margin-bottom:1rem;">
-                기칸의 자동차보험 보상 나침반
-            </h1>
-            <p style="
-                max-width:680px;
-                margin:0 auto;
-                font-size:1.15rem;
-                line-height:1.9;
-                color:#394150;
-            ">
-                사고내용과 실제 가입담보를 확인하고,<br>
-                자동차보험 약관에 근거한 보상 내용을 이해하기 쉽게 찾아드립니다.
-            </p>
+        }
+
+        .kh-cta-guide h2 {
+            margin: 0 0 0.6rem;
+            color: #172033;
+            font-size: 1.55rem;
+            letter-spacing: -0.035em;
+        }
+
+        .kh-cta-guide p {
+            margin: 0;
+            color: #667085;
+            font-size: 0.96rem;
+            line-height: 1.7;
+            word-break: keep-all;
+        }
+
+        div[data-testid="stButton"] {
+            max-width: 680px;
+            margin: 0 auto;
+        }
+
+        div[data-testid="stButton"] > button {
+            min-height: 3.8rem !important;
+            border: 1px solid #2563eb !important;
+            border-radius: 16px !important;
+            background: #2563eb !important;
+            color: #ffffff !important;
+            font-size: 1.08rem !important;
+            font-weight: 800 !important;
+            box-shadow: 0 12px 28px rgba(37, 99, 235, 0.22) !important;
+        }
+
+        div[data-testid="stButton"] > button:hover {
+            background: #1746b0 !important;
+            border-color: #1746b0 !important;
+            transform: translateY(-1px);
+        }
+
+        div[data-testid="stButton"] > button p {
+            color: #ffffff !important;
+        }
+
+        @media (max-width: 720px) {
+            .kh-hero {
+                padding: 2.7rem 1.35rem 2.4rem;
+                border-radius: 21px;
+            }
+
+            .kh-hero h1 {
+                font-size: 2.45rem;
+            }
+
+            .kh-hero p {
+                font-size: 1rem;
+            }
+
+            .kh-steps {
+                grid-template-columns: 1fr;
+            }
+
+            .kh-step {
+                min-height: auto;
+            }
+        }
+        </style>
+
+        <div class="kh-home">
+            <section class="kh-hero">
+                <div class="kh-brand">
+                    <span class="kh-compass">↗</span>
+                    기칸의 자동차보험 보상 나침반
+                </div>
+
+                <h1>
+                    사고 뒤,<br>
+                    <span class="kh-highlight">약관을 이해하는</span><br>
+                    가장 차분한 방법
+                </h1>
+
+                <p>
+                    사고내용을 말하고 실제 가입담보를 선택하세요.
+                    복잡한 자동차보험 약관에서 지금 확인해야 할 보상 항목과
+                    관련 원문을 찾아드립니다.
+                </p>
+
+                <div class="kh-trust-row">
+                    <span class="kh-trust">음성으로 간편 입력</span>
+                    <span class="kh-trust">실제 가입담보 중심</span>
+                    <span class="kh-trust">약관 원문과 페이지 확인</span>
+                </div>
+            </section>
+
+            <div class="kh-section-title">세 단계로 확인합니다</div>
+            <div class="kh-section-copy">
+                많은 정보를 한꺼번에 보여주지 않고, 사고와 가입담보에 필요한 내용부터 확인합니다.
+            </div>
+
+            <div class="kh-steps">
+                <div class="kh-step">
+                    <div class="kh-step-number">1</div>
+                    <h3>사고내용 말하기</h3>
+                    <p>마이크로 설명하면 음성이 문자로 바뀌며, 잘못 변환된 부분은 직접 수정할 수 있습니다.</p>
+                </div>
+
+                <div class="kh-step">
+                    <div class="kh-step-number">2</div>
+                    <h3>가입담보 선택하기</h3>
+                    <p>개인용·업무용·영업용·이륜차 중 보험 종류와 실제 가입담보를 선택합니다.</p>
+                </div>
+
+                <div class="kh-step">
+                    <div class="kh-step-number">3</div>
+                    <h3>약관 근거 확인하기</h3>
+                    <p>입력정보에 맞는 보상 검토 내용과 관련 약관 원문 및 PDF 페이지를 확인합니다.</p>
+                </div>
+            </div>
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
-    st.markdown(
+    st.html(
         """
-        ### 사고 이후, 무엇을 확인해야 할지 막막할 때
-
-        음성으로 사고내용을 입력하고 실제 가입담보를 선택하면  
-        약관상 확인할 보상 항목과 관련 약관 원문을 찾아볼 수 있습니다.
+        <div class="kh-cta-guide">
+            <h2>내 보험의 보상 내용을 확인해 보세요</h2>
+            <p>
+                사고내용과 실제 가입담보를 입력하면
+                약관을 기준으로 확인할 보상 항목을 정리합니다.
+            </p>
+        </div>
         """
     )
 
     if st.button(
-        "보상 분석 시작",
+        "보상 내역 확인 시작  →",
         key="homepage_start_button",
         use_container_width=True,
     ):
         st.session_state.homepage_started = True
         st.rerun()
 
-    st.caption(
-        "이 서비스는 참고 도구이며 보험회사의 지급 결정, "
-        "법률상담 또는 손해사정을 대신하지 않습니다."
+    st.html(
+        """
+        <div class="kh-note">
+            이 서비스는 사용자가 보험 내용을 이해하도록 돕는 참고 도구입니다.
+            보험회사의 지급 결정, 법률상담 또는 손해사정을 대신하지 않으며
+            합의금을 산정하지 않습니다.
+        </div>
+        """
     )
+
     st.stop()
 
 
