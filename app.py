@@ -2690,6 +2690,64 @@ def render_policy_analysis_result(result):
 initialize_state()
 
 # =========================================================
+# 홈페이지 시작 화면
+# =========================================================
+
+if not st.session_state.get("homepage_started", False):
+    st.markdown(
+        """
+        <div style="
+            padding: 3.2rem 2rem;
+            margin: 1rem 0 2rem 0;
+            border: 1px solid #e3e7eb;
+            border-radius: 22px;
+            background: linear-gradient(145deg, #ffffff 0%, #f4f7fa 100%);
+            text-align: center;
+        ">
+            <div style="font-size:3rem; margin-bottom:0.8rem;">🧭</div>
+            <h1 style="margin-bottom:1rem;">
+                기칸의 자동차보험 보상 나침반
+            </h1>
+            <p style="
+                max-width:680px;
+                margin:0 auto;
+                font-size:1.15rem;
+                line-height:1.9;
+                color:#394150;
+            ">
+                사고내용과 실제 가입담보를 확인하고,<br>
+                자동차보험 약관에 근거한 보상 내용을 이해하기 쉽게 찾아드립니다.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        """
+        ### 사고 이후, 무엇을 확인해야 할지 막막할 때
+
+        음성으로 사고내용을 입력하고 실제 가입담보를 선택하면  
+        약관상 확인할 보상 항목과 관련 약관 원문을 찾아볼 수 있습니다.
+        """
+    )
+
+    if st.button(
+        "보상 분석 시작",
+        key="homepage_start_button",
+        use_container_width=True,
+    ):
+        st.session_state.homepage_started = True
+        st.rerun()
+
+    st.caption(
+        "이 서비스는 참고 도구이며 보험회사의 지급 결정, "
+        "법률상담 또는 손해사정을 대신하지 않습니다."
+    )
+    st.stop()
+
+
+# =========================================================
 # 화면
 # =========================================================
 
