@@ -1,0 +1,8 @@
+{
+  "get_openai_key": "fe36116e46ae87dfc27f9c82da52bc37c0026311eb1ffc391143d9130dde1cc2",
+  "safe_audio_metadata": "2fabeb1ebf4fea15b8c31b1e8141476a4fbeda0d76dcac9b3261dd5b8626c2b8",
+  "normalize_audio_to_wav": "c83dcc149dc2d58f3f67fbd032d87d4b6519a26bf3645d5d4dbdee6f21458d5b",
+  "transcribe_audio": "4db5bfd7c605aff3cced335bf7271ded7d9b69312e6c8cd295f5e9303192416a",
+  "process_recorded_audio": "874c140fda9fdd13ce38b926758c7b2d739a5d80ab363d68d6f5196369a913cc",
+  "process_question_recorded_audio": "1116dd35e6b668c88152e2bdac33728b7230821db2943c0104a1d2139f938148"
+}

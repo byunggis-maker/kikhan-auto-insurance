@@ -1,11 +1,10 @@
 import base64
 import json
-import mimetypes
+from io import BytesIO
 import os
 from pathlib import Path
 from typing import Any, Dict
 
-from openai import OpenAI
 
 
 POLICY_READER_PROMPT = """
@@ -97,22 +96,54 @@ confidence는 0.0~1.0 숫자로 표시한다.
 """
 
 
+MAX_DOCUMENT_BYTES = 20 * 1024 * 1024
+
+
+def build_document_content(data: bytes, filename: str) -> dict:
+    """Validate actual content; normalize all image formats before sending."""
+    if not data or len(data) > MAX_DOCUMENT_BYTES:
+        raise ValueError("문서는 20MB 이하의 비어 있지 않은 파일이어야 합니다.")
+    suffix = Path(filename).suffix.lower()
+    if suffix == ".pdf":
+        from pypdf import PdfReader
+        if not data.startswith(b"%PDF-"):
+            raise ValueError("PDF 파일 내용이 올바르지 않습니다.")
+        reader = PdfReader(BytesIO(data))
+        if reader.is_encrypted:
+            raise ValueError("암호화된 PDF는 암호를 해제한 뒤 업로드하세요.")
+        if not 1 <= len(reader.pages) <= 30:
+            raise ValueError("PDF는 1~30페이지까지 지원합니다.")
+        return {"type": "input_file", "filename": "policy.pdf",
+                "file_data": "data:application/pdf;base64," + base64.b64encode(data).decode("ascii")}
+    if suffix not in {".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif"}:
+        raise ValueError("PDF, JPEG, PNG, WEBP, HEIC 파일을 지원합니다.")
+    from PIL import Image, ImageOps
+    if suffix in {".heic", ".heif"}:
+        try:
+            from pillow_heif import register_heif_opener
+        except ImportError as exc:
+            raise RuntimeError("HEIC 변환 라이브러리 설치가 필요합니다.") from exc
+        register_heif_opener()
+    try:
+        with Image.open(BytesIO(data)) as original:
+            if original.width * original.height > 40_000_000:
+                raise ValueError("이미지는 4천만 화소 이하로 업로드하세요.")
+            image = ImageOps.exif_transpose(original).convert("RGB")
+            image.thumbnail((4000, 4000))
+            output = BytesIO()
+            image.save(output, format="JPEG", quality=95)
+    except (OSError, Image.DecompressionBombError) as exc:
+        raise ValueError("이미지를 열거나 변환하지 못했습니다. 파일을 확인하세요.") from exc
+    return {"type": "input_image", "detail": "high",
+            "image_url": "data:image/jpeg;base64," + base64.b64encode(output.getvalue()).decode("ascii")}
+
+
 def _image_to_data_url(image_path: str) -> str:
     path = Path(image_path)
-
-    if not path.exists():
-        raise FileNotFoundError(f"이미지 파일을 찾을 수 없습니다: {path}")
-
-    mime_type, _ = mimetypes.guess_type(str(path))
-
-    if mime_type not in {"image/jpeg", "image/png", "image/webp"}:
-        raise ValueError(
-            "지원하는 이미지 형식은 JPG, JPEG, PNG, WEBP입니다."
-        )
-
-    encoded = base64.b64encode(path.read_bytes()).decode("utf-8")
-
-    return f"data:{mime_type};base64,{encoded}"
+    content = build_document_content(path.read_bytes(), path.name)
+    if content["type"] != "input_image":
+        raise ValueError("이미지 파일이 아닙니다.")
+    return content["image_url"]
 
 
 def _clean_json_text(text: str) -> str:
@@ -135,68 +166,41 @@ def _clean_json_text(text: str) -> str:
     return text
 
 
-def read_policy_image(
-    image_path: str,
-    api_key: str = "",
-) -> Dict[str, Any]:
-    """
-    자동차보험 증권 이미지를 OpenAI Vision으로 판독한다.
-
-    반환값:
-        basic_info
-        coverages
-        document_review_required
-        review_notes
-    """
-
+def read_policy_document(data: bytes, filename: str, api_key: str = "") -> Dict[str, Any]:
     key = (api_key or os.getenv("OPENAI_API_KEY", "")).strip()
-
     if not key:
-        raise RuntimeError(
-            "OPENAI_API_KEY가 설정되어 있지 않습니다."
-        )
-
-    client = OpenAI(api_key=key)
-
-    data_url = _image_to_data_url(image_path)
-
-    response = client.responses.create(
-        model="gpt-5.6-luna",
-        input=[
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "input_text",
-                        "text": POLICY_READER_PROMPT,
-                    },
-                    {
-                        "type": "input_image",
-                        "image_url": data_url,
-                        "detail": "high",
-                    },
-                ],
-            }
-        ],
-    )
-
-    raw_text = _clean_json_text(response.output_text)
-
+        raise RuntimeError("OPENAI_API_KEY가 설정되어 있지 않습니다.")
+    content = build_document_content(data, filename)
+    from openai import OpenAI, APIError
     try:
-        result = json.loads(raw_text)
-    except json.JSONDecodeError as exc:
-        raise RuntimeError(
-            "보험증권 판독 결과를 JSON으로 변환하지 못했습니다."
-        ) from exc
-
+        with OpenAI(api_key=key, timeout=90.0, max_retries=0) as client:
+            response = client.responses.create(
+                model=os.getenv("POLICY_READER_MODEL", "gpt-4.1-mini"),
+                store=False,
+                input=[{"role": "user", "content": [
+                    {"type": "input_text", "text": POLICY_READER_PROMPT}, content]}],
+                text={"format": {"type": "json_object"}},
+                max_output_tokens=8000,
+            )
+    except APIError as exc:
+        # Never expose the request, credential or response body to the UI/logs.
+        status = getattr(exc, "status_code", None)
+        raise RuntimeError(f"문서 읽기 API 호출 실패 (상태: {status or '연결/시간초과'}). 키 권한·모델·요금 상태를 확인하세요.") from None
+    if response.status != "completed":
+        raise RuntimeError("문서 판독이 완료되지 않았습니다. 페이지 수를 줄여 다시 시도하세요.")
+    try:
+        result = json.loads(_clean_json_text(response.output_text))
+    except (json.JSONDecodeError, TypeError) as exc:
+        raise RuntimeError("보험증권 판독 결과를 JSON으로 변환하지 못했습니다.") from exc
     if not isinstance(result, dict):
-        raise RuntimeError(
-            "보험증권 판독 결과 형식이 올바르지 않습니다."
-        )
-
+        raise RuntimeError("보험증권 판독 결과 형식이 올바르지 않습니다.")
     result.setdefault("basic_info", {})
     result.setdefault("coverages", [])
     result.setdefault("document_review_required", False)
     result.setdefault("review_notes", [])
-
     return result
+
+
+def read_policy_image(image_path: str, api_key: str = "") -> Dict[str, Any]:
+    path = Path(image_path)
+    return read_policy_document(path.read_bytes(), path.name, api_key)

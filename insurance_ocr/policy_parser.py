@@ -1,4 +1,5 @@
 import re
+from decimal import Decimal, InvalidOperation
 from typing import Any, Dict, List, Optional
 
 
@@ -40,6 +41,8 @@ COVERAGE_ALIASES = {
     "자기차량손해": [
         "자기차량손해",
         "자차",
+        "Own Vehicle Damage",
+        "Own Vehicle Damage Limit",
     ],
 }
 
@@ -104,7 +107,7 @@ def match_standard_coverage_name(
     candidates.sort(reverse=True)
 
     for _, standard_name, alias in candidates:
-        if target == normalize_text(alias):
+        if target.casefold() == normalize_text(alias).casefold():
             return standard_name
 
     return None
@@ -142,6 +145,10 @@ def parse_amount_to_won(value: Any) -> Optional[int]:
         return None
 
     text = str(value).strip().replace(",", "").replace(" ", "")
+    if text.upper().startswith("KRW"):
+        text = text[3:]
+    elif text.startswith("₩"):
+        text = text[1:]
 
     if not text:
         return None
@@ -149,18 +156,16 @@ def parse_amount_to_won(value: Any) -> Optional[int]:
     if "무한" in text or "법정한도" in text:
         return None
 
-    match = re.fullmatch(r"([\d.]+)억원?", text)
-    if match:
-        return int(float(match.group(1)) * 100_000_000)
-
-    match = re.fullmatch(r"([\d.]+)만원?", text)
-    if match:
-        return int(float(match.group(1)) * 10_000)
-
-    match = re.fullmatch(r"([\d]+)원?", text)
-    if match:
-        return int(match.group(1))
-
+    for pattern, multiplier in [(r"([0-9]+(?:\.[0-9]+)?)억원?", 100_000_000),
+                                (r"([0-9]+(?:\.[0-9]+)?)만원?", 10_000),
+                                (r"([0-9]+)원?", 1)]:
+        match = re.fullmatch(pattern, text)
+        if match:
+            try:
+                amount = Decimal(match.group(1)) * multiplier
+                return int(amount) if amount == amount.to_integral_value() else None
+            except (InvalidOperation, ValueError, OverflowError):
+                return None
     return None
 
 
