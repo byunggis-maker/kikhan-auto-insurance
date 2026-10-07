@@ -64,6 +64,23 @@ def app_functions():
 
 
 class RecoveryTests(unittest.TestCase):
+    def test_partial_inputs_are_estimated_with_reasons(self):
+        amount, reason = estimate_partial_vehicle(1000000, None, None, None, None, allow_incomplete=True)
+        self.assertEqual(amount, 1000000)
+        self.assertIn("공제 전 금액", reason)
+        self.assertIn("가입한도 미확정", reason)
+        amount, _ = estimate_partial_vehicle(1000000, 50000, 200000, 800000, None, allow_incomplete=True)
+        self.assertEqual(amount, 650000)
+        self.assertIsNone(estimate_partial_vehicle(None, 50000, None, None, None, allow_incomplete=True)[0])
+        scope = app_functions()
+        scope["sum_relevant_costs_for_coverage"] = lambda name: None
+        rows, _ = scope["build_policy_analysis_rows"]({"insurance_type":"개인용 자동차보험", "selected_coverages":[{"담보명":"자기차량손해"}], "vehicle_terms":{"damage":1000000}, "preconditions":{}})
+        self.assertEqual(rows[0]["계산가능금액"], 1000000)
+        self.assertTrue(rows[0]["조건부추정"])
+        table, total = scope["build_analysis_table"](rows)
+        self.assertEqual(total, 1000000)
+        self.assertIn("확정 보험금이 아닌", table[-1]["적용 약관 규정 및 산정근거"])
+
     def test_formats_and_malformed_files(self):
         for name, data in samples().items():
             content=build_document_content(data, name)
@@ -130,8 +147,8 @@ class RecoveryTests(unittest.TestCase):
         self.assertEqual(book["보상분석표"].cell(8,9).value,"900,000원")
         result["vehicle_terms"]["damage"]=None
         rows,_=scope["build_policy_analysis_rows"](result)
-        self.assertIsNone(rows[0]["계산가능금액"])
-        self.assertEqual(scope["build_analysis_table"](rows)[1],0)
+        self.assertEqual(rows[0]["계산가능금액"],900000)
+        self.assertEqual(scope["build_analysis_table"](rows)[1],900000)
         self.assertEqual(scope["parse_optional_amount"]("사망 1억 / 부상 3천만원"),None)
         self.assertEqual(scope["parse_optional_amount"]("1.25억원"),125000000)
         for bad in ["1..2억원", "-100원", "20% 최저20만원 최고50만원", "0.00001만원"]:

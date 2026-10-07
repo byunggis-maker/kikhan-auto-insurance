@@ -2449,7 +2449,8 @@ def build_policy_analysis_rows(result):
                 missing.append("기지급금·구상금 공제 검토")
             # Eligibility uncertainty is recorded alongside the estimate, rather
             # than hiding an amount whose formula inputs are available.
-            amount, basis = estimate_partial_vehicle(terms.get("damage"), terms.get("expenses"), deductible, limit, terms.get("vehicle_value"))
+            if source:
+                amount, basis = estimate_partial_vehicle(terms.get("damage") if terms.get("damage") is not None else actual, terms.get("expenses"), deductible, limit, terms.get("vehicle_value"), allow_incomplete=True)
         else:
             missing.extend(rule.get("계산에 필요한 사용자 입력값", []))
             if name in {"대인배상Ⅰ", "대인배상Ⅱ", "자기신체사고", "무보험자동차에의한상해", "자동차상해"}:
@@ -2537,7 +2538,7 @@ def build_analysis_table(rows):
     pending_count = sum(row.get("계산가능금액") is None for row in rows)
     conditional_count = sum(bool(row.get("조건부추정")) for row in rows)
     manual_count = sum(bool(row.get("사용자추정")) for row in rows)
-    total_note = f"조건부 추정액 {conditional_count}건 포함(사용자 임시 추정 {manual_count}건). 금액 미정 {pending_count}건" + ("이 있어 총계는 일부 항목 미정" if pending_count else "")
+    total_note = f"확정 보험금이 아닌 추정액입니다. 조건부 추정액 {conditional_count}건 포함(사용자 임시 추정 {manual_count}건). 금액 미정 {pending_count}건" + ("이 있어 총계는 일부 항목 미정" if pending_count else "")
     total_row = {
         "가입담보명": "추정 보험금 총계",
         "가입한도": "",
@@ -2684,7 +2685,7 @@ def render_policy_analysis_result(result):
     if pending_count:
         st.info("총계는 금액이 있는 항목의 합계입니다. 미정 담보는 아래에서 사유를 확인하고 임시 추정액을 입력할 수 있습니다.")
     st.caption(
-        "표시된 총계에는 약관 적용·면책 등 확인이 필요한 조건부 추정액과 사용자 입력 임시 추정액도 포함됩니다. 각 담보의 산정근거와 확인 사유를 함께 확인하세요. "
+        "이 총계는 확정 보험금이 아닌 추정액입니다. 약관에서 요구하는 일부 금액만 확인돼도 계산한 조건부 추정액과 사용자 입력 임시 추정액을 포함합니다. 미확정 비용·자기부담금·한도·보험가액과 지급조건은 각 담보의 산정근거와 확인 사유에 표시합니다. "
         "실제 지급 여부와 금액은 보험증권, 사고조사, 제출서류, 확정 과실률 및 보험회사의 심사에 따라 달라질 수 있습니다. "
         "이 앱은 합의금을 산정하지 않습니다."
     )
@@ -3434,7 +3435,7 @@ render_actual_cost_inputs(
 vehicle_terms = {}
 if "자기차량손해" in selected_names:
     st.markdown("### 자기차량손해 계산에 필요한 확인값")
-    st.caption("개인용 약관 PDF 57–58페이지 제24조와 실제 계약의 약관이 일치하는 경우 부분손해 최초 청구를 계산합니다. 입원일수만으로 신체 담보 보험금을 정하지 않습니다.")
+    st.caption("개인용 약관 제24조의 부분손해·최초 청구 기준으로 추정합니다. 손해액 등 확인 가능한 금액부터 입력하세요. 미확정 비용·자기부담금·한도·보험가액은 조정 전 추정액으로 총계에 포함하고 미확정 사유를 표시합니다. 실제 계약 적용과 최종 인정금액에 따라 달라집니다.")
     vehicle_terms["damage"] = render_money_input("잔존물·감가상각 반영 후 약관상 인정 손해액", "vehicle_accepted_damage")
     vehicle_terms["expenses"] = render_money_input("제24조 인정 비용 (없으면 0)", "vehicle_accepted_expenses")
     vehicle_terms["vehicle_value"] = render_money_input("사고 당시 보험가액", "vehicle_insurance_value")
