@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useSyncExternalStore } from "react";
-import { deleteDraft, draftKey, listDrafts, newDraft, parseDraft, saveDraft } from "./store";
+import { notifyConsentChanged } from "@/lib/privacy/consent";
+import { clearAll, clearHealth, deleteDraft, draftKey, listCases, migrateLegacyDrafts, newDraft, parseDraft, saveDraft, type CaseEntry } from "./store";
 import type { CaseDraft } from "./types";
 
 // 입력을 고칠 때마다 이 기기의 브라우저 저장소에 바로 쓴다. 새로고침해도 남는다.
@@ -15,7 +16,19 @@ function emit() {
   for (const listener of listeners) listener();
 }
 
+let migrated = false;
+
 function subscribe(listener: () => void) {
+  // 옛 키(v1·2단계)의 초안을 처음 한 번 새 키로 옮긴다. React가 구독 뒤 스냅숏을 다시 읽어 반영한다.
+  if (!migrated) {
+    migrated = true;
+    const store = storage();
+    try {
+      if (store && migrateLegacyDrafts(store) > 0) version++;
+    } catch {
+      // 저장 공간이 가득 찬 경우 등. 옛 초안은 그대로 남는다.
+    }
+  }
   listeners.add(listener);
   // 다른 탭에서 고친 내용도 반영한다.
   const onStorage = () => {
@@ -54,14 +67,14 @@ function draftSnapshot(id: string): CaseDraft | null {
   return value;
 }
 
-let listCache: { version: number; value: CaseDraft[] } = { version: -1, value: [] };
+let listCache: { version: number; value: CaseEntry[] } = { version: -1, value: [] };
 
-function listSnapshot(): CaseDraft[] {
+function listSnapshot(): CaseEntry[] {
   if (listCache.version === version) return listCache.value;
-  let value: CaseDraft[] = [];
+  let value: CaseEntry[] = [];
   try {
     const store = storage();
-    if (store) value = listDrafts(store);
+    if (store) value = listCases(store);
   } catch {
     value = [];
   }
@@ -93,9 +106,9 @@ export function useCaseDraft(id: string) {
   return { draft, update };
 }
 
-/** undefined: 아직 불러오는 중 */
+/** undefined: 아직 불러오는 중. 항목의 draft가 null이면 읽을 수 없는 기록 */
 export function useCaseList() {
-  return useSyncExternalStore<CaseDraft[] | undefined>(subscribe, listSnapshot, () => undefined);
+  return useSyncExternalStore<CaseEntry[] | undefined>(subscribe, listSnapshot, () => undefined);
 }
 
 export function createCase(): string | null {
@@ -118,9 +131,36 @@ export function removeCase(id: string) {
   emit();
 }
 
+/** "이 기기의 기록 모두 지우기": 사고 기록과 동의 기록까지 이 앱이 브라우저에 둔 것을 모두 지운다. */
+export function clearEverything(): boolean {
+  const store = storage();
+  if (!store) return false;
+  try {
+    clearAll(store);
+  } catch {
+    return false;
+  }
+  emit();
+  notifyConsentChanged();
+  return true;
+}
+
+/** 건강정보 동의를 철회했을 때 모든 사고 기록의 건강정보 칸을 비운다. */
+export function removeHealthData(): boolean {
+  const store = storage();
+  if (!store) return false;
+  try {
+    clearHealth(store);
+  } catch {
+    return false;
+  }
+  emit();
+  return true;
+}
+
 /** 동의 뒤·"바로 시작하기"의 도착점. 쓰던 사고 기록이 있으면 그 기록을, 없으면 새 기록을 연다. 저장소를 쓸 수 없으면 null */
 export function openWorkingCase(): string | null {
   const store = storage();
   if (!store) return null;
-  return listDrafts(store)[0]?.id ?? createCase();
+  return listCases(store).find((entry) => entry.draft)?.id ?? createCase();
 }

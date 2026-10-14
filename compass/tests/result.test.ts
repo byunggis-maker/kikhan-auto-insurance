@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { newCoverage, newDraft, newPerson, parseDraft } from "@/lib/draft/store";
+import { newCoverage, newDraft, newPerson, parseLegacyDraft } from "@/lib/draft/store";
 import { toClaim } from "@/lib/draft/to-claim";
 import type { CaseDraft } from "@/lib/draft/types";
 import { summarize } from "@/lib/engine/summarize";
@@ -142,14 +142,14 @@ describe("왜 이 금액? (LLM 설명)", () => {
 
 describe("읽어주기", () => {
   it("결과 요약과 증권 내용을 글로 만든다. 이름·차량번호·증권번호는 넣지 않는다", () => {
-    // v1 때 저장된 초안처럼 신원 칸이 남아 있어도, 읽을 때 지워져 읽어주기 글에 들어가지 않는다.
+    // v1 때 저장된 초안처럼 신원 칸이 남아 있어도, 옮겨 올 때 지워져 읽어주기 글에 들어가지 않는다.
     const plain = regressionDraft();
     const legacy = {
       ...plain,
       policy: { ...plain.policy, insuredName: "홍길동", vehicleNumber: "12가3456", policyNumber: "가상-0000" },
       people: plain.people.map((person) => ({ ...person, name: "가상 본인" })),
     };
-    const draft = parseDraft(JSON.stringify(legacy))!;
+    const draft = parseLegacyDraft(JSON.stringify(legacy))!;
     const text = [...resultSpeech(result(draft)), ...documentSpeech(draft.policy)].join("\n");
     expect(text).toContain("내가 받을 예상 보험금은 10,424,000원입니다.");
     expect(text).toContain("자동차상해, 가입금액 사망/후유장애 2억원 부상 3천만원.");
