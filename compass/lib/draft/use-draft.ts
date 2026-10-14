@@ -4,6 +4,8 @@ import { useCallback, useSyncExternalStore } from "react";
 import { notifyConsentChanged } from "@/lib/privacy/consent";
 import { clearAll, clearHealth, deleteDraft, draftKey, listCases, migrateLegacyDrafts, newDraft, parseDraft, saveDraft, type CaseEntry } from "./store";
 import type { CaseDraft } from "./types";
+import { forgetTicket } from "@/lib/guard/paid-client";
+import { forgetReadings } from "@/lib/upload/reading-cache";
 
 // 입력을 고칠 때마다 이 기기의 브라우저 저장소에 바로 쓴다. 새로고침해도 남는다.
 // 서버에는 아무것도 보내지 않는다.
@@ -140,6 +142,9 @@ export function clearEverything(): boolean {
   } catch {
     return false;
   }
+  // 이 탭의 분석 이용권(sessionStorage)과 증권 읽기 결과(메모리)도 함께 버린다.
+  forgetTicket();
+  forgetReadings();
   emit();
   notifyConsentChanged();
   return true;

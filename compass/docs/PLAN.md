@@ -116,38 +116,55 @@ v1에서 없애는 화면: `/login`, `/auth/callback`, `/start`(동의 뒤 바�
 
 사고 한 건을 처리하려면 유료 호출이 여러 번 필요하다(증권 읽기 1~2, 음성 변환 1~3, 사실 추출 1~2, 설명·읽어주기 여러 번). 호출 하나를 1회로 세면 IP당 하루 3회로는 사고 한 건도 끝낼 수 없다. 그래서 다음과 같이 정했다.
 
-- **1회 = 분석 이용권 1장.** 유료 기능을 처음 누를 때 Turnstile을 거쳐 이용권을 받는다. IP당 하루 3장.
-- 이용권은 서버 비밀값(`GUARD_SECRET`)으로 서명한 짧은 문자열이고, 유효 시간은 2시간이다. 브라우저 메모리(`sessionStorage`)에만 둔다.
-- 이용권 하나로 쓸 수 있는 유료 호출은 Vercel Firewall이 경로별로 시간당 한도를 둔다(증권 읽기 3, 음성 5, 추출 5, 설명 10, 읽어주기 10).
+- **1회 = 분석 이용권 1장.** 유료 기능을 처음 누를 때 Turnstile을 거쳐 이용권을 받는다. IP당 하루 3장(한국 시각 자정에 다시 생긴다).
+- 이용권은 서버 비밀값(`GUARD_SECRET`)으로 HMAC 서명한 짧은 문자열(`kc2t1.<내용>.<서명>`)이고, 유효 시간은 2시간이다. 내용은 번호·발급·만료 시각·`plan: "free"`뿐이다(IP·사람 정보 없음). 브라우저 `sessionStorage`(`kc2.ticket`)에만 둔다.
+- 이용권 1장으로 쓸 수 있는 경로별 횟수: 증권 읽기 3, 음성 5, 사고 내용 추출 5, 설명 10, 읽어주기 10(`TICKET_CALL_LIMITS`로 바꿀 수 있다).
 
-### DB 없이 구현하는 방법 (추가 서비스 없음)
+### 카운터 저장소: Upstash Redis (4단계에서 바꾼 결정, 2026-10-14)
 
-| 층 | 방법 | 막는 것 | 한계 |
-|---|---|---|---|
-| ① Turnstile | 이용권을 받을 때 Turnstile 토큰을 서버가 Cloudflare `siteverify`로 확인. 토큰은 한 번만 쓸 수 있다 | 자동화 스크립트·봇의 대량 요청 | 사람이 직접 반복하는 것은 못 막는다 |
-| ② Vercel Firewall 속도 제한 | 이용권 발급 경로 `/api/guard/ticket`에 IP 기준 규칙. 코드에서 `@vercel/firewall`의 `checkRateLimit('ticket', { request })`를 부르고, 대시보드(또는 `vercel firewall rules add`)에 같은 id의 규칙을 둔다. 유료 경로마다 시간당 규칙도 둔다 | 한 IP의 반복 요청 | 창(window)이 최대 3,600초(1시간)다. "하루 3회"를 정확히 셀 수 없고, "1시간에 3회"까지만 된다 |
-| ③ 서명한 쿠키 카운터 | 서버가 `{날짜(한국), 발급 수}`를 HMAC 서명한 `httpOnly` 쿠키로 준다. 하루 3장을 넘으면 거절 | 같은 브라우저의 하루 4번째 요청 | 쿠키를 지우거나 다른 브라우저를 쓰면 다시 3장. IP 기준이 아니다 |
-| ④ 제공자 사용 한도 | OpenAI 프로젝트 예산·Anthropic 워크스페이스 사용 한도를 대시보드에서 월 금액으로 건다 | 위 층을 모두 뚫어도 비용이 정해진 금액을 넘지 않음 | 한도에 닿으면 모든 사용자가 그달 유료 기능을 못 쓴다 |
+1단계에서는 추가 서비스 없이 서명 쿠키 + Vercel Firewall로 가기로 했다. 4단계를 시작하며 다시 따져 보니 두 가지가 맞지 않아 사용자 확인을 받고 Upstash Redis(Vercel 마켓플레이스, 무료 등급 월 50만 명령·256MB)로 바꿨다.
 
-①~④를 함께 쓰면, 한 IP가 쿠키를 지워 가며 시도해도 하루 최대 72장(1시간 3장 × 24)이고, 실제 비용 상한은 ④가 막는다. **"IP당 정확히 하루 3회"는 DB나 Redis 같은 공유 저장소 없이는 만들 수 없다.** 서버리스 함수는 여러 인스턴스로 떠서 메모리 카운터가 공유되지 않기 때문이다.
+1. 무료 요금제(Hobby)의 Vercel Firewall 사용자 규칙은 프로젝트당 3개다. 계획한 6개(발급 1 + 유료 경로 5)를 둘 수 없다.
+2. 쿠키 카운터로는 이용권 재사용(옛 쿠키를 다시 보내기)과 같은 파일 중복 과금을 서버에서 막을 수 없다.
 
-정확히 하루 3회가 꼭 필요하면 다음 중 하나가 필요하다(설치 전 사용자 확인).
+그래서 `@vercel/firewall`과 쿠키 카운터는 쓰지 않는다. Redis에는 사용자 기록이 아니라 개수와 표시만 두고, 모든 키는 하루 안쪽에 저절로 사라진다(`lib/guard/store.ts`). npm 패키지는 더하지 않고 Upstash REST API(`/pipeline`)를 `fetch`로 부른다.
 
-- Upstash Redis(Vercel Marketplace, 무료 등급 있음): `ip:<HMAC>:<날짜>` 키에 개수만 두고 24시간 뒤 자동 삭제. 사용자 기록이 아니라 IP 해시 카운터만 남는다.
-- 그 밖의 KV 저장소. Vercel Edge Config는 쓰기가 느리고 횟수 제한이 있어 카운터로 맞지 않는다.
+| 키 | 내용 | 사라지는 때 |
+|---|---|---|
+| `kc2:day:<IP HMAC>:<한국 날짜>` | 오늘 발급한 이용권 수 | 2일 |
+| `kc2:try:<IP HMAC>:<한국 시각 시>` | 발급 시도 수(시간당 20번) | 1시간 |
+| `kc2:ts:<토큰 HMAC>` | 이미 쓴 Turnstile 토큰 | 10분 |
+| `kc2:tk:<이용권 번호>` | 이 서버가 발급한 이용권 | 이용권 만료 |
+| `kc2:use:<번호>:<경로>` | 경로별 쓴 횟수 | 이용권 만료 |
+| `kc2:all:<번호>` | 돌려받은 것까지 합친 전체 시도 수(경로별 횟수 합의 2배까지) | 이용권 만료 |
+| `kc2:fast:<번호>:<경로>` | 연속 요청 간격(증권·음성·추출 3초, 설명·읽어주기 1초) | 그 간격 |
+| `kc2:file:<번호>:<파일 HMAC>` | 같은 이용권으로 같은 파일을 읽은 번수 | 이용권 만료 |
 
-결정: 추가 서비스 없이 ①~④로 간다. 정확한 하루 3회는 하지 않는다. 나중에 남용이 보이면 다시 정한다. `lib/guard/quota.ts`는 저장소를 바꿔 끼울 수 있게 `QuotaStore` 인터페이스로 만든다(지금은 쿠키 + Firewall 구현 하나).
+IP 원문, 사고 내용, 건강정보, 증권 내용, 판독 결과는 Redis에 넣지 않는다. IP는 요청을 받자마자 `GUARD_SECRET`으로 HMAC한 값만 쓴다.
 
-알아 둘 점: 휴대폰 통신사 망은 여러 사람이 IP 하나를 함께 쓰는 경우가 많다. IP 기준 한도를 낮게 잡으면 같은 통신사의 다른 사용자가 막힐 수 있다. ②의 시간당 한도는 너무 낮게 잡지 않는다.
+- 로컬 개발: Upstash 설정이 없으면 메모리 카운터를 쓴다(한 프로세스). `GUARD_DEV_CLOCK_FILE`에 적은 밀리초만큼 서버 시계를 옮겨 "다음 날"을 시험할 수 있다(메모리 카운터일 때만).
+- 배포(`VERCEL`): Upstash 설정이 없으면 유료 기능을 막는다. Turnstile 시험용 키가 `VERCEL_ENV=production`에 들어가도 막는다.
+- 알아 둘 점: 휴대폰 통신사 망은 여러 사람이 IP 하나를 함께 쓰는 경우가 많다. IP당 하루 3장이면 같은 IP의 다른 사용자가 막힐 수 있다. 문제가 보이면 `DAILY_TICKET_LIMIT`를 올린다.
+- 마지막 방어선: OpenAI 프로젝트 예산·Anthropic 워크스페이스 사용 한도를 월 금액으로 건다(11단계).
 
-### 처리 순서 (`paidGuard()`)
+### 처리 순서
 
-1. 요청 머리글의 이용권을 확인한다(서명, 유효 시간, 동의 버전). 없거나 틀리면 401 "이용권이 필요합니다".
-2. `checkRateLimit('<경로 id>', { request })`로 이 경로의 시간당 한도를 확인한다. 넘으면 429.
-3. 건강정보가 들어가는 경로(음성 변환, 사실 추출)는 요청의 동의 버전에 건강정보 동의가 있는지 본다.
-4. 통과하면 제공자를 부른다. 막힌 요청은 제공자를 부르기 전에 끝난다(테스트로 확인).
+이용권 발급(`issueTicket`, `/api/guard/ticket`): 서비스 동의 버전 → 발급 시도 시간당 20번 → 오늘 남은 장수(없으면 Turnstile을 부르지 않고 429) → 같은 Turnstile 토큰 재사용 거절 → Cloudflare `siteverify` → 발급 기록. Turnstile 시험용 비밀 키(`1x…AA` 등)는 매번 같은 가짜 토큰을 주므로 재사용 검사만 건너뛴다.
 
-IP 원문은 저장하지 않는다. Firewall은 Vercel이 IP로 센다. 쿠키에는 IP를 넣지 않는다.
+유료 라우트(`paidGuard(request, 경로 id, 필요한 동의)`):
+
+1. 설정·저장소가 없으면 503 "지금은 자동 기능을 쓸 수 없습니다. 직접 입력해 계산할 수 있어요."
+2. 요청 머리글 `x-kc2-consent`의 동의 버전. 서비스 동의가 없으면 403, 건강정보 경로(음성·추출·설명)는 건강정보 동의가 없으면 403.
+3. 머리글 `x-kc2-ticket`의 이용권: 없음·위조·만료면 401, 서명이 맞아도 발급 기록이 없으면 401.
+4. 연속 요청 간격, 전체 시도 수, 이 경로의 남은 횟수. 넘으면 429.
+5. 통과하면 1회를 깎고 제공자를 부른다. 결과를 돌려주지 못하면(입력 오류, 제공자 설정 없음·장애) 라우트가 `refund()`로 돌려준다. 설명에서 LLM을 부르지 않은 경우도 돌려준다.
+6. 증권 읽기는 파일을 받은 뒤 `sameFile()`을 부른다. 같은 이용권으로 같은 파일을 다시 읽으면 2번까지 횟수를 깎지 않는다. 화면도 이 탭에서 읽은 파일의 결과를 메모리에 두고(`lib/upload/reading-cache.ts`, 5개까지) 같은 파일은 서버에 다시 보내지 않는다.
+
+막힌 요청은 제공자를 부르기 전에 끝난다. `tests/paid-routes.test.ts`가 `app/api`의 모든 라우트를 찾아, 공개 라우트 4개(`guard/config`, `guard/ticket`, `laws`, `laws/precedents`)가 아닌 라우트는 자기 경로 id로 `paidGuard`를 제공자 호출보다 먼저 부르는지 보고, 실제로 불러 이용권 없음·위조·만료·발급 기록 없음·동의 없음·횟수 소진이 제공자 호출 0번으로 거절되는지 확인한다. 서버 코드에 `console` 출력이 있으면 실패한다.
+
+### 결제를 붙일 자리 (이번에는 만들지 않음)
+
+이용권 내용의 `plan`은 지금 `"free"`뿐이다. 결제를 붙이면 결제 확인 뒤 `plan: "paid"` 이용권을 발급하는 경로를 `/api/guard/ticket` 옆에 따로 두고, 하루 무료 장수와 따로 센다(`issueTicket`의 주석). 문지기(`checkPaid`)는 `plan`에 따라 경로별 횟수만 바꾸면 된다.
 
 v1에서 없애는 것: `app/api/auth/`, `app/auth/callback/`, `app/login/`, `components/LoginForm.tsx`, `lib/auth/`(Supabase 클라이언트·`paidUser()`·하루 한도 RPC), `proxy.ts`의 세션 갱신, `supabase/migrations/`, PGlite RLS 테스트, `@supabase/*`·`@electric-sql/pglite` 패키지.
 
@@ -158,7 +175,7 @@ v1에서 없애는 것: `app/api/auth/`, `app/auth/callback/`, `app/login/`, `co
 서버는 아무것도 저장하지 않는다. DB 테이블이 없다. 남는 것은 다음뿐이다.
 
 - 법령·판례 응답의 메모리 캐시(24시간, 개인정보 없음)
-- Vercel Firewall의 IP별 요청 개수(Vercel이 관리, 최대 1시간)
+- Upstash Redis의 이용권·사용량 카운터(3절 표. IP HMAC·이용권 번호·파일 HMAC과 개수뿐, 하루 안쪽에 사라짐)
 - Vercel 요청 로그: 경로·상태 코드·시간만. 앱은 요청 본문을 로그에 쓰지 않는다
 
 ### 브라우저 (`lib/draft`)
@@ -167,11 +184,11 @@ v1에서 없애는 것: `app/api/auth/`, `app/auth/callback/`, `app/login/`, `co
 |---|---|---|
 | `kc2.consent` | 서비스·건강정보 동의 버전과 날짜 | 동의 문구 버전이 바뀌면 다시 묻는다 |
 | `kc2.case.<id>` | 증권(보험 정보만)·사고·사람 입력 초안 | 신원 칸 없음. 읽을 때 zod `strict`(`lib/draft/schema.ts`)로 검증하고 실패하면 그 사고를 "읽을 수 없는 기록"으로 표시. 사고 목록은 따로 키를 두지 않고 이 키들에서 바로 만든다(목록과 초안이 어긋나지 않게, 3단계에서 정함) |
-| `kc2.quota` | 오늘 남은 횟수(화면 표시용) | 진짜 한도는 서버가 정한다 |
 
-- 이용권은 `sessionStorage`(탭을 닫으면 사라짐)에 둔다.
+- 이용권은 `sessionStorage`의 `kc2.ticket`(탭을 닫으면 사라짐)에 둔다. 오늘 남은 장수는 저장하지 않고 `/api/guard/config`에서 그때그때 받는다(계획의 `kc2.quota`는 만들지 않았다).
+- 증권 읽기 결과는 같은 파일을 다시 쓰기 위해 이 탭의 메모리에만 둔다(브라우저 저장소에 넣지 않는다).
 - 원본 이미지·PDF·음성, 전사문 원문은 저장하지 않는다. 전사문은 `redact.ts`를 거친 사고 설명 글로만 남는다.
-- "이 기기의 기록 모두 지우기"는 `kc2.` 로 시작하는 키(동의 기록 포함)와 옛 키 `kac:draft:`를 모두 지운다.
+- "이 기기의 기록 모두 지우기"는 `kc2.` 로 시작하는 키(동의 기록 포함)와 옛 키 `kac:draft:`를 모두 지우고, 이 탭의 이용권과 증권 읽기 결과도 버린다.
 - 옛 키 `kac:draft:<id>`(v1·2단계)의 초안은 처음 읽을 때 신원 칸을 버리고 `kc2.case.<id>`로 옮긴다.
 - 건강정보 동의를 철회하면 모든 사고의 사람 칸에서 다친 내용·진단명·상해급수·수술·입원·통원 일수·치료비를 지운다(`HEALTH_FIELDS`).
 - 동의 화면의 체크박스는 저장된 동의 기록으로만 처음 상태를 정하고, 미리 체크하지 않는다(`tests/consent-form.test.ts`).
@@ -182,8 +199,8 @@ v1에서 없애는 것: `app/api/auth/`, `app/auth/callback/`, `app/login/`, `co
 
 | 라우트 | 메서드 | 필요 조건 | 하는 일 |
 |---|---|---|---|
-| `/api/guard/config` | GET | – | Turnstile 사이트 키와 오늘 남은 이용권 수(쿠키 기준) |
-| `/api/guard/ticket` | POST | Turnstile 토큰 + 동의 버전 | 이용권 발급. Firewall `ticket` 규칙 + 쿠키 카운터(하루 3장) |
+| `/api/guard/config` | GET | – | 유료 기능을 쓸 수 있는지, Turnstile 사이트 키, 오늘 남은 이용권 수(IP 기준), 이용권 1장의 경로별 횟수 |
+| `/api/guard/ticket` | POST | Turnstile 토큰 + 서비스 동의 버전 | 이용권 발급(IP당 하루 3장, 3절 처리 순서) |
 | `/api/policies/read` | POST | 이용권 | 올린 파일(PDF·HEIC·JPG·PNG, 4MB 이하)을 읽어 보험 정보만 돌려준다. 파일은 저장하지 않는다. 가리기를 여기서 한다 |
 | `/api/stt` | POST | 이용권 + 건강정보 동의 | 음성→문자(`STT_MODEL`). 음성은 저장하지 않는다. 4MB·5분 이하. 받은 글을 `redact.ts`로 가린다 |
 | `/api/extract/accident` | POST | 이용권 + 건강정보 동의 | 사고 설명 글에서 사고 정보와 사람별 사실을 뽑는다. 사람은 역할로만. 짐작한 칸은 `inferred`로 표시해 화면에서 회색 "추정" |
@@ -201,16 +218,19 @@ v1에서 없애는 라우트: `/api/auth`, `/auth/callback`, `/api/consents`, `/
 | 용도 | 환경변수 | 비고 |
 |---|---|---|
 | Turnstile | `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | Cloudflare 대시보드에서 발급. 사이트 키는 공개값이지만 서버가 화면에 넘긴다 |
-| 이용권·쿠키 서명 | `GUARD_SECRET` | 32바이트 이상 임의값 |
+| 이용권 서명·IP HMAC | `GUARD_SECRET` | 32자 이상 임의값 |
+| 카운터 저장소 | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` (또는 마켓플레이스가 만드는 `KV_REST_API_URL`, `KV_REST_API_TOKEN`) | 없으면 로컬은 메모리, Vercel은 유료 기능 막음 |
 | 하루 이용권 수 | `DAILY_TICKET_LIMIT` | 기본 3. 0이면 유료 기능 막음 |
 | 이용권 유효 시간 | `TICKET_TTL_MINUTES` | 기본 120 |
+| 이용권 1장의 경로별 횟수 | `TICKET_CALL_LIMITS` | 기본 `policy-read=3,stt=5,extract=5,explain=10,tts=10` |
+| 로컬 시계 옮기기 | `GUARD_DEV_CLOCK_FILE` | 로컬 메모리 카운터 전용("다음 날" 시험) |
 | 음성→문자 | `OPENAI_API_KEY`, `STT_MODEL` | `/v1/audio/transcriptions`, 언어 `ko` |
 | 읽어주기 | `OPENAI_API_KEY`, `TTS_MODEL`, `TTS_VOICE` | `/v1/audio/speech`. 문단 단위로 나눈다 |
 | 증권 읽기 | `VISION_PROVIDER`(openai / anthropic), `VISION_MODEL`, `OPENAI_API_KEY` 또는 `ANTHROPIC_API_KEY` | 구조화 출력(JSON 스키마)으로 받는다 |
 | 사실 추출·설명 | `LLM_PROVIDER`, `LLM_MODEL` | 비전과 같은 키 |
 | 법령 | `LAW_API_OC` | 국가법령정보센터 Open API 인증값 |
 
-경로별 시간당 한도는 환경변수가 아니라 Vercel Firewall 규칙에 둔다(규칙 id: `ticket`, `policy-read`, `stt`, `extract`, `explain`, `tts`). 규칙 설정은 11단계 점검표에 적는다. 로컬 개발에서는 `checkRateLimit`가 항상 통과하므로 쿠키 카운터와 이용권으로 시험한다.
+경로별 한도는 Vercel Firewall 규칙이 아니라 이용권별 Redis 카운터로 센다(3절). Firewall 규칙은 두지 않아도 되고, 둔다면 무료 요금제 한도(3개) 안에서 `/api/guard/ticket` 하나에만 IP 기준 규칙을 더한다(11단계). 업로드 제한: 증권은 PDF·HEIC·JPEG·PNG(파일 이름이 아니라 첫 바이트로 판별), 4MB, PDF 3쪽까지. 음성은 4MB·5분. 사고 글은 5,000자.
 
 v1에서 없애는 환경변수: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `DAILY_*_LIMIT`(사용자별). 모델 이름은 코드에 쓰지 않고 환경변수로 둔다.
 
@@ -662,14 +682,14 @@ data/rules/
 | 1 | 설계 문서 개정 (`compass/CLAUDE.md`, `compass/docs/PLAN.md`) | 이 문서 |
 | 2 | v1 코드 복사 + 로그인·DB 걷어 내기: v1을 `compass/`로 복사(`.git`·`node_modules`·`.next`·`.env*` 제외), `compass/.gitignore`, Supabase·카카오·`lib/auth`·`supabase/`·DB API·PGlite 테스트 제거, 첫 화면 "바로 시작하기", 흐름(첫 화면 → 동의 → 내 보험), 사람 카드 제목을 역할 이름으로, 증권 표에서 신원 칸 제거. 유료 기능 버튼은 잠시 "준비 중" | 빌드·테스트 통과(DB 테스트는 지운 목록을 보고). `@supabase` import 0건. 390px에서 6개 화면 확인 |
 | 3 | 브라우저 저장 + 동의: `lib/draft`를 `kc2.*` 키로 정리, 사고 목록·이어서 하기·지우기·"모두 지우기", 건강정보 동의 철회 시 `health` 삭제(동의 화면 2항목의 브라우저 저장은 2단계에서 만들었다), 읽을 때 zod 검증, `tests/privacy-fields.test.ts` | 새로고침 뒤 입력이 그대로. 모두 지우기 뒤 `kc2.*` 키 0개. 금지 이름이 스키마에 있으면 테스트 실패 |
-| 4 | 유료 API 문지기: Turnstile 위젯, `/api/guard/config`·`/api/guard/ticket`, 서명 이용권·쿠키 카운터, `@vercel/firewall` `checkRateLimit`, `paidGuard()`를 5개 유료 라우트 맨 앞에, "오늘 남은 횟수", `.env.example` | 이용권 없음·만료·위조·4번째 발급·동의 없음이 각각 제공자를 부르기 전에 거절되는 테스트. 로컬에서 Turnstile 시험 키로 발급 확인 |
+| 4 | 유료 API 문지기: Turnstile 위젯, `/api/guard/config`·`/api/guard/ticket`, 서명 이용권, Upstash Redis 카운터(쿠키 카운터·`@vercel/firewall`은 쓰지 않기로 바꿈, 3절), `paidGuard()`를 5개 유료 라우트 맨 앞에, 실패 시 횟수 돌려주기, 같은 파일 재사용, "오늘 남은 이용권", `.env.example` | 이용권 없음·만료·위조·4번째 발급·동의 없음이 각각 제공자를 부르기 전에 거절되는 테스트. 로컬에서 Turnstile 시험 키로 발급 확인 |
 | 5 | 증권 읽기 v2: `policy-reading.ts`에서 신원 칸 제거(`strict`), `redact.ts`(5절 가리기 표 전체), 글자 PDF는 가린 글자만 LLM으로, 판독 프롬프트 수정, 사진 칠해 가리기 화면(안내 문구·빈 가리기 확인창), "개인정보 ○건을 가렸습니다" | 가상 이름·주민번호·증권번호·차량번호·전화·이메일·계좌·카드번호를 넣은 가짜 증권(PDF·HEIC·JPG)의 응답과 LLM 요청 본문(글자 PDF)에 그 값이 없음. `redact.ts` 단위 테스트(가릴 것 / 가리면 안 되는 금액·날짜·"3천만원"·보험사 대표번호) |
 | 6 | 음성 입력 + 사실 추출 v2: 사람을 역할로만 뽑는 스키마, 전사문·사고 글 `redact.ts`, "이름은 말하지 않아도 됩니다" 안내, 나이 추출(말한 경우, "추정" 표시). 상해급수 후보는 v1 그대로 | 이름이 들어간 가상 사고 글에서 추출 결과에 이름이 없음. 녹음·추출·급수 후보 테스트 통과 |
 | 7 | 계산 엔진 A 조정: `birthDate` → `age`, `birthRangeFromAge()`로 상실수익액·위자료의 최소·최대, 사망일 기준 나이 | v1 손 검산 35건 그대로 통과(생년월일 사례는 같은 만 나이로 바꿔 범위 안에 v1 값이 드는지 확인). 새 손 검산: 만 나이 경계(정년 직전), 사망, 후유장해 각 1건 이상 |
 | 8 | 계산 엔진 B 점검: 사람 `label`·`age` 변경이 차량·특약·합산에 주는 영향 확인, 합산 불변식(fast-check) 유지 | 불변식 테스트 통과. 화면·엑셀·PDF·읽어주기가 `summarize()` 값만 쓰는지 v1 "합계 점검" 테스트 통과 |
 | 9 | 결과 화면·설명·읽어주기·내려받기 v2: `/api/explain`이 입력을 받아 다시 계산(저장 없음), 엑셀·PDF·읽어주기 글에서 신원 칸 제거, 결과를 브라우저에서 다시 열기. 법령·판례는 v1 그대로 | 엑셀 시트·PDF 글자·TTS 요청 본문에 신원정보 없음(테스트). 새로고침 → 다시 열기 → 같은 합계. 법령 가짜 응답·실패 테스트 통과 |
 | 10 | 통합 점검: `scripts/e2e/mock-services.mjs`(v1의 Supabase판은 2단계에서 지웠다)를 Turnstile·LLM·음성만 흉내 내도록 새로 만든 뒤 브라우저로 ① 바로 시작 → 동의 → 가짜 증권(HEIC) → 보험 정보 확인 ② 사고 글 → 사람 2명 → 입원·수술·과실 30% ③ 화면 합계 = 엑셀 총합계 ④ 정보 부족 칸 표시 ⑤ 390px 가로 넘침 없음 ⑥ 브라우저 저장소·제공자 요청·서버 응답에 신원정보 없음 ⑦ 이용권 4번째 요청 거절. 스크린샷은 `docs/e2e/` | 일곱 시나리오 통과. `needs_check` 규칙 전체 목록 보고 |
-| 11 | Vercel 배포: 새 프로젝트 `kikhan-auto-compass-v2`(Root Directory `compass`), 환경변수, Firewall 속도 제한 규칙 6개, Turnstile 도메인 등록, OpenAI·Anthropic 월 사용 한도 | 배포 주소에서 바로 시작 → 결과까지 한 번 확인. 이용권 4번째 발급이 막히는지 확인 |
+| 11 | Vercel 배포: 새 프로젝트 `kikhan-auto-compass-v2`(Root Directory `compass`), 환경변수, Upstash Redis 연결(Vercel 마켓플레이스), Turnstile 도메인 등록(시험용 키 금지), OpenAI·Anthropic 월 사용 한도 | 배포 주소에서 바로 시작 → 결과까지 한 번 확인. 이용권 4번째 발급이 막히는지 확인 |
 
 단계 순서는 사용자의 지시에 따라 바뀔 수 있다.
 
@@ -682,8 +702,8 @@ data/rules/
 - Vercel 프로젝트 이름은 `kikhan-auto-compass-v2`.
 - 남용 방지: Turnstile을 쓴다.
   - "1회"는 2시간 동안 쓸 수 있는 분석 이용권 1장이고, 하루 3장이다.
-  - 정확한 IP당 하루 3회는 하지 않는다. Upstash 없이 네 겹 방어로 간다(Turnstile, Firewall 시간당 한도, 쿠키, API 월 상한).
-  - 경로별 시간당 한도: 이용권 발급 3, 증권 읽기 3, 음성 5, 사고 내용 추출 5, 설명 10, 읽어주기 10.
+  - (4단계에서 바꿈) 카운터는 Upstash Redis에 둔다. IP당 정확히 하루 3장, 이용권 재사용·같은 파일 중복 과금을 서버에서 막는다. Firewall 규칙 6개와 쿠키 카운터는 쓰지 않는다(무료 요금제 규칙 3개 한도).
+  - 이용권 1장의 경로별 횟수: 증권 읽기 3, 음성 5, 사고 내용 추출 5, 설명 10, 읽어주기 10. 업로드 4MB·PDF 3쪽·음성 5분·사고 글 5,000자.
 - 사진 증권은 (가) 사용자가 올리기 전에 화면에서 칠해 가린다.
   - 가리기 화면에 "이름·주민번호·증권번호·차량번호를 칠해 주세요"를 크게 띄운다.
   - 아무것도 칠하지 않고 올리면 확인창을 한 번 더 띄운다.

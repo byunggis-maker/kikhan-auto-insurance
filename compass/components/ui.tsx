@@ -166,14 +166,14 @@ export const primaryButton =
 export const outlineButton =
   "flex min-h-13 w-full items-center justify-center rounded-2xl border-2 border-navy bg-white px-5 text-lg font-bold text-navy disabled:opacity-40";
 
-// lib/guard/paid.ts의 PAID_NOT_READY_MESSAGE와 같은 문구다.
-export const PAID_NOT_READY_MESSAGE = "이 기능은 준비 중입니다. 직접 입력해 계산할 수 있어요";
+// lib/guard/paid.ts의 PAID_UNAVAILABLE_MESSAGE와 같은 문구다.
+export const PAID_UNAVAILABLE_MESSAGE = "지금은 자동 기능을 쓸 수 없습니다. 직접 입력해 계산할 수 있어요.";
 
-/** 유료 기능(음성 변환, 증권 읽기, 쉬운 말 설명, 읽어주기)을 아직 쓸 수 없을 때 그 자리에 보여 주는 안내. */
+/** 유료 기능(음성 변환, 증권 읽기, 쉬운 말 설명, 읽어주기)을 쓸 수 없을 때(설정 없음, 서버 장애) 그 자리에 보여 주는 안내. */
 export function PaidNotice({ what }: { what: string }) {
   return (
     <p role="note" className="rounded-xl bg-navy-soft p-4 font-semibold text-navy">
-      {what}: {PAID_NOT_READY_MESSAGE}
+      {what}: {PAID_UNAVAILABLE_MESSAGE}
     </p>
   );
 }

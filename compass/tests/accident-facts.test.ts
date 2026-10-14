@@ -145,8 +145,8 @@ function setup(options: { blocked?: boolean; keys?: boolean } = {}) {
     vi.stubEnv("LLM_PROVIDER", "openai");
     vi.stubEnv("LLM_MODEL", "test-llm");
   }
-  if (options.blocked) guard.paidGuard.mockRejectedValue(new ApiError(503, "PAID_NOT_READY", "준비 중"));
-  else guard.paidGuard.mockResolvedValue(undefined);
+  if (options.blocked) guard.paidGuard.mockRejectedValue(new ApiError(503, "PAID_UNAVAILABLE", "쓸 수 없음"));
+  else guard.paidGuard.mockResolvedValue({ claims: {}, refund: vi.fn(async () => {}), sameFile: vi.fn(async () => false) });
   const provider = vi.fn<(url: string, init: RequestInit) => Promise<Response>>(async (url) =>
     url.includes("/audio/transcriptions")
       ? Response.json({ text: " 어제 사고가 났습니다. 주민번호는 800505-1234567 " })
@@ -169,9 +169,9 @@ describe("/api/stt", () => {
     const provider = setup({ blocked: true });
     const response = await sttPost(audioRequest());
     expect(response.status).toBe(503);
-    expect((await response.json()).code).toBe("PAID_NOT_READY");
+    expect((await response.json()).code).toBe("PAID_UNAVAILABLE");
     expect(provider).not.toHaveBeenCalled();
-    expect(guard.paidGuard).toHaveBeenCalledWith(expect.any(Request), ["service", "health"]);
+    expect(guard.paidGuard).toHaveBeenCalledWith(expect.any(Request), "stt", ["service", "health"]);
   });
 
   it("설정이 없거나 형식을 모르는 녹음이면 안내한다", async () => {
@@ -209,7 +209,7 @@ describe("/api/extract/accident", () => {
     const provider = setup({ blocked: true });
     expect((await extractPost(textRequest(SAID))).status).toBe(503);
     expect(provider).not.toHaveBeenCalled();
-    expect(guard.paidGuard).toHaveBeenCalledWith(expect.any(Request), ["service", "health"]);
+    expect(guard.paidGuard).toHaveBeenCalledWith(expect.any(Request), "extract", ["service", "health"]);
   });
 
   it("너무 짧은 글은 받지 않는다", async () => {

@@ -40,8 +40,8 @@ function setup(options: { blocked?: boolean; vision?: boolean } = {}) {
     vi.stubEnv("VISION_MODEL", "test-model");
     vi.stubEnv("ANTHROPIC_API_KEY", "test-key");
   }
-  if (options.blocked) guard.paidGuard.mockRejectedValue(new ApiError(503, "PAID_NOT_READY", "준비 중"));
-  else guard.paidGuard.mockResolvedValue(undefined);
+  if (options.blocked) guard.paidGuard.mockRejectedValue(new ApiError(503, "PAID_UNAVAILABLE", "쓸 수 없음"));
+  else guard.paidGuard.mockResolvedValue({ claims: {}, refund: vi.fn(async () => {}), sameFile: vi.fn(async () => false) });
   const provider = vi.fn<(url: string, init: RequestInit) => Promise<Response>>(async () => Response.json({ content: [{ type: "tool_use", input: ANSWER }] }));
   vi.stubGlobal("fetch", provider);
   return provider;
@@ -57,9 +57,9 @@ it("문지기가 막으면 제공자를 부르지 않는다. 서비스 이용 �
   const provider = setup({ blocked: true });
   const response = await POST(upload("policy-sample.jpg"));
   expect(response.status).toBe(503);
-  expect((await response.json()).code).toBe("PAID_NOT_READY");
+  expect((await response.json()).code).toBe("PAID_UNAVAILABLE");
   expect(provider).not.toHaveBeenCalled();
-  expect(guard.paidGuard).toHaveBeenCalledWith(expect.any(Request), ["service"]);
+  expect(guard.paidGuard).toHaveBeenCalledWith(expect.any(Request), "policy-read", ["service"]);
 });
 
 it("비전 설정이 없으면 직접 입력을 안내한다", async () => {

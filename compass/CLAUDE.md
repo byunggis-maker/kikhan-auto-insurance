@@ -50,7 +50,7 @@ v2는 기존 나침반(`~/Projects/kikhan-auto-compass`, 카카오 로그인 + S
 - 동의 여부도 브라우저에 둔다(동의 문구 버전과 날짜). 서버는 유료 API 요청마다 동의 버전 값을 함께 받아 확인한다.
 - 유료 API(증권 읽기, 음성 변환, 사고 사실 추출, 쉬운 말 설명, 읽어주기)의 남용은 `lib/guard/paid.ts`의 `paidGuard()`가 막는다(자세한 방식은 `docs/PLAN.md` 3절).
   - Cloudflare Turnstile 확인
-  - 하루 사용 한도(IP당 하루 3회. DB 없이 구현하는 방식과 한계는 PLAN 3절)
+  - 하루 사용 한도(IP당 하루 이용권 3장. Redis에는 IP HMAC·이용권 번호와 개수만 둔다. 자세한 것은 PLAN 3절)
   - IP 원문은 어디에도 남기지 않는다.
 
 ## 설계 원칙 3 — 개인정보: 가린 뒤에만 분석, 보험 정보만 보인다
@@ -74,7 +74,7 @@ v2는 기존 나침반(`~/Projects/kikhan-auto-compass`, 카카오 로그인 + S
 
 - Next.js 16 (App Router) + TypeScript(strict) + Tailwind CSS 4
 - DB 없음. 브라우저 `localStorage`만 쓴다.
-- 남용 방지: Cloudflare Turnstile, Vercel Firewall 속도 제한(`@vercel/firewall`), 서명한 쿠키 카운터
+- 남용 방지: Cloudflare Turnstile, 서버가 서명한 분석 이용권, Upstash Redis 카운터(REST API를 `fetch`로 부름. 4단계에서 쿠키 카운터·Firewall 대신 정함)
 - 음성→문자: OpenAI 음성 전사 API(모델은 환경변수). 읽어주기: OpenAI TTS API.
 - 증권·가입증명서 읽기: 비전 LLM. `VISION_PROVIDER=openai|anthropic`으로 선택.
 - 법령: 국가법령정보센터 Open API.

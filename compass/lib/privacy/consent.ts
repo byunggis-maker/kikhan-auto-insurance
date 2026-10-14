@@ -1,16 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { CONSENT_VERSIONS, type ConsentKind, type ConsentState } from "./consent-versions";
 
-// 동의 문안의 버전. 문안을 바꾸면 버전을 올리고, 옛 버전에 동의한 사용자는 다시 동의를 받는다.
-// 문안은 아직 초안이다(법무 확인 전). 동의 기록은 서버가 아니라 이 브라우저에만 둔다.
-export const CONSENT_VERSIONS = {
-  service: "2026-10-14-v2-draft",
-  health: "2026-10-14-v2-draft",
-} as const;
-
-export type ConsentKind = keyof typeof CONSENT_VERSIONS;
-export type ConsentState = Record<ConsentKind, boolean>;
+// 동의 기록은 서버가 아니라 이 브라우저에만 둔다.
+export { CONSENT_VERSIONS, type ConsentKind, type ConsentState };
 
 export const CONSENT_KEY = "kc2.consent";
 const KEY = CONSENT_KEY;

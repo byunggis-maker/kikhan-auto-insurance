@@ -2,8 +2,11 @@
 
 import { useRef, useState, type ReactNode } from "react";
 import { StepShell } from "@/components/StepShell";
-import { Card, PaidNotice, outlineButton } from "@/components/ui";
+import { TicketBadge, TicketGate } from "@/components/TicketGate";
+import { Card, outlineButton } from "@/components/ui";
+import { paidFetch } from "@/lib/guard/paid-client";
 import { usePaid } from "@/lib/guard/use-paid";
+import { cachedReading, fileDigest, rememberReading } from "@/lib/upload/reading-cache";
 import { applyReading } from "@/lib/draft/apply-reading";
 import { newCoverage } from "@/lib/draft/store";
 import { PRODUCT_LINE_LABELS, type CoverageDraft, type PolicyDraft, type ProductLine } from "@/lib/draft/types";
@@ -62,7 +65,7 @@ function Pick<T extends string>(props: { label: string; value: T | ""; options: 
 type ReadState =
   | { status: "idle" }
   | { status: "reading" }
-  | { status: "done"; source: keyof typeof SOURCE_LABELS; missing: number }
+  | { status: "done"; source: keyof typeof SOURCE_LABELS; missing: number; reused?: boolean }
   | { status: "error"; message: string; needPassword: boolean };
 
 function countMissing(reading: PolicyReading) {
@@ -77,7 +80,7 @@ function hasInput(policy: PolicyDraft) {
 
 export function PolicyStep() {
   // 증권 읽기는 유료 기능이라 문지기를 통과할 때만 쓴다. 직접 입력은 누구나 할 수 있다.
-  const guest = !usePaid().ready;
+  const guest = !usePaid("policy-read").ready;
   const [read, setRead] = useState<ReadState>({ status: "idle" });
   const [password, setPassword] = useState("");
   // 비밀번호를 물어야 할 때 같은 파일을 다시 보내기 위해 들고 있는다. 화면을 떠나면 사라진다.
@@ -109,10 +112,19 @@ export function PolicyStep() {
             if (upload.size > UPLOAD_LIMIT) {
               return setRead({ status: "error", needPassword: false, message: "파일이 너무 큽니다. 4MB 이하의 파일을 올리거나 화면을 캡처해 올려 주세요." });
             }
+            // 이 탭에서 이미 읽은 파일이면 서버에 다시 보내지 않는다.
+            const digest = await fileDigest(upload);
+            const cached = cachedReading(digest);
+            if (cached) {
+              update((d) => ({ ...d, policy: { ...applyReading(d.policy, cached.reading, () => crypto.randomUUID()), fileName: file.name } }));
+              picked.current = null;
+              setPassword("");
+              return setRead({ status: "done", source: cached.source, missing: countMissing(cached.reading), reused: true });
+            }
             const form = new FormData();
             form.set("file", upload);
             if (pdfPassword) form.set("password", pdfPassword);
-            const response = await fetch("/api/policies/read", { method: "POST", body: form });
+            const response = await paidFetch("policy-read", "/api/policies/read", { method: "POST", body: form });
             const body = await response.json().catch(() => null);
             if (!response.ok) {
               const code = body?.code as string | undefined;
@@ -124,6 +136,7 @@ export function PolicyStep() {
             }
             const result = readResponseSchema.safeParse(body);
             if (!result.success) return setRead({ status: "error", needPassword: false, message: "증권을 읽지 못했습니다. 아래에 직접 입력해 주세요." });
+            rememberReading(digest, result.data);
             update((d) => ({ ...d, policy: { ...applyReading(d.policy, result.data.reading, () => crypto.randomUUID()), fileName: file.name } }));
             picked.current = null;
             setPassword("");
@@ -145,7 +158,7 @@ export function PolicyStep() {
             <Card title="증권·가입증명서 올리기">
               {guest ? (
                 <>
-                  <PaidNotice what="증권 자동 읽기" />
+                  <TicketGate route="policy-read" what="증권 자동 읽기" />
                   <p className="text-muted">아래에 직접 입력할 수 있습니다.</p>
                 </>
               ) : (
@@ -164,10 +177,11 @@ export function PolicyStep() {
                     />
                   </label>
                   <p className="text-sm text-muted">PDF, 아이폰 사진(HEIC), JPG, PNG를 읽습니다. 이름·주민번호·증권번호·차량번호는 가리고 찍으면 더 안전합니다.</p>
+                  <TicketBadge route="policy-read" />
                   <div role="status" aria-live="polite" className="flex flex-col gap-3">
                     {read.status === "done" && (
                       <p className="rounded-xl bg-navy-soft px-4 py-3 text-navy">
-                        {SOURCE_LABELS[read.source]}에서 읽었습니다.{" "}
+                        {read.reused ? "앞서 읽은 같은 파일의 결과를 다시 썼습니다(이용권 횟수를 쓰지 않았습니다). " : `${SOURCE_LABELS[read.source]}에서 읽었습니다. `}
                         {read.missing > 0
                           ? `읽지 못한 칸 ${read.missing}곳을 노란색으로 표시했습니다. 나머지도 증권과 같은지 확인해 주세요.`
                           : "아래 표가 증권과 같은지 확인하고, 다르면 고쳐 주세요."}

@@ -5,7 +5,9 @@ import { useMemo, useState } from "react";
 import { LawArticles, PrecedentSearch } from "@/components/LawView";
 import { ReadAloud } from "@/components/ReadAloud";
 import { StepShell } from "@/components/StepShell";
-import { Card, Disclaimer, PaidNotice, outlineButton } from "@/components/ui";
+import { TicketBadge, TicketGate } from "@/components/TicketGate";
+import { Card, Disclaimer, outlineButton } from "@/components/ui";
+import { paidFetch } from "@/lib/guard/paid-client";
 import { usePaid } from "@/lib/guard/use-paid";
 import { useConsent } from "@/lib/privacy/consent";
 import type { CaseDraft } from "@/lib/draft/types";
@@ -73,7 +75,7 @@ function Why({ cell, label, result, canExplain }: { cell: MatrixCell; label: str
   async function explain() {
     setExplained({ status: "working" });
     try {
-      const response = await fetch("/api/explain", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ claim: result.claim, rowId: cell.rowId, columnId: cell.columnId }) });
+      const response = await paidFetch("explain", "/api/explain", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ claim: result.claim, rowId: cell.rowId, columnId: cell.columnId }) });
       const body = await response.json().catch(() => null);
       if (!response.ok || !Array.isArray(body?.sentences)) throw new Error(typeof body?.error === "string" ? body.error : "설명을 만들지 못했습니다.");
       setExplained({ status: "done", sentences: body.sentences as string[], source: body.source === "llm" ? "llm" : "default" });
@@ -210,10 +212,11 @@ function ResultView({ draft, result }: { draft: CaseDraft; result: Result }) {
   const [busy, setBusy] = useState<"xlsx" | "pdf" | null>(null);
   const [notice, setNotice] = useState("");
   // 쉬운 말 설명과 읽어주기는 유료 기능이라 문지기를 통과할 때만 쓴다. 계산 결과와 내려받기는 누구나 쓴다.
-  const guest = !usePaid().ready;
+  const guest = !usePaid("tts").ready;
+  const explainReady = usePaid("explain").ready;
   const consent = useConsent();
   // 설명 요청에는 다친 내용이 들어가므로 건강정보 동의도 있어야 한다.
-  const health = !guest && !!consent?.health;
+  const health = explainReady && !!consent?.health;
   const { matrix, summary } = result;
   const [mine, others] = summary.groups;
   const row = matrix.rows.find((candidate) => candidate.id === selected) ?? matrix.rows[0];
@@ -268,12 +271,13 @@ function ResultView({ draft, result }: { draft: CaseDraft; result: Result }) {
 
       <Card title="읽어주기">
         {guest ? (
-          <PaidNotice what="읽어주기와 쉬운 말 설명" />
+          <TicketGate route="tts" what="읽어주기와 쉬운 말 설명" />
         ) : (
           <>
             <ReadAloud label="결과 요약 듣기" chunks={summaryChunks} />
             {documentChunks.length > 0 && <ReadAloud label="증권에서 읽은 내용 듣기" chunks={documentChunks} />}
             <p className="text-sm text-muted">이름·차량번호·증권번호는 읽지 않습니다.</p>
+            <TicketBadge route="tts" />
           </>
         )}
       </Card>

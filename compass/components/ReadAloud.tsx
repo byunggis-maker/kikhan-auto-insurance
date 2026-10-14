@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { outlineButton } from "@/components/ui";
+import { paidFetch } from "@/lib/guard/paid-client";
 import { SpeechPlayer, type AudioLike, type PlayerState } from "@/lib/speech/player";
 
 // 읽어주기: 글을 서버에서 음성으로 바꿔 차례로 재생한다. 재생·멈춤·속도를 고를 수 있다.
@@ -14,7 +15,7 @@ const SEPARATOR = "\u0000";
 async function fetchAudio(text: string): Promise<string> {
   let response: Response;
   try {
-    response = await fetch("/api/tts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }) });
+    response = await paidFetch("tts", "/api/tts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }) });
   } catch {
     throw new Error("서버에 연결하지 못했습니다. 다시 눌러 주세요.");
   }

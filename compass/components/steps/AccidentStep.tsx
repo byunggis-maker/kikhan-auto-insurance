@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { StepShell } from "@/components/StepShell";
-import { Card, Choice, PaidNotice, TextField, outlineButton } from "@/components/ui";
+import { TicketBadge, TicketGate } from "@/components/TicketGate";
+import { Card, Choice, TextField, outlineButton } from "@/components/ui";
+import { paidFetch } from "@/lib/guard/paid-client";
 import { usePaid } from "@/lib/guard/use-paid";
 import { useConsent } from "@/lib/privacy/consent";
 import { applyFacts } from "@/lib/draft/apply-facts";
@@ -24,7 +26,7 @@ async function sendAudio(blob: Blob): Promise<{ text: string }> {
   form.set("audio", blob, "speech");
   let response: Response;
   try {
-    response = await fetch("/api/stt", { method: "POST", body: form });
+    response = await paidFetch("stt", "/api/stt", { method: "POST", body: form });
   } catch {
     throw new Error("서버에 연결하지 못했습니다. 다시 눌러 같은 녹음으로 다시 시도할 수 있습니다.");
   }
@@ -37,10 +39,13 @@ export function AccidentStep() {
   const { id } = useParams<{ id: string }>();
   const consent = useConsent();
   // 음성 변환과 사실 추출은 유료 기능이라 문지기를 통과할 때만 쓴다. 직접 적는 것은 누구나 할 수 있다.
-  const guest = !usePaid().ready;
-  // 다친 내용을 말하게 되므로 건강정보 동의가 있어야 서버로 보낸다.
-  const needsConsent = !guest && consent !== undefined && !consent.health;
+  const stt = usePaid("stt");
+  const guest = !stt.ready;
+  const extractReady = usePaid("extract").ready;
+  // 다친 내용을 말하게 되므로 건강정보 동의가 있어야 서버로 보낸다. 동의가 없으면 이용권보다 동의를 먼저 안내한다.
+  const needsConsent = !!stt.view.status?.enabled && consent !== undefined && !consent.health;
   const allowed = !guest && !!consent?.health;
+  const extractAllowed = extractReady && !!consent?.health;
 
   const [audio, setAudio] = useState<AudioState>({ phase: "idle", message: "", canRetry: false });
   const [pressed, setPressed] = useState(false);
@@ -98,7 +103,7 @@ export function AccidentStep() {
           if (draft.people.length > 0 && !window.confirm("뽑은 내용으로 다음 화면의 사람 카드를 새로 채웁니다. 적어 둔 사람 카드는 지워집니다. 계속할까요?")) return;
           setExtract({ status: "working" });
           try {
-            const response = await fetch("/api/extract/accident", {
+            const response = await paidFetch("extract", "/api/extract/accident", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ text: accident.text }),
@@ -150,12 +155,13 @@ export function AccidentStep() {
               </button>
               <p className="text-center text-xl font-bold">사고 내용 말로 설명하기</p>
               <p className="text-center text-muted">언제, 어디서, 어떻게 났는지와 누가 어디를 다쳤는지 말해 주세요. 5분까지 녹음됩니다.</p>
-              {pressed && guest && (
+              {pressed && guest && !needsConsent && (
                 <>
-                  <PaidNotice what="음성을 글로 바꾸기" />
+                  <TicketGate route="stt" what="음성을 글로 바꾸기" />
                   <p className="text-muted">아래에 직접 적을 수 있습니다.</p>
                 </>
               )}
+              {allowed && <TicketBadge route="stt" />}
               {pressed && needsConsent && (
                 <div className="flex w-full flex-col gap-3 rounded-xl bg-navy-soft p-4">
                   <p className="font-semibold text-navy">다친 내용을 말하게 되므로, 음성 입력을 쓰려면 건강정보 처리 동의가 필요합니다.</p>
@@ -180,7 +186,10 @@ export function AccidentStep() {
                   onChange={(e) => update((d) => ({ ...d, accident: { ...d.accident, text: e.target.value } }))}
                 />
               </label>
-              {allowed && (
+              {!extractAllowed && !!consent?.health && accident.text.trim().length >= MIN_TEXT && !(pressed && guest) && (
+                <TicketGate route="extract" what="사고 사실 뽑아 채우기" />
+              )}
+              {extractAllowed && (
                 <>
                   <button
                     type="button"
