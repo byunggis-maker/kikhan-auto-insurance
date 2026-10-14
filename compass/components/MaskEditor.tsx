@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { detectSensitiveBoxes } from "@/components/ocr";
 import { outlineButton, primaryButton } from "@/components/ui";
+import { heicToJpeg } from "@/lib/upload/heic";
 
 // 증권 사진을 올리기 전에 이름·주민번호·증권번호·차량번호를 손가락으로 칠해 가리는 화면(docs/PLAN.md 5절 "증권 읽기의 처리 순서" 2).
 // 사진을 열면 먼저 이 기기 안에서 글자를 읽어 개인정보로 보이는 자리를 미리 칠해 둔다(components/ocr.ts). 사용자는 확인하고 더 칠하거나 되돌린다.
@@ -36,7 +37,15 @@ export function MaskEditor({ file, onDone, onCancel }: Props) {
     let cancelled = false;
     (async () => {
       try {
-        const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+        let bitmap: ImageBitmap;
+        try {
+          bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+        } catch (error) {
+          // HEIC를 직접 그리지 못하는 브라우저(크롬·안드로이드)는 이 기기에서 JPEG로 바꾼 뒤 연다.
+          const jpeg = await heicToJpeg(file);
+          if (!jpeg) throw error;
+          bitmap = await createImageBitmap(jpeg, { imageOrientation: "from-image" });
+        }
         if (cancelled) return;
         const scale = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height));
         const element = canvas.current!;

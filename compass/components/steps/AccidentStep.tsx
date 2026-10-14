@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { StepShell } from "@/components/StepShell";
 import { TicketBadge, TicketGate } from "@/components/TicketGate";
 import { Card, Choice, TextField, outlineButton } from "@/components/ui";
@@ -13,6 +13,9 @@ import { applyFacts } from "@/lib/draft/apply-facts";
 import { ACCIDENT_KIND_LABELS, COUNTERPARTY_INSURANCE_LABELS, type AccidentDraft, type AccidentKind, type CounterpartyInsurance } from "@/lib/draft/types";
 import { accidentFactsSchema } from "@/lib/schemas/accident-facts";
 import { AudioController, type AudioState, type RecorderClass } from "@/lib/speech/audio-controller";
+import { splitAudio } from "@/lib/speech/split";
+import { MIN_INTERVAL_MS } from "@/lib/guard/config";
+import { detectInApp, externalOpenUrl } from "@/lib/browser/in-app";
 
 const KINDS = (Object.keys(ACCIDENT_KIND_LABELS) as AccidentKind[]).map((value) => ({ value, label: ACCIDENT_KIND_LABELS[value] }));
 const INSURANCES = (Object.keys(COUNTERPARTY_INSURANCE_LABELS) as CounterpartyInsurance[]).map((value) => ({ value, label: COUNTERPARTY_INSURANCE_LABELS[value] }));
@@ -21,9 +24,12 @@ const MIN_TEXT = 10;
 
 type ExtractState = { status: "idle" | "working" } | { status: "done" | "error"; message: string };
 
-async function sendAudio(blob: Blob): Promise<{ text: string }> {
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** 조각 하나를 서버로 보낸다. 너무 빨리 보냈다고 하면(TOO_FAST) 잠깐 쉬고 한 번 더 보낸다. */
+async function sendPiece(piece: Blob, again = true): Promise<string> {
   const form = new FormData();
-  form.set("audio", blob, "speech");
+  form.set("audio", piece, "speech");
   let response: Response;
   try {
     response = await paidFetch("stt", "/api/stt", { method: "POST", body: form });
@@ -31,8 +37,66 @@ async function sendAudio(blob: Blob): Promise<{ text: string }> {
     throw new Error("서버에 연결하지 못했습니다. 다시 눌러 같은 녹음으로 다시 시도할 수 있습니다.");
   }
   const body = await response.json().catch(() => null);
+  if (response.status === 429 && body?.code === "TOO_FAST" && again) {
+    await wait(MIN_INTERVAL_MS.stt + 500);
+    return sendPiece(piece, false);
+  }
   if (!response.ok || typeof body?.text !== "string") throw new Error(body?.error ?? "음성을 글로 바꾸지 못했습니다.");
-  return { text: body.text };
+  return body.text;
+}
+
+/** 4MB를 넘는 녹음은 60초씩 나눠 차례로 보내고, 받은 글을 이어 붙인다. 중간에 실패하면 거기까지의 글을 남긴다. */
+async function sendAudio(blob: Blob, onProgress: (done: number, total: number) => void): Promise<{ text: string; note?: string }> {
+  const pieces = await splitAudio(blob);
+  const texts: string[] = [];
+  try {
+    for (const [index, piece] of pieces.entries()) {
+      onProgress(index, pieces.length);
+      // 서버는 같은 이용권의 연속 요청 사이에 간격을 둔다.
+      if (index > 0) await wait(MIN_INTERVAL_MS.stt + 200);
+      texts.push(await sendPiece(piece));
+    }
+  } catch (error) {
+    if (texts.length === 0) throw error;
+    return {
+      text: texts.join(" "),
+      note: `앞부분 ${texts.length}분만 글로 바꿨습니다. ${(error as Error).message} 나머지는 아래에 직접 적어 주세요.`,
+    };
+  } finally {
+    onProgress(0, 0);
+  }
+  return { text: texts.join(" ") };
+}
+
+const noSubscribe = () => () => {};
+const inAppName = () => detectInApp(navigator.userAgent)?.name ?? null;
+const micMissing = () => !(window.isSecureContext && typeof navigator.mediaDevices?.getUserMedia === "function" && typeof window.MediaRecorder === "function");
+
+/** 카카오톡 등 인앱 브라우저에서 마이크를 쓸 수 없을 때: Safari·Chrome으로 다시 열게 안내한다. */
+function OpenOutside({ app }: { app: string }) {
+  const [copied, setCopied] = useState(false);
+  function open() {
+    const url = externalOpenUrl(navigator.userAgent, window.location.href);
+    if (url) {
+      window.location.href = url;
+      return;
+    }
+    // 바깥 브라우저로 여는 주소를 받지 않는 앱: 주소를 복사해 붙여 넣게 한다.
+    void navigator.clipboard
+      ?.writeText(window.location.href)
+      .then(() => setCopied(true))
+      .catch(() => setCopied(false));
+  }
+  return (
+    <div role="alert" className="flex w-full flex-col gap-3 rounded-xl bg-warn-soft p-4 text-warn-ink">
+      <p className="font-semibold">{app} 안의 브라우저에서는 마이크를 쓸 수 없어요. Safari나 Chrome으로 열어주세요.</p>
+      <button type="button" className={outlineButton} onClick={open}>
+        외부 브라우저로 열기
+      </button>
+      {copied && <p className="font-semibold">주소를 복사했습니다. Safari나 Chrome 주소창에 붙여 넣어 주세요.</p>}
+      <p className="text-sm">아이폰은 화면 아래의 ⋯ 또는 공유 단추에서 &ldquo;Safari로 열기&rdquo;를 눌러도 됩니다. 새 브라우저에는 여기에 적어 둔 내용이 옮겨지지 않습니다. 녹음 파일을 올리거나 아래에 직접 적어도 됩니다.</p>
+    </div>
+  );
 }
 
 export function AccidentStep() {
@@ -50,6 +114,10 @@ export function AccidentStep() {
   const [audio, setAudio] = useState<AudioState>({ phase: "idle", message: "", canRetry: false });
   const [pressed, setPressed] = useState(false);
   const [extract, setExtract] = useState<ExtractState>({ status: "idle" });
+  // 나눠 보내는 중이면 몇 번째 조각인지
+  const [progress, setProgress] = useState({ done: 0, total: 0 });
+  const app = useSyncExternalStore(noSubscribe, inAppName, () => null);
+  const noMic = useSyncExternalStore(noSubscribe, micMissing, () => false);
   const controller = useRef<AudioController | null>(null);
   // 녹음이 끝났을 때 최신 입력 초안에 글을 붙이기 위해 들고 있는다.
   const appendText = useRef<(text: string) => void>(() => {});
@@ -59,7 +127,7 @@ export function AccidentStep() {
       mediaDevices: navigator.mediaDevices,
       Recorder: window.MediaRecorder as unknown as RecorderClass | undefined,
       secure: window.isSecureContext,
-      send: sendAudio,
+      send: (blob) => sendAudio(blob, (done, total) => setProgress({ done, total })),
       onState: setAudio,
       onText: (text) => appendText.current(text),
     });
@@ -94,6 +162,8 @@ export function AccidentStep() {
 
         function mic() {
           setPressed(true);
+          // 인앱 브라우저에 녹음 기능이 없으면 이용권보다 바깥 브라우저 안내를 먼저 보인다.
+          if (app && noMic) return;
           if (!allowed) return;
           if (recording || (audio.phase === "error" && audio.canRetry)) void controller.current?.stop();
           else void controller.current?.start();
@@ -156,6 +226,7 @@ export function AccidentStep() {
               <p className="text-center text-xl font-bold">사고 내용 말로 설명하기</p>
               <p className="text-center text-muted">언제, 어디서, 어떻게 났는지와 누가 어디를 다쳤는지 말해 주세요. 5분까지 녹음됩니다.</p>
               <p className="text-center text-sm font-semibold text-navy">이름은 말하지 않아도 됩니다. &ldquo;나&rdquo;, &ldquo;아내&rdquo;, &ldquo;상대 운전자&rdquo;처럼 말해 주세요.</p>
+              {app && ((pressed && noMic) || (audio.phase === "error" && !!audio.blocked)) && <OpenOutside app={app} />}
               {pressed && guest && !needsConsent && (
                 <>
                   <TicketGate route="stt" what="음성을 글로 바꾸기" />
@@ -173,7 +244,31 @@ export function AccidentStep() {
               )}
               <p role="status" aria-live="polite" className={`text-center font-semibold ${audio.phase === "error" ? "rounded-xl bg-warn-soft px-4 py-3 text-warn-ink" : "text-navy"}`}>
                 {allowed ? audio.message : ""}
+                {allowed && audio.phase === "transcribing" && progress.total > 1 && ` (${progress.done + 1}/${progress.total})`}
               </p>
+              <label
+                className={`${outlineButton} cursor-pointer ${busy || recording ? "pointer-events-none opacity-40" : ""}`}
+                onClick={(e) => {
+                  // 이용권·동의가 없으면 파일을 고르기 전에 안내부터 보인다.
+                  if (!allowed) {
+                    e.preventDefault();
+                    setPressed(true);
+                  }
+                }}
+              >
+                녹음 파일 올리기 (음성메모 등)
+                <input
+                  type="file"
+                  accept="audio/*"
+                  className="sr-only"
+                  disabled={busy || recording}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    e.target.value = "";
+                    if (file) void controller.current?.transcribeFile(file);
+                  }}
+                />
+              </label>
             </div>
 
             <Card title="바뀐 글 확인·수정">

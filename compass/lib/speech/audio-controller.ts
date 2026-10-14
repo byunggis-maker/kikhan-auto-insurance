@@ -1,14 +1,18 @@
 // 브라우저 녹음 제어. 원본 앱(frontend/audio-controller.js)에서 잘 되던 코드를 옮기고 타입을 붙였다.
-// 달라진 점: 크기 한도를 4MB로 줄였고(서버가 한 번에 받는 크기), 음질을 낮춰 5분까지 담기게 했고, 5분이 되면 스스로 멈춘다.
+// 달라진 점: 음질을 낮춰 5분까지 담기게 했고, 5분이 되면 스스로 멈춘다.
+// 서버가 한 번에 받는 크기(4MB)를 넘는 녹음은 보내는 쪽(lib/speech/split.ts)이 60초씩 나눠 보낸다.
 
 export type AudioPhase = "idle" | "starting" | "recording" | "stopping" | "transcribing" | "error";
-export type AudioState = { phase: AudioPhase; message: string; canRetry: boolean };
+/** 마이크를 쓸 수 없는 이유. denied: 권한 거부, unsupported: 이 브라우저에 녹음 기능이 없음(카카오톡 등 인앱 브라우저) */
+export type MicBlocked = "denied" | "unsupported";
+export type AudioState = { phase: AudioPhase; message: string; canRetry: boolean; blocked?: MicBlocked };
 
-export const MAX_RECORDING_BYTES = 4 * 1024 * 1024;
+/** 녹음·올린 파일을 받는 최대 크기. 이 기기에서 풀어 나눌 수 있는 정도로 둔다. */
+export const MAX_RECORDING_BYTES = 25 * 1024 * 1024;
 export const MAX_RECORDING_MS = 5 * 60 * 1000;
 const MIN_RECORDING_MS = 2000;
-// 사파리는 mp4만, 크롬·안드로이드는 webm을 녹음한다.
-const TYPES = ["audio/webm;codecs=opus", "audio/mp4", "audio/ogg;codecs=opus", "audio/webm", "audio/ogg"];
+// 형식을 고정하지 않고 브라우저가 되는 것을 webm → mp4 순으로 고른다(크롬·안드로이드는 webm, 아이폰 Safari는 mp4).
+const TYPES = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus", "audio/ogg"];
 
 const START_ERRORS: Record<string, string> = {
   NotAllowedError: "마이크 사용이 허용되지 않았습니다. 주소창의 마이크 권한을 허용한 뒤 다시 눌러 주세요.",
@@ -34,7 +38,7 @@ export type AudioControllerOptions = {
   mediaDevices: Pick<MediaDevices, "getUserMedia"> | undefined;
   Recorder: RecorderClass | undefined;
   /** 녹음을 서버로 보내 글을 받아 온다. 실패하면 사용자에게 보여 줄 문구로 Error를 던진다. */
-  send: (blob: Blob) => Promise<{ text: string }>;
+  send: (blob: Blob) => Promise<{ text: string; note?: string }>;
   onState: (state: AudioState) => void;
   onText: (text: string) => void;
   now?: () => number;
@@ -54,9 +58,9 @@ export class AudioController {
     this.now = options.now ?? (() => performance.now());
   }
 
-  private update(phase: AudioPhase, message = "") {
+  private update(phase: AudioPhase, message = "", blocked?: MicBlocked) {
     this.phase = phase;
-    this.options.onState({ phase, message, canRetry: phase === "error" && Boolean(this.blob) });
+    this.options.onState({ phase, message, canRetry: phase === "error" && Boolean(this.blob), ...(blocked ? { blocked } : {}) });
   }
 
   private clean() {
@@ -65,9 +69,9 @@ export class AudioController {
     this.recorder = null;
   }
 
-  private fail(message: string) {
+  private fail(message: string, blocked?: MicBlocked) {
     this.clean();
-    this.update("error", message);
+    this.update("error", message, blocked);
   }
 
   async start() {
@@ -76,7 +80,7 @@ export class AudioController {
     this.update("starting", "마이크를 준비하고 있습니다");
     const { mediaDevices, Recorder } = this.options;
     if (this.options.secure === false || !mediaDevices?.getUserMedia || !Recorder) {
-      return this.fail("이 브라우저에서는 녹음을 쓸 수 없습니다. 아래에 직접 적어 주세요.");
+      return this.fail("이 브라우저에서는 녹음을 쓸 수 없습니다. 녹음 파일을 올리거나 아래에 직접 적어 주세요.", "unsupported");
     }
     try {
       this.stream = await mediaDevices.getUserMedia({ audio: true });
@@ -121,7 +125,9 @@ export class AudioController {
       this.started = this.now();
       this.update("recording", "듣고 있습니다. 다 말했으면 다시 눌러 주세요");
     } catch (error) {
-      this.fail(START_ERRORS[(error as { name?: string })?.name ?? ""] ?? "녹음을 시작하지 못했습니다. 아래에 직접 적어 주세요.");
+      const name = (error as { name?: string })?.name ?? "";
+      const blocked: MicBlocked | undefined = name === "NotAllowedError" || name === "SecurityError" ? "denied" : name === "TypeError" ? "unsupported" : undefined;
+      this.fail(START_ERRORS[name] ?? "녹음을 시작하지 못했습니다. 아래에 직접 적어 주세요.", blocked);
     }
   }
 
@@ -138,6 +144,15 @@ export class AudioController {
     }
   }
 
+  /** 휴대폰 음성메모처럼 이미 있는 녹음 파일을 글로 바꾼다. 실패하면 마이크 단추로 같은 파일을 다시 시도할 수 있다. */
+  async transcribeFile(file: Blob) {
+    if (this.disposed || !["idle", "error"].includes(this.phase)) return;
+    if (!file.size) return this.update("error", "빈 파일입니다. 다른 녹음 파일을 골라 주세요.");
+    if (file.size > MAX_RECORDING_BYTES) return this.update("error", "녹음 파일이 너무 큽니다(25MB까지). 짧게 나눈 파일을 올려 주세요.");
+    this.blob = file;
+    await this.convert();
+  }
+
   private async convert() {
     if (this.disposed || this.phase === "transcribing") return;
     if (!this.blob?.size || this.blob.size > MAX_RECORDING_BYTES) return this.fail("녹음이 비어 있거나 너무 깁니다. 다시 녹음해 주세요.");
@@ -148,7 +163,7 @@ export class AudioController {
       if (typeof result.text !== "string" || !result.text.trim()) throw new Error("말소리를 알아듣지 못했습니다.");
       this.options.onText(result.text.trim());
       this.blob = null;
-      this.update("idle", "글로 바꿨습니다. 아래 글을 확인하고 틀린 곳을 고쳐 주세요.");
+      this.update("idle", result.note ?? "글로 바꿨습니다. 아래 글을 확인하고 틀린 곳을 고쳐 주세요.");
     } catch (error) {
       if (!this.disposed) this.update("error", `${(error as Error).message || "음성을 글로 바꾸지 못했습니다."} 적어 둔 사고 내용은 그대로 있습니다.`);
     }

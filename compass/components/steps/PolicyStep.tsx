@@ -150,6 +150,13 @@ export function PolicyStep() {
           }
         }
 
+        // 읽지 못했을 때 아래 "기본 정보" 표의 첫 칸으로 옮겨 바로 적게 한다.
+        function startManual() {
+          const first = document.querySelector<HTMLInputElement>('#f-policy-productLine input[aria-label="보험회사"]');
+          first?.scrollIntoView({ behavior: "smooth", block: "center" });
+          first?.focus({ preventScroll: true });
+        }
+
         function choose(file: File | undefined) {
           if (!file) return;
           if (hasInput(policy) && !window.confirm("읽어온 값으로 아래 내용을 바꿉니다. 직접 입력한 내용은 지워집니다. 계속할까요?")) return;
@@ -207,6 +214,11 @@ export function PolicyStep() {
                       </p>
                     )}
                     {read.status === "error" && <p className="rounded-xl bg-warn-soft px-4 py-3 font-semibold text-warn-ink">{read.message}</p>}
+                    {read.status === "error" && !read.needPassword && (
+                      <button type="button" className={outlineButton} onClick={startManual}>
+                        직접 입력하기
+                      </button>
+                    )}
                     {read.status === "error" && read.needPassword && (
                       <form
                         className="flex flex-col gap-2"
