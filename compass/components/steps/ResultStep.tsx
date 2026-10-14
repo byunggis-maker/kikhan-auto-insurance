@@ -25,14 +25,21 @@ import { fieldHref } from "@/lib/result/field-link";
 const TTS_CHUNK = 1200;
 
 function Amounts({ amount }: { amount: Range }) {
+  // 예상값을 크게 한 줄로, 최소·최대는 그 아래 두 칸에. 좁은 화면에서도 금액이 중간에 끊기지 않는다.
   return (
-    <dl className="grid grid-cols-3 gap-2 text-center">
-      {(["min", "expected", "max"] as const).map((key) => (
-        <div key={key} className={`rounded-[14px] px-1 py-3 ${key === "expected" ? "bg-navy-soft" : "bg-surface"}`}>
-          <dt className="text-sm text-muted">{key === "min" ? "최소" : key === "expected" ? "예상" : "최대"}</dt>
-          <dd className={`num break-all font-bold ${key === "expected" ? "text-lg text-navy" : "text-base"}`}>{won(amount[key])}</dd>
-        </div>
-      ))}
+    <dl className="flex flex-col gap-2">
+      <div className="rounded-[14px] bg-navy-soft px-4 py-3">
+        <dt className="text-sm text-muted">예상</dt>
+        <dd className="num text-2xl font-bold text-navy">{won(amount.expected)}</dd>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        {(["min", "max"] as const).map((key) => (
+          <div key={key} className="rounded-[14px] bg-surface px-3 py-2.5">
+            <dt className="text-sm text-muted">{key === "min" ? "최소" : "최대"}</dt>
+            <dd className="num whitespace-nowrap text-base font-bold">{won(amount[key])}</dd>
+          </div>
+        ))}
+      </div>
     </dl>
   );
 }

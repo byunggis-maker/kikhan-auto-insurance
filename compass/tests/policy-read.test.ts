@@ -142,7 +142,8 @@ describe("가짜 증권 샘플 읽기", () => {
       expect(reading).toMatchObject({ productLine: "personal" });
       // 금액은 숫자로 바꾸지 않고 적힌 그대로 둔다.
       expect(reading.coverages[1]).toEqual({ name: "자동차상해", limit: "사망·후유장애 2억원, 부상 3천만원", deductible: "" });
-      expect(reading.coverages[3]).toEqual({ name: "대물배상 (피보험자 ******)", limit: null, deductible: null });
+      expect(reading.coverages[3]).toEqual({ name: "대물배상", limit: null, deductible: null });
+      expect(reading.riders).toEqual(["긴급출동서비스 특약", "주민번호 ******", "블랙박스 장착 할인 특약"]);
     }
   });
 });

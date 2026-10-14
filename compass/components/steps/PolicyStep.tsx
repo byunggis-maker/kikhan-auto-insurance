@@ -45,7 +45,7 @@ function Row({ label, flag, children }: { label: string; flag?: boolean; childre
 
 function Pick<T extends string>(props: { label: string; value: T | ""; options: { value: T; label: string }[]; onChange: (value: T) => void }) {
   return (
-    <div role="group" aria-label={props.label} className="flex flex-wrap gap-1.5">
+    <div role="group" aria-label={props.label} className="grid grid-cols-2 gap-1.5">
       {props.options.map((option) => {
         const on = props.value === option.value;
         return (
@@ -54,7 +54,7 @@ function Pick<T extends string>(props: { label: string; value: T | ""; options: 
             type="button"
             aria-pressed={on}
             onClick={() => props.onChange(option.value)}
-            className={`min-h-11 flex-1 rounded-lg border px-2 text-base font-semibold ${on ? "border-navy bg-navy text-white" : "border-line bg-white text-ink"}`}
+            className={`min-h-12 whitespace-nowrap rounded-[10px] border px-1 text-base font-semibold ${on ? "border-navy bg-navy text-white" : "border-line bg-white text-ink"}`}
           >
             {option.label}
           </button>

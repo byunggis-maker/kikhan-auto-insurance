@@ -44,5 +44,12 @@ export function toReading(raw: RawReading): { reading: PolicyReading; redacted: 
       .slice(0, 80),
   };
   const { value, count } = redactDeep(reading);
-  return { reading: policyReadingSchema.parse(value), redacted: count };
+  // 가린 값만 남은 괄호("(피보험자 ******)")는 지운다. 담보 이름이 기본 담보와 맞춰지고 화면이 깔끔해진다.
+  const tidy = (text: string | null) => (text === null ? null : text.replace(/\s*[(（][^()（）]*\*{6}[^()（）]*[)）]/g, "").trim() || null);
+  const tidied = {
+    ...value,
+    coverages: value.coverages.map((coverage) => ({ ...coverage, name: tidy(coverage.name) })),
+    riders: value.riders.map((rider) => tidy(rider)).filter((rider): rider is string => !!rider),
+  };
+  return { reading: policyReadingSchema.parse(tidied), redacted: count };
 }

@@ -12,7 +12,7 @@ import { verifyTurnstile } from "./turnstile";
 export const TICKET_HEADER = "x-kc2-ticket";
 export const CONSENT_HEADER = "x-kc2-consent";
 
-export const PAID_UNAVAILABLE_MESSAGE = "지금은 자동 기능을 쓸 수 없습니다. 직접 입력해 계산할 수 있어요.";
+export const PAID_UNAVAILABLE_MESSAGE = "자동 기능은 준비 중입니다. 직접 입력해 계산할 수 있어요.";
 
 export type GuardDeps = { config: GuardConfig; store: QuotaStore; clock: Clock; fetcher?: typeof fetch };
 

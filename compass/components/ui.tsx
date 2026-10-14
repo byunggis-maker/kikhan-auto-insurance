@@ -147,7 +147,7 @@ export function Choice<T extends string>(props: {
           <GuessBadge onConfirm={props.onConfirmGuess} />
         </span>
       )}
-      <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-2 gap-2">
         {props.options.map((option) => {
           const on = props.value === option.value;
           return (
@@ -156,7 +156,7 @@ export function Choice<T extends string>(props: {
               type="button"
               aria-pressed={on}
               onClick={() => props.onChange(option.value)}
-              className={`min-h-12 flex-1 rounded-xl border px-4 font-semibold ${
+              className={`min-h-12 rounded-[14px] border px-3 font-semibold leading-snug ${
                 on ? (props.onConfirmGuess ? "border-muted bg-muted text-white" : "border-navy bg-navy text-white") : "border-line bg-white text-ink"
               }`}
             >
@@ -179,7 +179,7 @@ export const outlineButton =
   "flex min-h-13 w-full items-center justify-center rounded-2xl border border-navy/30 bg-white px-5 text-lg font-bold text-navy hover:border-navy hover:bg-navy-soft disabled:opacity-40";
 
 // lib/guard/paid.ts의 PAID_UNAVAILABLE_MESSAGE와 같은 문구다.
-export const PAID_UNAVAILABLE_MESSAGE = "지금은 자동 기능을 쓸 수 없습니다. 직접 입력해 계산할 수 있어요.";
+export const PAID_UNAVAILABLE_MESSAGE = "준비 중입니다. 직접 입력해 계산할 수 있어요.";
 
 /** 유료 기능(음성 변환, 증권 읽기, 쉬운 말 설명, 읽어주기)을 쓸 수 없을 때(설정 없음, 서버 장애) 그 자리에 보여 주는 안내. */
 export function PaidNotice({ what }: { what: string }) {
