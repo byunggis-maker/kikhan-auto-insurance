@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // 글자 인식 파일 복사본(scripts/copy-ocr-assets.mjs)
+    "public/ocr/**",
   ]),
 ]);
 

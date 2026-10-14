@@ -20,7 +20,8 @@ const ACCOUNT_LABELS = "계좌번호|계좌|입금계좌";
 // 이름 칸 뒤에 와도 사람 이름이 아닌 말(담보 이름, 운전자 범위 등)
 const NOT_A_NAME = /(사고|상해|배상|담보|보험|특약|한정|가족|부부|본인|누구|동일|기준|범위|이상|이하|연령|운전|해당|없음|미가입|가입|정보|확인|자동차|차량|소유|명의)/;
 
-type Rule = { kind: RedactKind; pattern: RegExp; replace: (match: string, ...groups: string[]) => string | null };
+// valueGroup: 항목 이름이 붙은 규칙에서 가릴 값이 든 묶음 번호(항목 이름은 남긴다). 없으면 찾은 글 전체를 가린다.
+type Rule = { kind: RedactKind; pattern: RegExp; replace: (match: string, ...groups: string[]) => string | null; valueGroup?: number };
 
 const keepLabel = (label: string, separator: string) => `${label}${separator}${MASK}`;
 
@@ -46,10 +47,11 @@ const RULES: Rule[] = [
     kind: "name",
     pattern: new RegExp(`(${NAME_LABELS})(\\s*(?:명|성명)?\\s*[:：]?\\s*)([가-힣]{2,5})(?![가-힣])`, "g"),
     replace: (match, label, separator, value) => (NOT_A_NAME.test(value) ? null : keepLabel(label, separator)),
+    valueGroup: 3,
   },
-  { kind: "address", pattern: new RegExp(`(${ADDRESS_LABELS})(\\s*[:：]?\\s*)([^\\n]{4,80})`, "g"), replace: (match, label, separator) => keepLabel(label, separator) },
-  { kind: "policy", pattern: new RegExp(`(${POLICY_LABELS})(\\s*[:：]?\\s*)([^\\s,]{4,40})`, "gi"), replace: (match, label, separator) => keepLabel(label, separator) },
-  { kind: "account", pattern: new RegExp(`(${ACCOUNT_LABELS})(\\s*[:：]?\\s*)([0-9][0-9 -]{6,24}[0-9])`, "g"), replace: (match, label, separator) => keepLabel(label, separator) },
+  { kind: "address", pattern: new RegExp(`(${ADDRESS_LABELS})(\\s*[:：]?\\s*)([^\\n]{4,80})`, "g"), replace: (match, label, separator) => keepLabel(label, separator), valueGroup: 3 },
+  { kind: "policy", pattern: new RegExp(`(${POLICY_LABELS})(\\s*[:：]?\\s*)([^\\s,]{4,40})`, "gi"), replace: (match, label, separator) => keepLabel(label, separator), valueGroup: 3 },
+  { kind: "account", pattern: new RegExp(`(${ACCOUNT_LABELS})(\\s*[:：]?\\s*)([0-9][0-9 -]{6,24}[0-9])`, "g"), replace: (match, label, separator) => keepLabel(label, separator), valueGroup: 3 },
   // 꼴로 잡는 것
   { kind: "email", pattern: /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, replace: () => MASK },
   // 주민등록번호·외국인등록번호: 앞 6자리 + 뒷자리(일부를 * 등으로 가린 꼴 포함). 앞자리도 생년월일이므로 함께 가린다.
@@ -91,6 +93,28 @@ export function redact(text: string): Redacted {
     });
   }
   return { text: out, count };
+}
+
+export type SensitiveSpan = { kind: RedactKind; start: number; end: number };
+
+/**
+ * 가릴 자리를 글자 위치로 돌려준다(글은 바꾸지 않는다). 사진의 글자 인식 결과에서 칠할 곳을 정할 때 쓴다(lib/privacy/image-mask.ts).
+ * redact와 같은 규칙을 같은 순서로 쓰고, 앞 규칙이 잡은 자리와 겹치는 것은 건너뛴다.
+ */
+export function findSensitive(text: string): SensitiveSpan[] {
+  const spans: SensitiveSpan[] = [];
+  const overlaps = (start: number, end: number) => spans.some((span) => start < span.end && span.start < end);
+  for (const rule of RULES) {
+    const pattern = new RegExp(rule.pattern.source, `${rule.pattern.flags}d`);
+    for (const match of text.matchAll(pattern)) {
+      const groups = match.slice(1).filter((item): item is string => typeof item === "string");
+      if (rule.replace(match[0], ...groups) === null) continue;
+      const [start, end] = rule.valueGroup ? match.indices![rule.valueGroup]! : match.indices![0]!;
+      if (start === end || overlaps(start, end)) continue;
+      spans.push({ kind: rule.kind, start, end });
+    }
+  }
+  return spans.sort((a, b) => a.start - b.start);
 }
 
 /** 객체·배열 안의 모든 문자열을 가린다. 칸 이름(키)은 바꾸지 않는다. */

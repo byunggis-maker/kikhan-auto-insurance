@@ -743,3 +743,4 @@ data/rules/
 - [11단계] 배포 프로젝트 이름은 지시의 `kikhan-auto-compass`가 아니라 `kikhan-auto-compass-v2`로 했다. 이유: `kikhan-auto-compass`는 이미 있는 v1 운영 프로젝트(이 문서와 CLAUDE.md에서 건드리지 않기로 한 것)라 그 이름으로 배포하면 v1을 덮어쓴다. 1단계에서 정한 이름이 `-v2`다.
 - [11단계] 첫 배포가 "public 폴더 없음"으로 실패했다(CLI로 만든 프로젝트에 프레임워크가 지정되지 않음). `vercel.json`에 `"framework": "nextjs"`를 넣고 다시 배포했다.
 - [11단계] 환경변수는 `GUARD_SECRET`(새로 만든 임의값)만 등록했다. Turnstile·Upstash·API 키가 없어 유료 기능은 "준비 중"이고, 직접 입력·계산·엑셀·PDF는 동작한다.
+- [추가] 사진 속 개인정보 자동 가림: 사진을 고르면 브라우저 안에서 tesseract.js(한국어, 무료·오픈소스)로 글자를 읽고, `redact.ts`와 같은 규칙과 줄 첫머리 항목 이름으로 칠할 자리를 찾아 미리 검게 칠한다(`lib/privacy/image-mask.ts`, `components/ocr.ts`). 사용자는 확인·추가·되돌리기 뒤 올린다. 이유: 신뢰·개인정보 보호(그림 속 신원정보가 판독 서비스에 가지 않게), 비용 0원. 인식 파일은 외부 CDN이 아니라 이 앱의 `/ocr/`에서 내려준다. `redact.ts`는 동작을 바꾸지 않고 자리 찾기(`findSensitive`)만 더했다.

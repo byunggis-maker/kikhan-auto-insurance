@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/copy-ocr-assets.mjs",
     "dev": "next dev",
+    "prebuild": "node scripts/copy-ocr-assets.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -12,6 +14,7 @@
   },
   "dependencies": {
     "@napi-rs/canvas": "^1.0.11",
+    "@tesseract.js-data/kor": "^1.0.0",
     "decimal.js": "^10.6.0",
     "exceljs": "^4.4.0",
     "heic-convert": "^2.1.0",
@@ -21,6 +24,7 @@
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "sharp": "^0.35.5",
+    "tesseract.js": "^7.0.0",
     "unpdf": "^1.8.1",
     "zod": "^4.6.7"
   },

@@ -10,6 +10,10 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/api/policies/read": ["./node_modules/pdfjs-dist/cmaps/**", "./node_modules/pdfjs-dist/standard_fonts/**"],
   },
+  // 사진 속 개인정보 찾기에 쓰는 글자 인식 파일(scripts/copy-ocr-assets.mjs). 크므로 브라우저가 일주일 보관한다.
+  async headers() {
+    return [{ source: "/ocr/:file*", headers: [{ key: "Cache-Control", value: "public, max-age=604800" }] }];
+  },
   turbopack: {
     rules: {
       "*.css": {

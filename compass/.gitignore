@@ -45,3 +45,6 @@ next-env.d.ts
 
 # 브라우저 확인 도구의 기록
 .playwright-mcp/
+
+# 글자 인식 파일 복사본(scripts/copy-ocr-assets.mjs가 만든다)
+/public/ocr

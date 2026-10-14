@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { detectSensitiveBoxes } from "@/components/ocr";
 import { outlineButton, primaryButton } from "@/components/ui";
 
 // 증권 사진을 올리기 전에 이름·주민번호·증권번호·차량번호를 손가락으로 칠해 가리는 화면(docs/PLAN.md 5절 "증권 읽기의 처리 순서" 2).
+// 사진을 열면 먼저 이 기기 안에서 글자를 읽어 개인정보로 보이는 자리를 미리 칠해 둔다(components/ocr.ts). 사용자는 확인하고 더 칠하거나 되돌린다.
 // 칠한 부분은 그림 자체에서 검게 바뀐 뒤에 올라간다. 원본 사진은 이 화면의 메모리에만 있고 어디에도 저장하지 않는다.
 
 const MAX_EDGE = 2000;
@@ -16,12 +18,16 @@ type Props = {
   onCancel: () => void;
 };
 
-type Phase = "loading" | "ready" | "confirm-empty" | "unpaintable" | "saving";
+type Phase = "loading" | "scanning" | "ready" | "confirm-empty" | "unpaintable" | "saving";
+/** 자동 찾기 결과: 미리 칠한 곳 수, 또는 찾지 못함 */
+type Auto = { found: number } | "failed" | "skipped" | null;
 
 export function MaskEditor({ file, onDone, onCancel }: Props) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const [phase, setPhase] = useState<Phase>("loading");
   const [painted, setPainted] = useState(false);
+  const [auto, setAuto] = useState<Auto>(null);
+  const scan = useRef<AbortController | null>(null);
   const history = useRef<ImageData[]>([]);
   const original = useRef<ImageData | null>(null);
   const drawing = useRef<{ x: number; y: number } | null>(null);
@@ -40,14 +46,33 @@ export function MaskEditor({ file, onDone, onCancel }: Props) {
         context.drawImage(bitmap, 0, 0, element.width, element.height);
         bitmap.close();
         original.current = context.getImageData(0, 0, element.width, element.height);
-        setPhase("ready");
       } catch {
         // HEIC처럼 이 브라우저가 그리지 못하는 사진
         if (!cancelled) setPhase("unpaintable");
+        return;
       }
+      setPhase("scanning");
+      const controller = new AbortController();
+      scan.current = controller;
+      try {
+        const boxes = await detectSensitiveBoxes(canvas.current!, controller.signal);
+        if (cancelled || controller.signal.aborted) return;
+        if (boxes.length > 0) {
+          const ctx = canvas.current!.getContext("2d")!;
+          history.current = [ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height)];
+          ctx.fillStyle = "#000";
+          for (const box of boxes) ctx.fillRect(box.x0, box.y0, box.x1 - box.x0, box.y1 - box.y0);
+          setPainted(true);
+        }
+        setAuto({ found: boxes.length });
+      } catch {
+        if (!cancelled && !controller.signal.aborted) setAuto("failed");
+      }
+      if (!cancelled) setPhase((current) => (current === "scanning" ? "ready" : current));
     })();
     return () => {
       cancelled = true;
+      scan.current?.abort();
     };
   }, [file]);
 
@@ -91,6 +116,12 @@ export function MaskEditor({ file, onDone, onCancel }: Props) {
     drawing.current = null;
   };
 
+  function skipScan() {
+    scan.current?.abort();
+    setAuto("skipped");
+    setPhase("ready");
+  }
+
   function undo() {
     const ctx = context();
     const last = history.current.pop();
@@ -123,6 +154,25 @@ export function MaskEditor({ file, onDone, onCancel }: Props) {
     <div className="flex flex-col gap-3" role="group" aria-label="개인정보 칠해 가리기">
       <p className="rounded-2xl bg-navy px-4 py-3 text-lg font-bold leading-snug text-white">이름·주민번호·증권번호·차량번호를 손가락으로 칠해 주세요</p>
       <p className="text-sm text-muted">칠한 곳은 검게 바뀐 그림으로만 올라갑니다. 보험회사·담보·금액은 가리지 마세요.</p>
+      <div role="status" aria-live="polite">
+        {phase === "scanning" && (
+          <div className="flex flex-col gap-2 rounded-xl bg-navy-soft p-4">
+            <p className="font-semibold text-navy">개인정보 자리를 찾는 중… 사진은 이 기기 밖으로 나가지 않습니다.</p>
+            <button type="button" className={`${outlineButton} text-base`} onClick={skipScan}>
+              건너뛰고 직접 칠하기
+            </button>
+          </div>
+        )}
+        {phase !== "scanning" && auto !== null && auto !== "skipped" && (
+          <p className={`rounded-xl p-4 font-semibold ${auto !== "failed" && auto.found > 0 ? "bg-navy-soft text-navy" : "bg-warn-soft text-warn-ink"}`}>
+            {auto === "failed"
+              ? "자동으로 찾지 못했습니다. 직접 칠해 주세요."
+              : auto.found > 0
+                ? `개인정보로 보이는 ${auto.found}곳을 미리 가렸습니다. 빠진 곳이 있으면 더 칠하고, 잘못 가렸으면 "한 번 되돌리기"를 누르세요.`
+                : "자동으로 찾은 곳이 없습니다. 보이는 개인정보가 있으면 직접 칠해 주세요."}
+          </p>
+        )}
+      </div>
 
       {phase === "unpaintable" ? (
         <div className="flex flex-col gap-3 rounded-xl bg-warn-soft p-4 text-warn-ink">
