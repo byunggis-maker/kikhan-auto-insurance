@@ -132,17 +132,19 @@ function devClock(env: Env): Clock {
 let memory: { store: MemoryStore; clock: Clock } | undefined;
 
 /**
- * 쓸 저장소와 시계. 배포(Vercel)에서 Upstash 설정이 없으면 null이고, 그러면 유료 기능은 막힌다.
+ * 쓸 저장소와 시계. Upstash 설정이 없으면 이 프로세스의 메모리 카운터를 쓴다.
+ * fallback: 배포(Vercel)에서 Upstash 없이 메모리로 도는 간이 모드. 서버 인스턴스마다 따로 세고 인스턴스가 바뀌면
+ * 처음부터 세므로 막는 힘이 약하다(lib/guard/paid.ts가 IP당 하루 호출 수로 막는다). Upstash를 넣으면 원래대로 돌아간다.
+ * 로컬 개발은 한 프로세스라 메모리 카운터로도 원래와 같이 동작한다(fallback: false).
  * Vercel 마켓플레이스로 붙이면 KV_REST_API_URL·KV_REST_API_TOKEN이 생기고, Upstash에서 직접 만들면 UPSTASH_REDIS_REST_* 이름이다.
  */
-export function openStore(env: Env = process.env): { store: QuotaStore; clock: Clock } | null {
+export function openStore(env: Env = process.env): { store: QuotaStore; clock: Clock; fallback: boolean } {
   const url = env.UPSTASH_REDIS_REST_URL || env.KV_REST_API_URL;
   const token = env.UPSTASH_REDIS_REST_TOKEN || env.KV_REST_API_TOKEN;
-  if (url && token) return { store: new UpstashStore(url, token), clock: Date.now };
-  if (env.VERCEL) return null;
+  if (url && token) return { store: new UpstashStore(url, token), clock: Date.now, fallback: false };
   if (!memory) {
     const clock = devClock(env);
     memory = { store: new MemoryStore(clock), clock };
   }
-  return memory;
+  return { ...memory, fallback: !!env.VERCEL };
 }

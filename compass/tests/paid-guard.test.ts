@@ -294,3 +294,43 @@ describe("Upstash 저장소", () => {
     await expect(status.exists("k")).rejects.toBeInstanceOf(StoreError);
   });
 });
+
+describe("간이 모드(Turnstile·Upstash 없음)", () => {
+  const LITE = { GUARD_SECRET: SECRET };
+
+  it("Turnstile 키가 없으면 봇 확인 없이 이용권을 주고, 키를 넣으면 다시 확인한다", async () => {
+    const lite = setup();
+    lite.deps.config = readGuardConfig(LITE)!;
+    expect(lite.deps.config.turnstile).toBeNull();
+    expect(await guardStatus(ticketRequest(), lite.deps)).toMatchObject({ enabled: true, siteKey: null });
+    await expect(issueTicket(ticketRequest(), "", lite.deps)).resolves.toMatchObject({ remaining: 2 });
+    expect(lite.turnstile).not.toHaveBeenCalled();
+    // 키가 있으면 빈 토큰으로는 받지 못한다.
+    const full = setup({ turnstile: "rejected" });
+    await expect(issueTicket(ticketRequest(), "", full.deps)).rejects.toMatchObject({ code: "TURNSTILE_FAILED" });
+  });
+
+  it("배포에서 Upstash가 없으면 메모리로 돌며, IP당 하루 30회까지만 통과한다", async () => {
+    const lite = setup();
+    const deps: GuardDeps = { ...lite.deps, config: { ...readGuardConfig(LITE)!, calls: { "policy-read": 100, stt: 100, extract: 100, explain: 100, tts: 100 } }, fallback: true };
+    const { ticket } = await issueTicket(ticketRequest(), "", deps);
+    for (let i = 0; i < 30; i++) {
+      lite.advance(5000);
+      await checkPaid(paidRequest(ticket), "stt", ["service", "health"], deps);
+    }
+    lite.advance(5000);
+    await expect(checkPaid(paidRequest(ticket), "stt", ["service", "health"], deps)).rejects.toMatchObject({ status: 429, code: "DAILY_LIMIT" });
+    // 다음 날(한국 시각 자정 뒤)에는 다시 쓴다.
+    lite.advance(24 * 60 * 60 * 1000);
+    const next = await issueTicket(ticketRequest(), "", deps);
+    await expect(checkPaid(paidRequest(next.ticket), "stt", ["service", "health"], deps)).resolves.toBeTruthy();
+  });
+
+  it("간이 모드에서는 다른 인스턴스가 발급한 이용권도 서명·만료가 맞으면 받는다", async () => {
+    const lite = setup();
+    const now = Math.floor(START / 1000);
+    const elsewhere = signTicket({ jti: "issued-on-another-instance", iat: now, exp: now + 600, plan: "free" }, SECRET);
+    await expect(checkPaid(paidRequest(elsewhere), "stt", ["service", "health"], { ...lite.deps, fallback: true })).resolves.toBeTruthy();
+    await expect(checkPaid(paidRequest(elsewhere), "stt", ["service", "health"], lite.deps)).rejects.toMatchObject({ code: "TICKET_INVALID" });
+  });
+});

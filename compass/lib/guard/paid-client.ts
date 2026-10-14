@@ -101,7 +101,10 @@ export const paidServerSnapshot = () => SERVER_VIEW;
 /** 이용권이 있고, 아직 시간이 남았고, 이 경로의 횟수를 다 쓰지 않았는지 */
 export function canUse(current: PaidView, route: PaidRoute, now = Date.now()) {
   const { status, ticket } = current;
-  return !!status?.enabled && !!ticket && Date.parse(ticket.expiresAt) > now && !ticket.usedUp.includes(route);
+  if (!status?.enabled) return false;
+  if (ticket && Date.parse(ticket.expiresAt) > now) return !ticket.usedUp.includes(route);
+  // 봇 확인(Turnstile)이 없는 간이 모드: 이용권이 없어도 쓸 수 있게 보이고, paidFetch가 보낼 때 이용권을 받는다.
+  return !status.siteKey && status.remaining > 0;
 }
 
 /** 지금 이 브라우저에 저장된 동의를 서버에 알리는 머리글 값 */
@@ -144,7 +147,16 @@ const TICKET_GONE = new Set(["TICKET_REQUIRED", "TICKET_INVALID", "TICKET_EXPIRE
  */
 export async function paidFetch(route: PaidRoute, url: string, init: RequestInit = {}): Promise<Response> {
   const headers = new Headers(init.headers);
-  const held = view.ticket ?? readHeld();
+  let held = view.ticket && Date.parse(view.ticket.expiresAt) > Date.now() ? view.ticket : readHeld();
+  // 간이 모드(봇 확인 없음)면 이용권을 화면에서 따로 받지 않고 여기서 받는다.
+  if (!held && view.status?.enabled && !view.status.siteKey) {
+    try {
+      await requestTicket("");
+    } catch (error) {
+      return Response.json({ error: (error as Error).message, code: "TICKET_REQUIRED" }, { status: 401 });
+    }
+    held = view.ticket;
+  }
   if (held) headers.set(TICKET_HEADER, held.token);
   headers.set(CONSENT_HEADER, consentHeader());
   const response = await fetch(url, { ...init, headers });

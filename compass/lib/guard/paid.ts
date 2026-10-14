@@ -1,5 +1,5 @@
 import { CONSENT_VERSIONS, type ConsentKind } from "@/lib/privacy/consent-versions";
-import { FREE_REPEATS_PER_FILE, MIN_INTERVAL_MS, isTurnstileTestSecret, PAID_ROUTES, PAID_ROUTE_IDS, TICKET_TRIES_PER_HOUR, readGuardConfig, type GuardConfig, type PaidRoute } from "./config";
+import { FALLBACK_DAILY_CALLS, FREE_REPEATS_PER_FILE, MIN_INTERVAL_MS, isTurnstileTestSecret, PAID_ROUTES, PAID_ROUTE_IDS, TICKET_TRIES_PER_HOUR, readGuardConfig, type GuardConfig, type PaidRoute } from "./config";
 import { ApiError } from "./http";
 import { StoreError, openStore, type Clock, type QuotaStore } from "./store";
 import { digestKey, ipKey, newTicketId, signTicket, verifyTicket, type TicketClaims } from "./token";
@@ -14,14 +14,14 @@ export const CONSENT_HEADER = "x-kc2-consent";
 
 export const PAID_UNAVAILABLE_MESSAGE = "자동 기능은 준비 중입니다. 직접 입력해 계산할 수 있어요.";
 
-export type GuardDeps = { config: GuardConfig; store: QuotaStore; clock: Clock; fetcher?: typeof fetch };
+/** fallback: 배포에서 Upstash 없이 메모리 카운터로 도는 간이 모드(lib/guard/store.ts의 openStore) */
+export type GuardDeps = { config: GuardConfig; store: QuotaStore; clock: Clock; fetcher?: typeof fetch; fallback?: boolean };
 
-/** 환경변수로 정한 설정과 저장소. 하나라도 없으면 null(유료 기능 막힘). */
+/** 환경변수로 정한 설정과 저장소. GUARD_SECRET이 없거나 하루 이용권이 0이면 null(유료 기능 막힘). */
 export function guardDeps(env: Record<string, string | undefined> = process.env): GuardDeps | null {
   const config = readGuardConfig(env);
   if (!config || config.dailyTickets === 0) return null;
-  const opened = openStore(env);
-  return opened ? { config, ...opened } : null;
+  return { config, ...openStore(env) };
 }
 
 const unavailable = () => new ApiError(503, "PAID_UNAVAILABLE", PAID_UNAVAILABLE_MESSAGE);
@@ -75,6 +75,7 @@ const keys = {
   use: (jti: string, route: PaidRoute) => `kc2:use:${jti}:${route}`,
   all: (jti: string) => `kc2:all:${jti}`,
   fast: (jti: string, route: PaidRoute) => `kc2:fast:${jti}:${route}`,
+  calls: (ip: string, day: string) => `kc2:calls:${ip}:${day}`,
   file: (jti: string, digest: string) => `kc2:file:${jti}:${digest}`,
 };
 
@@ -94,7 +95,7 @@ export async function guardStatus(request: Request, deps: GuardDeps | null = gua
   const used = await guarded(() => store.get(keys.day(ipKey(clientIp(request), config.secret), koreanDay(clock()))));
   return {
     enabled: true,
-    siteKey: config.turnstile.siteKey,
+    siteKey: config.turnstile?.siteKey ?? null,
     limit: config.dailyTickets,
     remaining: Math.max(0, config.dailyTickets - used),
     ttlMinutes: config.ticketTtlSeconds / 60,
@@ -124,13 +125,16 @@ export async function issueTicket(request: Request, turnstileToken: string, deps
       throw new ApiError(429, "TOO_MANY_TRIES", "이용권 요청이 너무 잦습니다. 한 시간쯤 뒤에 다시 시도해 주세요.");
     }
     if ((await store.get(dayKey)) >= config.dailyTickets) throw new ApiError(429, "DAILY_LIMIT", dailyLimitMessage(config.dailyTickets));
-    const testKey = isTurnstileTestSecret(config.turnstile.secretKey);
-    if (!testKey && !(await store.setOnce(keys.turnstile(digestKey(turnstileToken, config.secret)), 10 * 60 * 1000))) {
-      throw new ApiError(400, "TURNSTILE_REUSED", "이미 쓴 확인입니다. 확인을 다시 한 뒤 눌러 주세요.");
+    // Turnstile 키가 없으면(간이 모드) 봇 확인을 건너뛴다. 키를 넣으면 다시 확인한다.
+    if (config.turnstile) {
+      const testKey = isTurnstileTestSecret(config.turnstile.secretKey);
+      if (!testKey && !(await store.setOnce(keys.turnstile(digestKey(turnstileToken, config.secret)), 10 * 60 * 1000))) {
+        throw new ApiError(400, "TURNSTILE_REUSED", "이미 쓴 확인입니다. 확인을 다시 한 뒤 눌러 주세요.");
+      }
+      const verdict = await verifyTurnstile(turnstileToken, config.turnstile.secretKey, deps.fetcher);
+      if (verdict === "rejected") throw new ApiError(400, "TURNSTILE_FAILED", "사람인지 확인하지 못했습니다. 확인을 다시 한 뒤 눌러 주세요.");
+      if (verdict === "unavailable") throw new ApiError(503, "TURNSTILE_UNAVAILABLE", "확인 서비스에 연결하지 못했습니다. 잠시 뒤에 다시 시도해 주세요.");
     }
-    const verdict = await verifyTurnstile(turnstileToken, config.turnstile.secretKey, deps.fetcher);
-    if (verdict === "rejected") throw new ApiError(400, "TURNSTILE_FAILED", "사람인지 확인하지 못했습니다. 확인을 다시 한 뒤 눌러 주세요.");
-    if (verdict === "unavailable") throw new ApiError(503, "TURNSTILE_UNAVAILABLE", "확인 서비스에 연결하지 못했습니다. 잠시 뒤에 다시 시도해 주세요.");
     const used = await store.incr(dayKey, DAY_TTL);
     if (used > config.dailyTickets) {
       await store.decr(dayKey);
@@ -172,10 +176,13 @@ export async function checkPaid(request: Request, route: PaidRoute, needs: Conse
   const ttl = Math.max(1, claims.exp - Math.floor(clock() / 1000));
   const cap = config.calls[route];
   const useKey = keys.use(claims.jti, route);
+  // 간이 모드(메모리 카운터): 발급한 인스턴스와 받는 인스턴스가 다를 수 있어 발급 기록 대신 서명·만료만 보고, IP당 하루 호출 수로 막는다.
+  const fallback = deps.fallback === true;
+  const callsKey = fallback ? keys.calls(ipKey(clientIp(request), config.secret), koreanDay(clock())) : null;
 
   await guarded(async () => {
     // 서명이 맞아도 이 서버가 발급한 기록이 없으면 받지 않는다(비밀값이 바뀌기 전의 이용권, 지어낸 번호).
-    if (!(await store.exists(keys.ticket(claims.jti)))) throw new ApiError(401, "TICKET_INVALID", "이용권을 확인하지 못했습니다. 새 이용권을 받아 주세요.");
+    if (!fallback && !(await store.exists(keys.ticket(claims.jti)))) throw new ApiError(401, "TICKET_INVALID", "이용권을 확인하지 못했습니다. 새 이용권을 받아 주세요.");
     if (cap === 0) throw new ApiError(429, "TICKET_USED_UP", usedUpMessage(route, 0));
     if (!(await store.setOnce(keys.fast(claims.jti, route), MIN_INTERVAL_MS[route]))) {
       throw new ApiError(429, "TOO_FAST", "조금 천천히 눌러 주세요. 몇 초 뒤에 다시 시도해 주세요.");
@@ -187,6 +194,11 @@ export async function checkPaid(request: Request, route: PaidRoute, needs: Conse
       await store.decr(useKey);
       throw new ApiError(429, "TICKET_USED_UP", usedUpMessage(route, cap));
     }
+    if (callsKey && (await store.incr(callsKey, DAY_TTL)) > FALLBACK_DAILY_CALLS) {
+      await store.decr(callsKey);
+      await store.decr(useKey);
+      throw new ApiError(429, "DAILY_LIMIT", `오늘 쓸 수 있는 자동 기능 ${FALLBACK_DAILY_CALLS}번을 모두 썼습니다. 내일(한국 시각 자정이 지나면) 다시 쓸 수 있어요. 직접 입력과 계산은 계속 쓸 수 있어요.`);
+    }
   });
 
   let refunded = false;
@@ -194,6 +206,7 @@ export async function checkPaid(request: Request, route: PaidRoute, needs: Conse
     if (refunded) return;
     refunded = true;
     await store.decr(useKey).catch(() => undefined);
+    if (callsKey) await store.decr(callsKey).catch(() => undefined);
   };
   return {
     claims,

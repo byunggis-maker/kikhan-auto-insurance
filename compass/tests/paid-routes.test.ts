@@ -208,8 +208,8 @@ describe.each(PAID_ROUTE_IDS)("%s 라우트", (id) => {
   });
 });
 
-it("유료 기능 설정이 없으면(배포에서 저장소 없음) 503으로 막고 직접 입력을 안내한다", async () => {
-  vi.stubEnv("VERCEL", "1");
+it("GUARD_SECRET이 없으면 503으로 막고 직접 입력을 안내한다", async () => {
+  vi.stubEnv("GUARD_SECRET", "");
   for (const id of PAID_ROUTE_IDS) {
     const response = await (await load(id))(request(id, { [CONSENT_HEADER]: BOTH }));
     expect(response.status).toBe(503);

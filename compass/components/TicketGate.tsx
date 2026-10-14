@@ -143,6 +143,13 @@ export function TicketGate({ route, what }: { route: PaidRoute; what: string }) 
 
   const usedUp = !!view.ticket?.usedUp.includes(route);
   const busy = phase.step === "checking" || phase.step === "issuing";
+  // 봇 확인(Turnstile)이 없는 간이 모드: 확인 위젯 없이 바로 이용권을 받는다.
+  const issueDirectly = () => {
+    setPhase({ step: "issuing" });
+    requestTicket("")
+      .then(() => setPhase({ step: "idle" }))
+      .catch((error: unknown) => setPhase({ step: "error", message: error instanceof Error ? error.message : "이용권을 받지 못했습니다." }));
+  };
   return (
     <div className="flex flex-col gap-3 rounded-xl bg-navy-soft p-4 text-navy" role="group" aria-label="분석 이용권">
       <p className="font-semibold">
@@ -162,7 +169,7 @@ export function TicketGate({ route, what }: { route: PaidRoute; what: string }) 
       ) : (
         <>
           {phase.step === "idle" || phase.step === "error" ? (
-            <button type="button" className={outlineButton} onClick={() => setPhase({ step: "checking" })}>
+            <button type="button" className={outlineButton} onClick={() => (siteKey ? setPhase({ step: "checking" }) : issueDirectly())}>
               {usedUp ? "새 이용권 받기" : "이용권 받기"}
             </button>
           ) : (
