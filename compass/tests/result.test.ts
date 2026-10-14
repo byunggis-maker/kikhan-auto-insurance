@@ -94,6 +94,28 @@ describe("화면 입력을 엔진에 연결", () => {
   });
 });
 
+describe("후유장애·사망 입력", () => {
+  it("노동능력상실률·급수·만 나이를 넣으면 후유장애 손해를 범위로 계산하고, 넣지 않으면 후유장애를 계산하지 않는다", () => {
+    const base = regressionDraft();
+    const draft = { ...base, people: [{ ...base.people[0], age: 40, monthlyIncome: 3_000_000, disabilityPercent: 30, disabilityGrade: 9 }] };
+    const claimed = toClaim(draft);
+    expect(claimed.ok && claimed.claim.persons[0].person.disability).toEqual({ lossRatePercent: "30", grade: 9, determinedOn: null });
+    const lines = cellOf(result(draft), "auto_injury").lines.map((line) => line.item);
+    expect(lines).toContain("lost_earnings_disability");
+    const plain = toClaim(base);
+    expect(plain.ok && plain.claim.persons[0].person.disability).toBeNull();
+    expect(plain.ok && plain.claim.persons[0].person.death).toBeNull();
+  });
+
+  it("사망일을 넣으면 사망 손해를 계산하고, 만 나이가 없으면 위자료·상실수익액은 정보 부족이다", () => {
+    const base = regressionDraft();
+    const draft = { ...base, people: [{ ...base.people[0], deathDate: "2026-09-01" }] };
+    const claimed = toClaim(draft);
+    expect(claimed.ok && claimed.claim.persons[0].person.death).toEqual({ date: "2026-09-01" });
+    expect(JSON.stringify(cellOf(result(draft), "auto_injury"))).toContain("만 나이를 입력하면 계산됩니다");
+  });
+});
+
 describe("왜 이 금액? (LLM 설명)", () => {
   const cell = cellOf(result(), "auto_injury");
   const facts = explainFacts(cell);

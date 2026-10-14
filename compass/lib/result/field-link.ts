@@ -13,6 +13,8 @@ const PERSON_FIELDS: Record<string, string> = {
   occupationType: "occupation",
   monthlyIncome: "monthlyIncome",
   age: "age",
+  "disability.lossRatePercent": "disabilityPercent",
+  "disability.grade": "disabilityGrade",
 };
 
 const VEHICLE_FIELDS: Record<string, string> = {

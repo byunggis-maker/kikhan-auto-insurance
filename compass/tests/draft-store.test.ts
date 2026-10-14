@@ -168,9 +168,13 @@ describe("입력 초안 저장", () => {
       occupation: "회사원",
       monthlyIncome: 3000000,
       faultPercent: 20,
+      disabilityPercent: 30,
+      disabilityGrade: 9,
+      deathDate: "2026-10-01",
     });
     saveDraft(storage, draft);
     expect(clearHealth(storage)).toBe(1);
+    expect(loadDraft(storage, "a")!.people[0]).toMatchObject({ disabilityPercent: null, disabilityGrade: null, deathDate: "" });
     const person = loadDraft(storage, "a")!.people[0];
     expect(person).toMatchObject({ injury: "", diagnosis: "", injuryGrade: null, surgery: null, hospitalDays: null, outpatientDays: null, treatmentCost: null });
     expect(person).toMatchObject({ occupation: "회사원", monthlyIncome: 3000000, faultPercent: 20, inferred: ["faultPercent"] });

@@ -60,6 +60,9 @@ export const personDraftSchema = z.strictObject({
   daysOffWork: amount,
   /** 사고일의 만 나이. 3단계까지의 초안에 있던 생년월일(birthDate)은 읽을 때 만 나이로 바꾼다(lib/draft/store.ts). */
   age: z.number().int().min(0).max(120).nullable().default(null),
+  disabilityPercent: z.number().int().min(0).max(100).nullable().default(null),
+  disabilityGrade: z.number().int().min(1).max(14).nullable().default(null),
+  deathDate: z.union([z.literal(""), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)]).default(""),
   occupation: text,
   monthlyIncome: amount,
   faultPercent: amount,

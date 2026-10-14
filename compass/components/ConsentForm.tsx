@@ -108,14 +108,14 @@ export function ConsentView(props: {
         checked={health}
         onChange={(v) => props.onChange("health", v)}
       >
-        <p>진단명, 수술 여부, 입원·통원 기간, 치료비를 다친 사람의 예상 보험금 계산에 씁니다.</p>
+        <p>진단명, 수술 여부, 입원·통원 기간, 치료비, 후유장애(노동능력상실률·급수), 사망 여부를 다친 사람의 예상 보험금 계산에 씁니다.</p>
         <p>음성 입력, 사고 사실 뽑기, 쉬운 말 설명은 이 내용을 서버와 AI 제공자에게 보내 처리하고, 처리 뒤 남기지 않습니다.</p>
         <p>동의하지 않아도 직접 입력해 계산할 수 있습니다. 이때 건강정보는 이 브라우저 밖으로 나가지 않습니다.</p>
       </Item>
 
       {props.withdrawingHealth && (
         <p role="alert" className="rounded-xl border-2 border-navy p-4 font-semibold">
-          건강정보 동의를 철회하면 음성 입력, 사고 사실 뽑기, 쉬운 말 설명을 쓸 수 없습니다. 이 브라우저의 사고 기록에 적어 둔 다친 내용·진단명·상해급수·수술·입원·통원 일수·치료비도 지워집니다.
+          건강정보 동의를 철회하면 음성 입력, 사고 사실 뽑기, 쉬운 말 설명을 쓸 수 없습니다. 이 브라우저의 사고 기록에 적어 둔 다친 내용·진단명·상해급수·수술·입원·통원 일수·치료비·후유장애·사망일도 지워집니다.
         </p>
       )}
       <p role="status" aria-live="polite" className="font-semibold">

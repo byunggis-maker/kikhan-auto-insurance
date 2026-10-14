@@ -61,6 +61,9 @@ export function newPerson(id: string, role: PersonRole): PersonDraft {
     treatmentCost: null,
     daysOffWork: null,
     age: null,
+    disabilityPercent: null,
+    disabilityGrade: null,
+    deathDate: "",
     occupation: "",
     monthlyIncome: null,
     faultPercent: null,
@@ -204,7 +207,7 @@ export function clearAll(storage: DraftStorage): number {
 }
 
 // 건강정보 동의를 철회하면 지우는 칸. 다친 내용, 진단, 상해급수, 수술, 입원·통원 일수, 치료비
-export const HEALTH_FIELDS = ["injury", "diagnosis", "injuryGrade", "surgery", "hospitalDays", "outpatientDays", "treatmentCost"] as const;
+export const HEALTH_FIELDS = ["injury", "diagnosis", "injuryGrade", "surgery", "hospitalDays", "outpatientDays", "treatmentCost", "disabilityPercent", "disabilityGrade", "deathDate"] as const;
 
 export function withoutHealth(draft: CaseDraft): CaseDraft {
   const blank = newPerson("", "driver");

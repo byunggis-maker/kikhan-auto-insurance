@@ -91,6 +91,11 @@ export type PersonDraft = {
   daysOffWork: number | null;
   /** 사고일의 만 나이. 생년월일은 받지 않는다. */
   age: number | null;
+  /** 후유장애 판정을 받았을 때만: 노동능력상실률(%)과 후유장애 급수(1~14). 없으면 null */
+  disabilityPercent: number | null;
+  disabilityGrade: number | null;
+  /** 사망했을 때만: 사망일. 아니면 빈 문자열 */
+  deathDate: string;
   occupation: string;
   monthlyIncome: number | null;
   faultPercent: number | null;

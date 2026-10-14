@@ -130,8 +130,8 @@ export function toClaim(draft: CaseDraft): ClaimResult {
               nursingProven: null,
             }
           : null,
-        death: null,
-        disability: null,
+        death: person.deathDate ? { date: person.deathDate } : null,
+        disability: person.disabilityPercent !== null ? { lossRatePercent: String(person.disabilityPercent), grade: person.disabilityGrade, determinedOn: null } : null,
         receivedFromThirdParty: null,
         receivedFromLiableParty: null,
       },

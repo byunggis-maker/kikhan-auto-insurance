@@ -180,6 +180,15 @@ export function PeopleStep() {
                     />
                     <InjuryGradePicker person={person} onPick={(injuryGrade) => setPerson(person.id, { injuryGrade })} />
                   </>
+                <details className="rounded-xl border border-line" open={person.disabilityPercent !== null || person.deathDate !== ""}>
+                  <summary className="flex min-h-12 cursor-pointer items-center px-4 font-semibold">후유장애·사망 (해당할 때만)</summary>
+                  <div className="flex flex-col gap-4 border-t border-line p-4">
+                    <NumberField anchor={`f-${person.id}-disabilityPercent`} label="노동능력상실률 (후유장애 판정을 받았을 때)" unit="%" max={100} value={person.disabilityPercent} onChange={(disabilityPercent) => setPerson(person.id, { disabilityPercent })} />
+                    <NumberField anchor={`f-${person.id}-disabilityGrade`} label="후유장애 급수" unit="급" max={14} value={person.disabilityGrade} onChange={(disabilityGrade) => setPerson(person.id, { disabilityGrade: disabilityGrade === 0 ? null : disabilityGrade })} />
+                    <TextField anchor={`f-${person.id}-deathDate`} label="사망일 (사망했을 때)" type="date" value={person.deathDate} onChange={(deathDate) => setPerson(person.id, { deathDate })} />
+                    <p className="text-sm text-muted">상실수익액과 위자료는 만 나이로 계산하고, 생일을 모르는 만큼 최소~최대로 보여 드립니다.</p>
+                  </div>
+                </details>
                 <NumberField anchor={`f-${person.id}-age`} label="만 나이 (사고일 기준)" unit="세" max={120} value={person.age} onChange={(age) => setPerson(person.id, { age })} onConfirmGuess={guess(person, "age")} />
                 <TextField
                   anchor={`f-${person.id}-occupation`}
