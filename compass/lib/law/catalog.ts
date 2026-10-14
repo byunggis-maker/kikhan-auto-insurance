@@ -65,6 +65,7 @@ const BY_KIND: Record<AccidentKind, PrecedentKeyword[]> = {
   car_person: ["보행자 과실상계", "횡단보도 과실", "무단횡단 과실"],
   motorcycle: ["이륜자동차 과실비율", "교차로 과실비율", "차로변경 과실"],
   single: [],
+  parked: ["주차장 사고 과실"],
 };
 
 /** 사고 유형에 맞는 검색어를 앞에 둔다 */

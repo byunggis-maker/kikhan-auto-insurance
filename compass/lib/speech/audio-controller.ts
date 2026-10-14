@@ -1,5 +1,7 @@
 // 브라우저 녹음 제어. 원본 앱(frontend/audio-controller.js)에서 잘 되던 코드를 옮기고 타입을 붙였다.
 // 달라진 점: 음질을 낮춰 5분까지 담기게 했고, 5분이 되면 스스로 멈춘다.
+// 아이폰 Safari는 조각 간격(timeslice)을 주면 조각난 mp4를 만들어 제공자가 읽지 못할 때가 있다. 그래서 간격 없이 녹음하고
+// 멈출 때 한 덩어리로 받는다. 5분 자동 멈춤은 타이머가 맡는다.
 // 서버가 한 번에 받는 크기(4MB)를 넘는 녹음은 보내는 쪽(lib/speech/split.ts)이 60초씩 나눠 보낸다.
 
 export type AudioPhase = "idle" | "starting" | "recording" | "stopping" | "transcribing" | "error";
@@ -15,7 +17,8 @@ const MIN_RECORDING_MS = 2000;
 const TYPES = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus", "audio/ogg"];
 
 const START_ERRORS: Record<string, string> = {
-  NotAllowedError: "마이크 사용이 허용되지 않았습니다. 주소창의 마이크 권한을 허용한 뒤 다시 눌러 주세요.",
+  NotAllowedError:
+    "마이크 사용이 허용되지 않았습니다. 마이크 권한을 허용한 뒤 다시 눌러 주세요. 아이폰은 주소창의 가가(aA) → 웹 사이트 설정 → 마이크, 또는 설정 → Safari → 마이크에서 허용합니다.",
   NotFoundError: "마이크를 찾지 못했습니다. 아래에 직접 적어 주세요.",
   NotReadableError: "마이크를 쓸 수 없습니다. 다른 녹음 앱을 끈 뒤 다시 시도해 주세요.",
 };
@@ -52,6 +55,7 @@ export class AudioController {
   private recorder: RecorderLike | null = null;
   private disposed = false;
   private started = 0;
+  private limitTimer: ReturnType<typeof setTimeout> | null = null;
   private readonly now: () => number;
 
   constructor(private readonly options: AudioControllerOptions) {
@@ -64,6 +68,8 @@ export class AudioController {
   }
 
   private clean() {
+    if (this.limitTimer) clearTimeout(this.limitTimer);
+    this.limitTimer = null;
     this.stream?.getTracks().forEach((track) => track.stop());
     this.stream = null;
     this.recorder = null;
@@ -86,7 +92,13 @@ export class AudioController {
       this.stream = await mediaDevices.getUserMedia({ audio: true });
       if (this.disposed) return this.clean();
       const type = TYPES.find((candidate) => Recorder.isTypeSupported(candidate));
-      const recorder = new Recorder(this.stream, { ...(type ? { mimeType: type } : {}), audioBitsPerSecond: 32000 });
+      let recorder: RecorderLike;
+      try {
+        recorder = new Recorder(this.stream, { ...(type ? { mimeType: type } : {}), audioBitsPerSecond: 32000 });
+      } catch {
+        // 음질 지정을 받지 않는 브라우저는 기본 음질로 녹음한다(길면 split.ts가 나눠 보낸다).
+        recorder = new Recorder(this.stream, type ? { mimeType: type } : {});
+      }
       this.recorder = recorder;
       const chunks: Blob[] = [];
       let size = 0;
@@ -120,9 +132,12 @@ export class AudioController {
         this.blob = blob;
         await this.convert();
       };
-      // 마지막 조각까지 받은 뒤 onstop에서 한 번만 보낸다.
-      recorder.start(1000);
+      // 간격 없이 녹음하고, 멈출 때 받은 한 덩어리를 onstop에서 한 번만 보낸다.
+      recorder.start();
       this.started = this.now();
+      this.limitTimer = setTimeout(() => {
+        if (this.phase === "recording") this.stop();
+      }, MAX_RECORDING_MS);
       this.update("recording", "듣고 있습니다. 다 말했으면 다시 눌러 주세요");
     } catch (error) {
       const name = (error as { name?: string })?.name ?? "";

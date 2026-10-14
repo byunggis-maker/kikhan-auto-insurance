@@ -48,6 +48,18 @@ export function GuessBadge({ onConfirm }: { onConfirm: () => void }) {
   );
 }
 
+/** 말·글에서 인식해 채운 칸(heard)과, 인식했지만 말에 없던 칸(check)에 붙는 표시 */
+export type FieldMark = "heard" | "check";
+
+export function MarkBadge({ mark }: { mark?: FieldMark }) {
+  if (!mark) return null;
+  return mark === "heard" ? (
+    <span className="ml-2 inline-block rounded-full bg-navy-soft px-2.5 py-1 align-middle text-xs font-bold text-navy">음성에서 인식됨</span>
+  ) : (
+    <span className="ml-2 inline-block rounded-full bg-warn-soft px-2.5 py-1 align-middle text-xs font-bold text-warn-ink">확인 필요</span>
+  );
+}
+
 /** 위쪽 고정 머리말에 가리지 않게 띄우고, 찾아온 칸을 잠깐 표시한다 */
 export const ANCHOR_CLASS = "scroll-mt-28 rounded-xl target:outline target:outline-3 target:outline-offset-4 target:outline-navy";
 
@@ -65,6 +77,7 @@ export function TextField(props: {
   onConfirmGuess?: () => void;
   /** 결과 화면의 "부족 정보" 버튼이 찾아오는 이름 */
   anchor?: string;
+  mark?: FieldMark;
 }) {
   const id = useId();
   // "추정" 버튼은 label 밖에 둔다. label 안에 두면 이름표가 입력 칸이 아니라 버튼에 붙는다.
@@ -74,6 +87,7 @@ export function TextField(props: {
         <label htmlFor={id} className="font-semibold">
           {props.label}
         </label>
+        <MarkBadge mark={props.mark} />
         {props.onConfirmGuess && <GuessBadge onConfirm={props.onConfirmGuess} />}
       </span>
       <input
@@ -99,6 +113,7 @@ export function NumberField(props: {
   hint?: string;
   onConfirmGuess?: () => void;
   anchor?: string;
+  mark?: FieldMark;
 }) {
   const shown = props.value === null ? "" : props.value.toLocaleString("ko-KR");
   const id = useId();
@@ -108,6 +123,7 @@ export function NumberField(props: {
         <label htmlFor={id} className="font-semibold">
           {props.label}
         </label>
+        <MarkBadge mark={props.mark} />
         {props.onConfirmGuess && <GuessBadge onConfirm={props.onConfirmGuess} />}
       </span>
       <span className="relative block">
@@ -138,10 +154,14 @@ export function Choice<T extends string>(props: {
   onChange: (value: T) => void;
   onConfirmGuess?: () => void;
   anchor?: string;
+  mark?: FieldMark;
 }) {
   return (
     <fieldset id={props.anchor} className={`flex flex-col gap-1.5 ${ANCHOR_CLASS}`}>
-      <legend className="mb-1.5 font-semibold">{props.label}</legend>
+      <legend className="mb-1.5 font-semibold">
+        {props.label}
+        <MarkBadge mark={props.mark} />
+      </legend>
       {props.onConfirmGuess && (
         <span className="-mt-1 mb-0.5">
           <GuessBadge onConfirm={props.onConfirmGuess} />

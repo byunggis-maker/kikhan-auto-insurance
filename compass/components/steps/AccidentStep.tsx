@@ -5,12 +5,13 @@ import { useParams } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { StepShell } from "@/components/StepShell";
 import { TicketBadge, TicketGate } from "@/components/TicketGate";
-import { Card, Choice, TextField, outlineButton } from "@/components/ui";
+import { Card, Choice, TextField, outlineButton, type FieldMark } from "@/components/ui";
 import { paidFetch } from "@/lib/guard/paid-client";
 import { usePaid } from "@/lib/guard/use-paid";
 import { useConsent } from "@/lib/privacy/consent";
 import { applyFacts } from "@/lib/draft/apply-facts";
-import { ACCIDENT_KIND_LABELS, COUNTERPARTY_INSURANCE_LABELS, type AccidentDraft, type AccidentKind, type CounterpartyInsurance } from "@/lib/draft/types";
+import { ACCIDENT_KIND_LABELS, COUNTERPARTY_INSURANCE_LABELS, type AccidentDraft, type AccidentKind, type CounterpartyInsurance, type YesNo } from "@/lib/draft/types";
+import { redact } from "@/lib/privacy/redact";
 import { accidentFactsSchema } from "@/lib/schemas/accident-facts";
 import { AudioController, type AudioState, type RecorderClass } from "@/lib/speech/audio-controller";
 import { splitAudio } from "@/lib/speech/split";
@@ -20,6 +21,19 @@ import { detectInApp, externalOpenUrl } from "@/lib/browser/in-app";
 const KINDS = (Object.keys(ACCIDENT_KIND_LABELS) as AccidentKind[]).map((value) => ({ value, label: ACCIDENT_KIND_LABELS[value] }));
 const INSURANCES = (Object.keys(COUNTERPARTY_INSURANCE_LABELS) as CounterpartyInsurance[]).map((value) => ({ value, label: COUNTERPARTY_INSURANCE_LABELS[value] }));
 const BUSY = ["starting", "stopping", "transcribing"];
+const HAD = [
+  { value: "yes" as const, label: "했음" },
+  { value: "no" as const, label: "안 했음" },
+];
+const EXISTS = [
+  { value: "yes" as const, label: "있음" },
+  { value: "no" as const, label: "없음 (단독·주차 중 등)" },
+];
+/** 녹음은 했지만 이용권이 없을 때. 녹음은 이 화면의 메모리에 남겨 두고, 이용권을 받으면 같은 녹음으로 다시 보낸다. */
+const NEED_TICKET = "녹음은 이 화면에 잠시 보관했습니다. 아래에서 이용권을 받은 뒤 '다시 시도'를 누르면 글로 바꿉니다.";
+
+/** 녹음 경과 시간 m:ss */
+const clock = (seconds: number) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 const MIN_TEXT = 10;
 
 type ExtractState = { status: "idle" | "working" } | { status: "done" | "error"; message: string };
@@ -119,6 +133,14 @@ export function AccidentStep() {
   const app = useSyncExternalStore(noSubscribe, inAppName, () => null);
   const noMic = useSyncExternalStore(noSubscribe, micMissing, () => false);
   const controller = useRef<AudioController | null>(null);
+  // 녹음이 끝났을 때 이용권이 있는지(녹음은 이용권 없이도 시작한다).
+  const allowedNow = useRef(false);
+  useEffect(() => {
+    allowedNow.current = allowed;
+  }, [allowed]);
+  // 녹음 경과 시간(초)과 한 번이라도 글로 바꿨는지
+  const [elapsed, setElapsed] = useState(0);
+  const [converted, setConverted] = useState(false);
   // 녹음이 끝났을 때 최신 입력 초안에 글을 붙이기 위해 들고 있는다.
   const appendText = useRef<(text: string) => void>(() => {});
 
@@ -127,9 +149,21 @@ export function AccidentStep() {
       mediaDevices: navigator.mediaDevices,
       Recorder: window.MediaRecorder as unknown as RecorderClass | undefined,
       secure: window.isSecureContext,
-      send: (blob) => sendAudio(blob, (done, total) => setProgress({ done, total })),
-      onState: setAudio,
-      onText: (text) => appendText.current(text),
+      send: async (blob) => {
+        if (!allowedNow.current) throw new Error(NEED_TICKET);
+        return sendAudio(blob, (done, total) => setProgress({ done, total }));
+      },
+      onState: (state) => {
+        setAudio(state);
+        if (state.phase === "recording") {
+          setConverted(false);
+          setElapsed(0);
+        }
+      },
+      onText: (text) => {
+        setConverted(true);
+        appendText.current(text);
+      },
     });
     controller.current = created;
     const leave = () => created.dispose();
@@ -143,6 +177,15 @@ export function AccidentStep() {
   const recording = audio.phase === "recording";
   const busy = BUSY.includes(audio.phase);
 
+  useEffect(() => {
+    if (!recording) return;
+    const started = Date.now();
+    const timer = setInterval(() => setElapsed(Math.floor((Date.now() - started) / 1000)), 500);
+    return () => clearInterval(timer);
+  }, [recording]);
+
+  const serviceOn = !!stt.view.status?.enabled;
+
   return (
     <StepShell step={2} lead="사고가 어떻게 났는지 말로 설명하고, 바뀐 글을 확인합니다.">
       {(draft, update) => {
@@ -150,33 +193,54 @@ export function AccidentStep() {
         const setAccident = (change: Partial<AccidentDraft>) =>
           update((d) => ({
             ...d,
-            // 사용자가 고친 칸은 더 이상 추정이 아니다.
-            accident: { ...d.accident, ...change, inferred: d.accident.inferred.filter((key) => !(key in change)) },
+            // 사용자가 고친 칸은 더 이상 추정도, 음성에서 인식한 값도 아니다.
+            accident: {
+              ...d.accident,
+              ...change,
+              inferred: d.accident.inferred.filter((key) => !(key in change)),
+              heard: d.accident.heard.filter((key) => !(key in change)),
+            },
           }));
+        // 음성에서 인식한 칸은 "음성에서 인식됨", 사실 추출 뒤에도 비어 있는 칸은 "확인 필요"
+        const mark = (key: keyof AccidentDraft): FieldMark | undefined =>
+          accident.heard.includes(key) ? "heard" : accident.extracted && accident[key] === "" ? "check" : undefined;
+        const yesNo = (value: YesNo | "") => (value === "" ? null : value);
         const guess = (key: keyof AccidentDraft) =>
           accident.inferred.includes(key)
             ? () => update((d) => ({ ...d, accident: { ...d.accident, inferred: d.accident.inferred.filter((k) => k !== key) } }))
             : undefined;
-        appendText.current = (text) =>
-          update((d) => ({ ...d, accident: { ...d.accident, text: d.accident.text.trim() ? `${d.accident.text.trim()}\n${text}` : text } }));
+        appendText.current = (text) => {
+          const next = accident.text.trim() ? `${accident.text.trim()}\n${text}` : text;
+          update((d) => ({ ...d, accident: { ...d.accident, text: next } }));
+          // 바뀐 글에서 사고 사실을 바로 뽑아 채운다. 이미 적어 둔 사람 카드가 있으면 덮어쓰지 않고 단추로 묻는다.
+          if (extractAllowed && draft.people.length === 0 && next.trim().length >= MIN_TEXT) void pull(next);
+        };
 
         function mic() {
           setPressed(true);
           // 인앱 브라우저에 녹음 기능이 없으면 이용권보다 바깥 브라우저 안내를 먼저 보인다.
           if (app && noMic) return;
-          if (!allowed) return;
-          if (recording || (audio.phase === "error" && audio.canRetry)) void controller.current?.stop();
-          else void controller.current?.start();
+          if (recording || (audio.phase === "error" && audio.canRetry)) return void controller.current?.stop();
+          // 서버에 음성 변환이 설정되지 않았거나, 건강정보 동의가 없으면 녹음하지 않고 안내만 보인다.
+          // 이용권은 녹음을 마친 뒤에 받아도 된다(녹음은 이 화면에 남는다).
+          if (!serviceOn || needsConsent || consent === undefined) return;
+          void controller.current?.start();
         }
 
-        async function pull() {
-          if (draft.people.length > 0 && !window.confirm("뽑은 내용으로 다음 화면의 사람 카드를 새로 채웁니다. 적어 둔 사람 카드는 지워집니다. 계속할까요?")) return;
+        /** 글 속의 이름·전화번호·주민번호·차량번호를 가린다. 가린 원래 값은 저장하지 않는다. */
+        function maskText() {
+          const masked = redact(accident.text);
+          if (masked.count > 0) update((d) => ({ ...d, accident: { ...d.accident, text: masked.text } }));
+        }
+
+        async function pull(source = accident.text) {
+          const text = redact(source).text;
           setExtract({ status: "working" });
           try {
             const response = await paidFetch("extract", "/api/extract/accident", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ text: accident.text }),
+              body: JSON.stringify({ text }),
             });
             const body = await response.json().catch(() => null);
             const result = accidentFactsSchema.safeParse(body?.facts);
@@ -189,8 +253,8 @@ export function AccidentStep() {
               status: "done",
               message:
                 count > 0
-                  ? `사람 ${count}명과 사고 정보를 미리 채웠습니다. 아래와 다음 화면에서 맞는지 확인해 주세요. 짐작한 값은 회색 "추정"으로 표시했습니다.`
-                  : "사람에 대한 내용은 찾지 못했습니다. 다음 화면에서 직접 추가해 주세요.",
+                  ? `사람 ${count}명과 사고 정보를 미리 채웠습니다. "음성에서 인식됨" 칸은 맞는지, "확인 필요" 칸은 말에 없던 내용이니 아래와 다음 화면에서 직접 채워 주세요.`
+                  : "다친 사람에 대한 내용은 찾지 못했습니다. \"확인 필요\" 칸을 채우고, 다음 화면에서 사람을 직접 추가해 주세요.",
             });
           } catch {
             setExtract({ status: "error", message: "서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요." });
@@ -220,14 +284,23 @@ export function AccidentStep() {
                   )}
                 </svg>
                 <span className="text-base font-bold">
-                  {recording ? "눌러서 멈추기" : audio.phase === "transcribing" ? "글로 바꾸는 중…" : audio.phase === "error" && audio.canRetry ? "다시 시도" : "눌러서 말하기"}
+                  {recording
+                    ? "눌러서 멈추기"
+                    : audio.phase === "transcribing"
+                      ? "글로 바꾸는 중…"
+                      : audio.phase === "error" && audio.canRetry
+                        ? "다시 시도"
+                        : converted
+                          ? "완료 · 더 말하기"
+                          : "눌러서 말하기"}
                 </span>
+                {recording && <span className="text-sm font-semibold tabular-nums">녹음 중 {clock(elapsed)}</span>}
               </button>
               <p className="text-center text-xl font-bold">사고 내용 말로 설명하기</p>
               <p className="text-center text-muted">언제, 어디서, 어떻게 났는지와 누가 어디를 다쳤는지 말해 주세요. 5분까지 녹음됩니다.</p>
               <p className="text-center text-sm font-semibold text-navy">이름은 말하지 않아도 됩니다. &ldquo;나&rdquo;, &ldquo;아내&rdquo;, &ldquo;상대 운전자&rdquo;처럼 말해 주세요.</p>
-              {app && ((pressed && noMic) || (audio.phase === "error" && !!audio.blocked)) && <OpenOutside app={app} />}
-              {pressed && guest && !needsConsent && (
+              {app && <OpenOutside app={app} />}
+              {(pressed || audio.canRetry) && guest && !needsConsent && (
                 <>
                   <TicketGate route="stt" what="음성을 글로 바꾸기" />
                   <p className="text-muted">아래에 직접 적을 수 있습니다.</p>
@@ -243,7 +316,7 @@ export function AccidentStep() {
                 </div>
               )}
               <p role="status" aria-live="polite" className={`text-center font-semibold ${audio.phase === "error" ? "rounded-xl bg-warn-soft px-4 py-3 text-warn-ink" : "text-navy"}`}>
-                {allowed ? audio.message : ""}
+                {audio.message}
                 {allowed && audio.phase === "transcribing" && progress.total > 1 && ` (${progress.done + 1}/${progress.total})`}
               </p>
               <label
@@ -278,6 +351,7 @@ export function AccidentStep() {
                   className="min-h-48 w-full rounded-xl border border-line p-4 text-lg placeholder:text-muted/70 focus:border-navy"
                   value={accident.text}
                   readOnly={audio.phase === "transcribing"}
+                  onBlur={maskText}
                   placeholder="언제, 어디서, 어떻게 사고가 났는지 적어 주세요."
                   onChange={(e) => update((d) => ({ ...d, accident: { ...d.accident, text: e.target.value } }))}
                 />
@@ -285,13 +359,17 @@ export function AccidentStep() {
               {!extractAllowed && !!consent?.health && accident.text.trim().length >= MIN_TEXT && !(pressed && guest) && (
                 <TicketGate route="extract" what="사고 사실 뽑아 채우기" />
               )}
+              <p className="text-sm text-muted">이름·전화번호·주민번호·차량번호는 저장하지 않고 ******로 가립니다.</p>
               {extractAllowed && (
                 <>
                   <button
                     type="button"
                     className={outlineButton}
                     disabled={extract.status === "working" || busy || recording || accident.text.trim().length < MIN_TEXT}
-                    onClick={() => void pull()}
+                    onClick={() => {
+                      if (draft.people.length > 0 && !window.confirm("뽑은 내용으로 다음 화면의 사람 카드를 새로 채웁니다. 적어 둔 사람 카드는 지워집니다. 계속할까요?")) return;
+                      void pull();
+                    }}
                   >
                     {extract.status === "working" ? "사실을 뽑는 중…" : "이 글에서 사고 사실 뽑아 채우기"}
                   </button>
@@ -308,10 +386,31 @@ export function AccidentStep() {
             </Card>
 
             <Card title="사고 정보">
-              <TextField anchor="f-accident-date" label="사고 날짜" type="date" value={accident.date} onChange={(date) => setAccident({ date })} onConfirmGuess={guess("date")} />
-              <TextField label="사고 시각" type="time" value={accident.time} onChange={(time) => setAccident({ time })} onConfirmGuess={guess("time")} />
-              <TextField label="사고 장소" value={accident.place} placeholder="예: ○○사거리" onChange={(place) => setAccident({ place })} onConfirmGuess={guess("place")} />
-              <Choice label="사고 유형" value={accident.kind || null} options={KINDS} onChange={(kind) => setAccident({ kind })} onConfirmGuess={guess("kind")} />
+              <TextField anchor="f-accident-date" label="사고 날짜" type="date" value={accident.date} onChange={(date) => setAccident({ date })} onConfirmGuess={guess("date")} mark={mark("date")} />
+              <TextField label="사고 시각" type="time" value={accident.time} onChange={(time) => setAccident({ time })} onConfirmGuess={guess("time")} mark={mark("time")} />
+              <TextField label="사고 장소" value={accident.place} placeholder="예: ○○사거리" onChange={(place) => setAccident({ place })} onConfirmGuess={guess("place")} mark={mark("place")} />
+              <Choice label="사고 유형" value={accident.kind || null} options={KINDS} onChange={(kind) => setAccident({ kind })} onConfirmGuess={guess("kind")} mark={mark("kind")} />
+              <TextField
+                label="내 차량 운전자"
+                value={accident.myDriver}
+                placeholder="예: 본인, 아내"
+                hint="이름은 적지 마세요."
+                onChange={(myDriver) => setAccident({ myDriver: redact(myDriver).text })}
+                onConfirmGuess={guess("myDriver")}
+                mark={mark("myDriver")}
+              />
+              <Choice label="상대방" value={yesNo(accident.counterpartyExists)} options={EXISTS} onChange={(counterpartyExists) => setAccident({ counterpartyExists })} onConfirmGuess={guess("counterpartyExists")} mark={mark("counterpartyExists")} />
+              <TextField
+                label="과실 관련 진술"
+                value={accident.faultStatement}
+                placeholder="예: 신호 대기 중 뒤차가 추돌"
+                hint="말한 그대로입니다. 과실비율은 다음 화면에서 사람마다 적습니다."
+                onChange={(faultStatement) => setAccident({ faultStatement: redact(faultStatement).text })}
+                onConfirmGuess={guess("faultStatement")}
+                mark={mark("faultStatement")}
+              />
+              <Choice label="경찰 신고" value={yesNo(accident.policeReport)} options={HAD} onChange={(policeReport) => setAccident({ policeReport })} onConfirmGuess={guess("policeReport")} mark={mark("policeReport")} />
+              <Choice label="보험 접수" value={yesNo(accident.insuranceReport)} options={HAD} onChange={(insuranceReport) => setAccident({ insuranceReport })} onConfirmGuess={guess("insuranceReport")} mark={mark("insuranceReport")} />
             </Card>
 
             {accident.kind !== "single" && (

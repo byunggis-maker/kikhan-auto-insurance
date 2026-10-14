@@ -23,7 +23,9 @@ function rig(options: { supported?: string[]; send?: (blob: Blob) => Promise<{ t
       // eslint-disable-next-line @typescript-eslint/no-this-alias
       recorder = this;
     }
-    start() {
+    started: number | undefined | "unset" = "unset";
+    start(timeslice?: number) {
+      this.started = timeslice;
       this.state = "recording";
     }
     stop() {
@@ -75,6 +77,18 @@ describe("녹음 제어", () => {
     const r = rig({ supported: ["audio/mp4"] });
     await r.controller.start();
     expect(r.recorder().options.mimeType).toBe("audio/mp4");
+  });
+
+  it("아이폰 Safari의 조각난 mp4를 막으려고 조각 간격 없이 녹음한다", async () => {
+    const r = rig({ supported: ["audio/mp4"] });
+    await r.controller.start();
+    expect(r.recorder().started).toBeUndefined();
+  });
+
+  it("webm이 되면 webm을 mp4보다 먼저 고른다", async () => {
+    const r = rig({ supported: ["audio/mp4", "audio/webm"] });
+    await r.controller.start();
+    expect(r.recorder().options.mimeType).toBe("audio/webm");
   });
 
   it("2초보다 짧은 녹음은 보내지 않는다", async () => {

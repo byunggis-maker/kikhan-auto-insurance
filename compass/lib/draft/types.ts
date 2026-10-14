@@ -34,7 +34,13 @@ export type PolicyDraft = {
 
 export type PersonRole = "driver" | "passenger" | "counterparty" | "pedestrian";
 
-export type AccidentKind = "car_car" | "car_person" | "single" | "motorcycle";
+export type AccidentKind = "car_car" | "car_person" | "single" | "motorcycle" | "parked";
+
+/** 말하는 사람과의 관계. 이름 대신 쓴다. */
+export type PersonRelation = "self" | "family" | "passenger" | "counterparty" | "pedestrian";
+/** 입원·통원 여부 */
+export type PersonCare = "hospital" | "outpatient" | "both" | "none";
+export type YesNo = "yes" | "no";
 
 export type AccidentDraft = {
   date: string;
@@ -49,6 +55,17 @@ export type AccidentDraft = {
   counterpartyPropertyLimit: string;
   /** 사실 추출이 짐작해서 채운 칸의 이름. 사용자가 확인하거나 고치면 빠진다. */
   inferred: string[];
+  /** 내 차를 운전한 사람(관계로만: 본인, 아내 등) */
+  myDriver: string;
+  counterpartyExists: YesNo | "";
+  /** 과실에 관한 진술(말한 그대로) */
+  faultStatement: string;
+  policeReport: YesNo | "";
+  insuranceReport: YesNo | "";
+  /** 말·글에서 인식해 채운 칸의 이름("음성에서 인식됨"). 사용자가 고치면 빠진다. vehicleDamage는 차량 피해 칸이다. */
+  heard: string[];
+  /** 사실 추출을 한 번이라도 했는지. 했으면 비어 있는 칸에 "확인 필요"를 붙인다. */
+  extracted: boolean;
 };
 
 export type CounterpartyInsurance = "full" | "mandatory_only" | "none" | "hit_and_run" | "unknown";
@@ -74,6 +91,7 @@ export type VehicleDraft = {
 export type PersonDraft = {
   id: string;
   role: PersonRole;
+  relation: PersonRelation | "";
   // 이름 칸은 두지 않는다. 화면 제목은 역할 이름("운전자(나)", "동승자 1")이다.
   /** 다친 내용(말한 그대로) */
   injury: string;
@@ -83,6 +101,9 @@ export type PersonDraft = {
   /** 사실 추출이 짐작해서 채운 칸의 이름. 사용자가 확인하거나 고치면 빠진다. */
   inferred: string[];
   surgery: boolean | null;
+  care: PersonCare | "";
+  /** 말·글에서 인식해 채운 칸의 이름("음성에서 인식됨"). 비어 있지 않으면 사실 추출로 만든 카드다. */
+  heard: string[];
   hospitalDays: number | null;
   outpatientDays: number | null;
   /** 실제 치료비 */
@@ -130,6 +151,22 @@ export const ACCIDENT_KIND_LABELS: Record<AccidentKind, string> = {
   car_person: "차 대 사람",
   single: "단독사고",
   motorcycle: "이륜차",
+  parked: "주차 중",
+};
+
+export const RELATION_LABELS: Record<PersonRelation, string> = {
+  self: "본인",
+  family: "가족",
+  passenger: "동승자",
+  counterparty: "상대방",
+  pedestrian: "보행자",
+};
+
+export const CARE_LABELS: Record<PersonCare, string> = {
+  hospital: "입원",
+  outpatient: "통원",
+  both: "입원·통원",
+  none: "치료 안 받음",
 };
 
 export const COUNTERPARTY_INSURANCE_LABELS: Record<CounterpartyInsurance, string> = {

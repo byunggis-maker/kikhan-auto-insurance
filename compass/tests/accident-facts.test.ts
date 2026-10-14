@@ -21,13 +21,27 @@ afterEach(() => {
 const SAID = "어제 오후 세 시쯤 시청 앞 사거리에서 신호 대기 중에 뒤차가 들이받았습니다. 저는 목을 다쳐서 경추 염좌 진단을 받고 2주 입원했고, 옆에 탄 아내는 허리가 아프다고 합니다. 저는 회사원이고 과실은 없습니다.";
 
 const ANSWER: RawFacts = {
-  accident: { date: "2026-10-12", time: "15:00", place: "시청 앞 사거리", kind: "car_car", vehicleDamage: "뒤 범퍼 파손", inferred: ["date", "kind"] },
+  accident: {
+    date: "2026-10-12",
+    time: "15:00",
+    place: "시청 앞 사거리",
+    kind: "car_car",
+    vehicleDamage: "뒤 범퍼 파손",
+    myDriver: "본인",
+    counterpartyExists: true,
+    faultStatement: "신호 대기 중 뒤차가 추돌",
+    policeReport: null,
+    insuranceReport: null,
+    inferred: ["date", "kind"],
+  },
   people: [
     {
       role: "driver",
+      relation: "self",
       injury: "목을 다침",
       diagnosis: "경추 염좌",
       surgery: null,
+      care: "hospital",
       hospitalStay: "2주",
       outpatientVisits: null,
       faultPercent: 0,
@@ -37,9 +51,11 @@ const ANSWER: RawFacts = {
     },
     {
       role: "passenger",
+      relation: "family",
       injury: "허리가 아픔",
       diagnosis: null,
       surgery: null,
+      care: null,
       hospitalStay: null,
       outpatientVisits: "5회",
       faultPercent: null,
@@ -48,6 +64,20 @@ const ANSWER: RawFacts = {
       inferred: ["diagnosis", "surgery"],
     },
   ],
+};
+
+const EMPTY_ACCIDENT: RawFacts["accident"] = {
+  date: null,
+  time: null,
+  place: null,
+  kind: null,
+  vehicleDamage: null,
+  myDriver: null,
+  counterpartyExists: null,
+  faultStatement: null,
+  policeReport: null,
+  insuranceReport: null,
+  inferred: [],
 };
 
 function fakeLlm(answers: unknown[] = [ANSWER]) {
@@ -78,7 +108,19 @@ describe("사고 사실 추출", () => {
     const llm = fakeLlm();
     const facts = await extractFacts(SAID, "2026-10-13", llm.call);
     expect(llm.requests[0].instructions).toContain("오늘은 2026-10-13");
-    expect(facts.accident).toEqual({ date: "2026-10-12", time: "15:00", place: "시청 앞 사거리", kind: "car_car", vehicleDamage: "뒤 범퍼 파손", inferred: ["date", "kind"] });
+    expect(facts.accident).toEqual({
+      date: "2026-10-12",
+      time: "15:00",
+      place: "시청 앞 사거리",
+      kind: "car_car",
+      vehicleDamage: "뒤 범퍼 파손",
+      myDriver: "본인",
+      counterpartyExists: true,
+      faultStatement: "신호 대기 중 뒤차가 추돌",
+      policeReport: null,
+      insuranceReport: null,
+      inferred: ["date", "kind"],
+    });
     expect(facts.people[0]).toMatchObject({ role: "driver", diagnosis: "경추 염좌", hospitalDays: 14, faultPercent: 0, occupation: "회사원", age: 42 });
     // 사람은 역할로만 가린다. 사람을 가리키는 말(이름이 들어갈 수 있는 칸)은 없다.
     expect(facts.people[0]).not.toHaveProperty("label");
@@ -112,6 +154,12 @@ describe("사고 사실 추출", () => {
     await expect(extractFacts(SAID, "2026-10-13", fakeLlm([null]).call)).rejects.toMatchObject({ status: 502, code: "EXTRACT_INVALID" });
   });
 
+  it("말 속의 상대방 실명도 LLM에 보내기 전에 가린다", async () => {
+    const llm = fakeLlm();
+    await extractFacts(`${SAID} 상대 운전자 김가상 씨가 먼저 내렸고, 상대방 이름은 박가상이고, 홍길동이라는 사람이 목격했습니다.`, "2026-10-13", llm.call);
+    for (const secret of ["김가상", "박가상", "홍길동"]) expect(llm.requests[0].text, secret).not.toContain(secret);
+  });
+
   it("이름·주민번호·전화·차량번호가 섞여 있으면 LLM에 보내기 전에 가리고, 결과에서도 가린다", async () => {
     const leaked = { ...ANSWER, accident: { ...ANSWER.accident, place: "주민번호 800505-1234567, 12가3456 차 앞" }, people: [{ ...ANSWER.people[0], label: "홍길동", injury: "목을 다침(연락처 010-1234-5678)" }] };
     const llm = fakeLlm([leaked]);
@@ -140,9 +188,24 @@ describe("뽑은 사실을 입력 초안에 옮기기", () => {
 
   it("사람을 하나도 뽑지 못하면 적어 둔 사람 카드를 지우지 않는다", () => {
     const before = { ...newDraft("a", "2026-10-13T00:00:00.000Z"), people: [newPerson("keep", "driver")] };
-    const draft = applyFacts(before, toFacts({ accident: { date: null, time: null, place: null, kind: null, vehicleDamage: null, inferred: [] }, people: [] }), () => "x");
+    const draft = applyFacts(before, toFacts({ accident: EMPTY_ACCIDENT, people: [] }), () => "x");
     expect(draft.people.map((p) => p.id)).toEqual(["keep"]);
     expect(draft.accident.date).toBe("");
+  });
+
+  it("말에서 채운 칸은 '음성에서 인식됨'으로 남기고, 말에 없던 칸은 비워 둔다(짐작해 채우지 않는다)", async () => {
+    const facts = await extractFacts(SAID, "2026-10-13", fakeLlm().call);
+    let n = 0;
+    const draft = applyFacts(newDraft("a", "2026-10-13T00:00:00.000Z"), facts, () => `p${++n}`);
+    expect(draft.accident).toMatchObject({ myDriver: "본인", counterpartyExists: "yes", faultStatement: "신호 대기 중 뒤차가 추돌", policeReport: "", insuranceReport: "", extracted: true });
+    expect(draft.accident.heard).toEqual(expect.arrayContaining(["date", "place", "kind", "myDriver", "counterpartyExists", "faultStatement", "vehicleDamage"]));
+    // 경찰 신고·보험 접수는 말하지 않았으므로 인식한 칸이 아니다(화면은 "확인 필요"를 붙인다).
+    expect(draft.accident.heard).not.toContain("policeReport");
+    expect(draft.accident.heard).not.toContain("insuranceReport");
+    expect(draft.people[0]).toMatchObject({ relation: "self", care: "hospital" });
+    expect(draft.people[0].heard).toEqual(expect.arrayContaining(["role", "relation", "injury", "care", "hospitalDays"]));
+    expect(draft.people[1]).toMatchObject({ relation: "family", care: "" });
+    expect(draft.people[1].heard).not.toContain("care");
   });
 });
 

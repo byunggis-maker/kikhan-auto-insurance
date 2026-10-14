@@ -9,6 +9,7 @@ const text = z.string().max(20_000).default("");
 const amount = z.number().nullable().default(null);
 const flag = z.boolean().nullable().default(null);
 const names = z.array(z.string().max(200)).max(200).default([]);
+const yesNo = z.enum(["yes", "no", ""]).default("");
 
 export const coverageDraftSchema = z.strictObject({
   id: z.string().min(1).max(100),
@@ -38,22 +39,32 @@ export const accidentDraftSchema = z.strictObject({
   date: text,
   time: text,
   place: text,
-  kind: z.enum(["car_car", "car_person", "single", "motorcycle", ""]).default(""),
+  kind: z.enum(["car_car", "car_person", "single", "motorcycle", "parked", ""]).default(""),
   text,
   counterpartyInsurance: z.enum(["full", "mandatory_only", "none", "hit_and_run", "unknown", ""]).default(""),
   counterpartyBodily2Limit: text,
   counterpartyPropertyLimit: text,
   inferred: names,
+  myDriver: text,
+  counterpartyExists: yesNo,
+  faultStatement: text,
+  policeReport: yesNo,
+  insuranceReport: yesNo,
+  heard: names,
+  extracted: z.boolean().default(false),
 });
 
 export const personDraftSchema = z.strictObject({
   id: z.string().min(1).max(100),
   role: z.enum(["driver", "passenger", "counterparty", "pedestrian"]),
+  relation: z.enum(["self", "family", "passenger", "counterparty", "pedestrian", ""]).default(""),
   injury: text,
   diagnosis: text,
   injuryGrade: z.number().int().min(1).max(14).nullable().default(null),
   inferred: names,
   surgery: flag,
+  care: z.enum(["hospital", "outpatient", "both", "none", ""]).default(""),
+  heard: names,
   hospitalDays: amount,
   outpatientDays: amount,
   treatmentCost: amount,

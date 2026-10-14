@@ -20,6 +20,11 @@ const ACCOUNT_LABELS = "계좌번호|계좌|입금계좌";
 // 이름 칸 뒤에 와도 사람 이름이 아닌 말(담보 이름, 운전자 범위 등)
 const NOT_A_NAME = /(사고|상해|배상|담보|보험|특약|한정|가족|부부|본인|누구|동일|기준|범위|이상|이하|연령|운전|해당|없음|미가입|가입|정보|확인|자동차|차량|소유|명의)/;
 
+// 흔한 성(말 속의 "김철수 씨"를 잡을 때만 쓴다)
+const SURNAMES = "김이박최정강조윤장임한오서신권황안송류유전홍고문양손배백허남심노하곽성차주우구민진나엄채원천방공현함변염여추";
+// "○○씨", "○○라는 사람" 꼴이지만 이름이 아닌 말
+const COMMON_WORD = /^(마음|아저|아가|아주|그|이|저|어떤|무슨|운전자|상대|상대방|기사|사람)$|^(마음|아저|아가)/;
+
 // valueGroup: 항목 이름이 붙은 규칙에서 가릴 값이 든 묶음 번호(항목 이름은 남긴다). 없으면 찾은 글 전체를 가린다.
 type Rule = { kind: RedactKind; pattern: RegExp; replace: (match: string, ...groups: string[]) => string | null; valueGroup?: number };
 
@@ -48,6 +53,26 @@ const RULES: Rule[] = [
     pattern: new RegExp(`(${NAME_LABELS})(\\s*(?:명|성명)?\\s*[:：]?\\s*)([가-힣]{2,5})(?![가-힣])`, "g"),
     replace: (match, label, separator, value) => (NOT_A_NAME.test(value) ? null : keepLabel(label, separator)),
     valueGroup: 3,
+  },
+  // 말 속의 이름(사고 설명·전사문): "이름은 홍길동", "홍길동이라는 사람", "김철수 씨"
+  {
+    kind: "name",
+    pattern: /(이름|성함)(은|는|이|이요|이에요)(\s*)([가-힣]{2,4}?)(?=이고|이며|이에요|이요|입니다|예요|씨|님|[^가-힣]|$)/g,
+    replace: (match, label, particle, space, value) => (NOT_A_NAME.test(value) ? null : `${label}${particle}${space}${MASK}`),
+    valueGroup: 4,
+  },
+  {
+    kind: "name",
+    pattern: /(?<![가-힣])([가-힣]{2,4}?)(이라는|라는|이란|란)(\s?(?:사람|분|운전자|기사|아저씨|아주머니|남자|여자))/g,
+    replace: (match, value, particle, rest) => (NOT_A_NAME.test(value) || COMMON_WORD.test(value) ? null : `${MASK}${particle}${rest}`),
+    valueGroup: 1,
+  },
+  {
+    kind: "name",
+    // 띄어 쓴 "김철수 씨"는 세 글자만 잡는다("정말 씨게" 같은 말을 피한다). 씨 뒤에는 조사만 온다.
+    pattern: new RegExp(`(?<![가-힣])([${SURNAMES}](?:[가-힣]{2}(?=\\s)|[가-힣]{1,2}(?=씨)))(\\s?씨)(?=[가는를의에와도께한랑]|[^가-힣]|$)`, "g"),
+    replace: (match, value, suffix) => (COMMON_WORD.test(value) ? null : `${MASK}${suffix}`),
+    valueGroup: 1,
   },
   { kind: "address", pattern: new RegExp(`(${ADDRESS_LABELS})(\\s*[:：]?\\s*)([^\\n]{4,80})`, "g"), replace: (match, label, separator) => keepLabel(label, separator), valueGroup: 3 },
   { kind: "policy", pattern: new RegExp(`(${POLICY_LABELS})(\\s*[:：]?\\s*)([^\\s,]{4,40})`, "gi"), replace: (match, label, separator) => keepLabel(label, separator), valueGroup: 3 },

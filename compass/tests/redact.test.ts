@@ -36,6 +36,15 @@ describe("가릴 것", () => {
     expect(result.count).toBeGreaterThan(0);
   });
 
+  it("말 속의 사람 이름(상대방 실명)을 가린다", () => {
+    expect(masked("상대 운전자 김가상 씨가 먼저 내렸어요")).toBe("상대 운전자 ****** 씨가 먼저 내렸어요");
+    expect(masked("김가상씨한테 연락했어요")).toBe("******씨한테 연락했어요");
+    expect(masked("상대방 이름은 박가상이고")).toBe("상대방 이름은 ******이고");
+    expect(masked("홍길동이라는 사람이 박았어요")).toBe("******이라는 사람이 박았어요");
+    // 이름이 아닌 말은 남긴다.
+    for (const text of ["아저씨가 마음씨 좋게 비켜 줬어요", "날씨가 흐렸고 정말 씨게 박았어요", "이 사람이 박았어요", "상대가 중앙선 침범"]) expect(masked(text)).toBe(text);
+  });
+
   it("한 글에 여러 개가 있으면 모두 가리고 건수를 센다", () => {
     const result = redact("계약자 홍길동 / 주민 800505-1234567 / 010-1234-5678 / 12가3456 / kim@example.com");
     expect(result.count).toBe(5);

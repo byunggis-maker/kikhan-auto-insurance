@@ -51,11 +51,14 @@ export function newPerson(id: string, role: PersonRole): PersonDraft {
   return {
     id,
     role,
+    relation: "",
     injury: "",
     diagnosis: "",
     injuryGrade: null,
     inferred: [],
     surgery: null,
+    care: "",
+    heard: [],
     hospitalDays: null,
     outpatientDays: null,
     treatmentCost: null,
@@ -71,7 +74,24 @@ export function newPerson(id: string, role: PersonRole): PersonDraft {
 }
 
 export function newAccident(): AccidentDraft {
-  return { date: "", time: "", place: "", kind: "", text: "", counterpartyInsurance: "", counterpartyBodily2Limit: "", counterpartyPropertyLimit: "", inferred: [] };
+  return {
+    date: "",
+    time: "",
+    place: "",
+    kind: "",
+    text: "",
+    counterpartyInsurance: "",
+    counterpartyBodily2Limit: "",
+    counterpartyPropertyLimit: "",
+    inferred: [],
+    myDriver: "",
+    counterpartyExists: "",
+    faultStatement: "",
+    policeReport: "",
+    insuranceReport: "",
+    heard: [],
+    extracted: false,
+  };
 }
 
 const newVehicle = (): CaseDraft["vehicle"] => ({ damage: "", repairCost: null, rentalDays: null, rented: null, rentalDailyRate: null, valueAtAccident: null, firstRegisteredOn: "", vehicleClass: "" });
@@ -206,15 +226,16 @@ export function clearAll(storage: DraftStorage): number {
   return keys.length;
 }
 
-// 건강정보 동의를 철회하면 지우는 칸. 다친 내용, 진단, 상해급수, 수술, 입원·통원 일수, 치료비
-export const HEALTH_FIELDS = ["injury", "diagnosis", "injuryGrade", "surgery", "hospitalDays", "outpatientDays", "treatmentCost", "disabilityPercent", "disabilityGrade", "deathDate"] as const;
+// 건강정보 동의를 철회하면 지우는 칸. 다친 내용, 진단, 상해급수, 수술, 입원·통원 여부와 일수, 치료비
+export const HEALTH_FIELDS = ["injury", "diagnosis", "injuryGrade", "surgery", "care", "hospitalDays", "outpatientDays", "treatmentCost", "disabilityPercent", "disabilityGrade", "deathDate"] as const;
 
 export function withoutHealth(draft: CaseDraft): CaseDraft {
   const blank = newPerson("", "driver");
   return {
     ...draft,
     people: draft.people.map((person) => {
-      const next = { ...person, inferred: person.inferred.filter((field) => !(HEALTH_FIELDS as readonly string[]).includes(field)) };
+      const health = (field: string) => (HEALTH_FIELDS as readonly string[]).includes(field);
+      const next = { ...person, inferred: person.inferred.filter((field) => !health(field)), heard: person.heard.filter((field) => !health(field)) };
       for (const field of HEALTH_FIELDS) (next as Record<string, unknown>)[field] = blank[field];
       return next;
     }),

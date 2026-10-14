@@ -1,14 +1,28 @@
 "use client";
 
 import { StepShell } from "@/components/StepShell";
-import { Card, Choice, NumberField, TextField } from "@/components/ui";
+import { Card, Choice, NumberField, TextField, type FieldMark } from "@/components/ui";
 import { suggestInjuryGrades } from "@/lib/engine/injury-grade";
 import { injuryGradeMap } from "@/lib/rules/injury-grade-map";
 import { newPerson } from "@/lib/draft/store";
 import { personLabel } from "@/lib/draft/to-claim";
-import { ROLE_LABELS, VEHICLE_CLASS_LABELS, type PersonDraft, type PersonRole, type VehicleClass } from "@/lib/draft/types";
+import {
+  CARE_LABELS,
+  RELATION_LABELS,
+  ROLE_LABELS,
+  VEHICLE_CLASS_LABELS,
+  type PersonCare,
+  type PersonDraft,
+  type PersonRelation,
+  type PersonRole,
+  type VehicleClass,
+} from "@/lib/draft/types";
 
 const ROLES = Object.keys(ROLE_LABELS) as PersonRole[];
+const RELATIONS = (Object.keys(RELATION_LABELS) as PersonRelation[]).map((value) => ({ value, label: RELATION_LABELS[value] }));
+const CARES = (Object.keys(CARE_LABELS) as PersonCare[]).map((value) => ({ value, label: CARE_LABELS[value] }));
+/** 사실 추출이 채우는 사람 칸. 추출로 만든 카드에서 이 칸이 비어 있으면 "확인 필요"를 붙인다. */
+const EXTRACTED = ["relation", "injury", "diagnosis", "surgery", "care", "hospitalDays", "outpatientDays", "faultPercent", "occupation", "age"];
 const GRADES = Array.from(new Set(injuryGradeMap.items.map((item) => item.grade))).sort((a, b) => a - b);
 
 /** 진단명·수술 여부로 찾은 상해급수 후보를 보여 주고 사용자가 고르게 한다. 후보일 뿐 확정이 아니다. */
@@ -98,14 +112,29 @@ export function PeopleStep() {
         const setPerson = (id: string, change: Partial<PersonDraft>) =>
           update((d) => ({
             ...d,
-            people: d.people.map((p) => (p.id === id ? { ...p, ...change, inferred: p.inferred.filter((key) => !(key in change)) } : p)),
+            people: d.people.map((p) =>
+              p.id === id ? { ...p, ...change, inferred: p.inferred.filter((key) => !(key in change)), heard: p.heard.filter((key) => !(key in change)) } : p,
+            ),
           }));
+        // 음성에서 인식한 칸은 "음성에서 인식됨", 사실 추출로 만든 카드에서 비어 있는 칸은 "확인 필요"
+        const mark = (person: PersonDraft, key: keyof PersonDraft): FieldMark | undefined =>
+          person.heard.includes(key) ? "heard" : person.heard.length > 0 && EXTRACTED.includes(key) && (person[key] === null || person[key] === "") ? "check" : undefined;
         const guess = (person: PersonDraft, key: keyof PersonDraft) =>
           person.inferred.includes(key)
             ? () => update((d) => ({ ...d, people: d.people.map((p) => (p.id === person.id ? { ...p, inferred: p.inferred.filter((k) => k !== key) } : p)) }))
             : undefined;
         const setVehicle = (change: Partial<typeof draft.vehicle>) =>
-          update((d) => ({ ...d, vehicle: { ...d.vehicle, ...change } }));
+          update((d) => ({
+            ...d,
+            vehicle: { ...d.vehicle, ...change },
+            // 고친 차량 피해 칸은 더 이상 음성에서 인식한 값이 아니다.
+            accident: "damage" in change ? { ...d.accident, heard: d.accident.heard.filter((key) => key !== "vehicleDamage") } : d.accident,
+          }));
+        const damageMark: FieldMark | undefined = draft.accident.heard.includes("vehicleDamage")
+          ? "heard"
+          : draft.accident.extracted && !draft.vehicle.damage
+            ? "check"
+            : undefined;
 
         return (
           <>
@@ -129,6 +158,15 @@ export function PeopleStep() {
                   options={ROLES.map((role) => ({ value: role, label: ROLE_LABELS[role] }))}
                   onChange={(role) => setPerson(person.id, { role })}
                   onConfirmGuess={guess(person, "role")}
+                  mark={mark(person, "role")}
+                />
+                <Choice
+                  label="나와의 관계"
+                  value={person.relation || null}
+                  options={RELATIONS}
+                  onChange={(relation) => setPerson(person.id, { relation })}
+                  onConfirmGuess={guess(person, "relation")}
+                  mark={mark(person, "relation")}
                 />
                   <>
                     <TextField
@@ -137,6 +175,7 @@ export function PeopleStep() {
                       placeholder="예: 목과 허리가 아픔"
                       onChange={(injury) => setPerson(person.id, { injury })}
                       onConfirmGuess={guess(person, "injury")}
+                      mark={mark(person, "injury")}
                     />
                     <TextField
                       label="진단명"
@@ -144,6 +183,7 @@ export function PeopleStep() {
                       placeholder="진단서에 적힌 그대로"
                       onChange={(diagnosis) => setPerson(person.id, { diagnosis })}
                       onConfirmGuess={guess(person, "diagnosis")}
+                      mark={mark(person, "diagnosis")}
                     />
                     <Choice
                       label="수술"
@@ -151,6 +191,15 @@ export function PeopleStep() {
                       options={YES_NO}
                       onChange={(v) => setPerson(person.id, { surgery: v === "yes" })}
                       onConfirmGuess={guess(person, "surgery")}
+                      mark={mark(person, "surgery")}
+                    />
+                    <Choice
+                      label="입원·통원"
+                      value={person.care || null}
+                      options={CARES}
+                      onChange={(care) => setPerson(person.id, { care })}
+                      onConfirmGuess={guess(person, "care")}
+                      mark={mark(person, "care")}
                     />
                     <NumberField
                       anchor={`f-${person.id}-treatmentCost`}
@@ -168,6 +217,7 @@ export function PeopleStep() {
                       value={person.hospitalDays}
                       onChange={(hospitalDays) => setPerson(person.id, { hospitalDays })}
                       onConfirmGuess={guess(person, "hospitalDays")}
+                      mark={mark(person, "hospitalDays")}
                     />
                     <NumberField
                       anchor={`f-${person.id}-outpatientDays`}
@@ -177,6 +227,7 @@ export function PeopleStep() {
                       value={person.outpatientDays}
                       onChange={(outpatientDays) => setPerson(person.id, { outpatientDays })}
                       onConfirmGuess={guess(person, "outpatientDays")}
+                      mark={mark(person, "outpatientDays")}
                     />
                     <InjuryGradePicker person={person} onPick={(injuryGrade) => setPerson(person.id, { injuryGrade })} />
                   </>
@@ -189,7 +240,7 @@ export function PeopleStep() {
                     <p className="text-sm text-muted">상실수익액과 위자료는 만 나이로 계산하고, 생일을 모르는 만큼 최소~최대로 보여 드립니다.</p>
                   </div>
                 </details>
-                <NumberField anchor={`f-${person.id}-age`} label="만 나이 (사고일 기준)" unit="세" max={120} value={person.age} onChange={(age) => setPerson(person.id, { age })} onConfirmGuess={guess(person, "age")} />
+                <NumberField anchor={`f-${person.id}-age`} label="만 나이 (사고일 기준)" unit="세" max={120} value={person.age} onChange={(age) => setPerson(person.id, { age })} onConfirmGuess={guess(person, "age")} mark={mark(person, "age")} />
                 <TextField
                   anchor={`f-${person.id}-occupation`}
                   label="직업"
@@ -197,6 +248,7 @@ export function PeopleStep() {
                   value={person.occupation}
                   onChange={(occupation) => setPerson(person.id, { occupation })}
                   onConfirmGuess={guess(person, "occupation")}
+                  mark={mark(person, "occupation")}
                 />
                 <NumberField anchor={`f-${person.id}-monthlyIncome`} label="월소득" unit="원" value={person.monthlyIncome} onChange={(monthlyIncome) => setPerson(person.id, { monthlyIncome })} />
                 <NumberField
@@ -217,6 +269,7 @@ export function PeopleStep() {
                   hint="이 사람 쪽의 과실입니다. 과실이 없으면 0을 적어 주세요."
                   onChange={(faultPercent) => setPerson(person.id, { faultPercent })}
                   onConfirmGuess={guess(person, "faultPercent")}
+                  mark={mark(person, "faultPercent")}
                 />
               </Card>
             ))}
@@ -239,7 +292,7 @@ export function PeopleStep() {
             <div id="f-vehicle" className="scroll-mt-28">
               <Card title="차량 피해">
                 <p className="text-muted">내 차량의 피해입니다. 과실비율은 운전자 카드에 적은 값을 씁니다.</p>
-                <TextField label="피해 내용" value={draft.vehicle.damage} placeholder="예: 뒤 범퍼가 찌그러짐" onChange={(damage) => setVehicle({ damage })} />
+                <TextField label="피해 내용 (파손 부위)" value={draft.vehicle.damage} placeholder="예: 뒤 범퍼가 찌그러짐" onChange={(damage) => setVehicle({ damage })} mark={damageMark} />
                 <NumberField anchor="f-vehicle-repairCost" label="수리비" unit="원" value={draft.vehicle.repairCost} hint="견적서나 정비소에서 들은 금액" onChange={(repairCost) => setVehicle({ repairCost })} />
                 <NumberField
                   anchor="f-vehicle-valueAtAccident"
