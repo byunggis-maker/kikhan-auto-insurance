@@ -1,0 +1,57 @@
+{
+  "id": "product",
+  "title": "개인용자동차보험의 담보 구성",
+  "items": [
+    {
+      "id": "product.coverages",
+      "value": [
+        "liability_bodily_1",
+        "liability_bodily_2",
+        "liability_property",
+        "self_injury",
+        "auto_injury",
+        "uninsured",
+        "own_damage"
+      ],
+      "unit": "list",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 45쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "보통약관 제2조(Hicar 개인용자동차보험의 구성)",
+        "clause": "① 6가지 보장종목과 특별약관(자동차상해 특별약관 포함)",
+        "page": 45
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "product.riders",
+      "value": [
+        "rider_legal",
+        "rider_rental"
+      ],
+      "unit": "list",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 126쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "특별약관 목차",
+        "clause": "렌트비용지원 특별약관(126쪽), 법률비용 지원 특별약관(132쪽)",
+        "page": 126
+      },
+      "status": "confirmed",
+      "note": "계산 규칙을 등록한 특별약관의 목록이다. 여기에 없는 특약은 '증권에 있으나 계산 규칙 미등록'으로 표시한다."
+    }
+  ]
+}

@@ -1,0 +1,106 @@
+{
+  "id": "coverage-clauses",
+  "title": "담보별 지급보험금 계산 조항",
+  "items": [
+    {
+      "id": "clause.liability_bodily_1",
+      "value": "지급보험금 = 보험금지급기준에 의해 산출한 금액 + 비용 − 공제액. 한도: 자동차손해배상보장법령에서 정한 기준에 따라 산출한 금액",
+      "unit": "text",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 49쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "보통약관 제10조(지급보험금의 계산)",
+        "clause": "① 1. 대인배상Ⅰ",
+        "page": 49
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "clause.liability_bodily_2",
+      "value": "지급보험금 = 보험금지급기준에 의해 산출한 금액 + 비용 − 공제액(대인배상Ⅰ에서 지급되는 금액). 한도: 보험증권에 기재된 보험가입금액",
+      "unit": "text",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 49쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "보통약관 제10조(지급보험금의 계산)",
+        "clause": "① 2. 대인배상Ⅱ, ④ 1.",
+        "page": 49
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "clause.self_injury",
+      "value": "지급보험금 = 실제손해액 + 비용 − 공제액. 공제액이 없으면 사망은 사망보험가입금액, 부상은 실제로 지출한 치료비, 후유장애는 장애등급별 보험금액",
+      "unit": "text",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 51쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "보통약관 제15조(보험금의 종류와 한도), 제16조(지급보험금의 계산)",
+        "clause": "제16조 ① 1.~4.",
+        "page": 51
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "clause.uninsured",
+      "value": "지급보험금 = 보험금지급기준에 의해 산출한 금액 + 비용 − 공제액. 한도: 보험증권에 기재된 보험가입금액",
+      "unit": "text",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 53쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "보통약관 제20조(지급보험금의 계산)",
+        "clause": "1.~3.",
+        "page": 53
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "clause.auto_injury",
+      "value": "지급보험금 = 실제손해액 + 비용 − 공제액. 실제손해액은 과실상계 및 보상한도를 적용하기 전의 금액. 한도: 보험증권에 기재된 보험가입금액",
+      "unit": "text",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 118쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "자동차상해 특별약관",
+        "clause": "2. 보상하는 손해 (2)",
+        "page": 118
+      },
+      "status": "confirmed",
+      "note": ""
+    }
+  ]
+}

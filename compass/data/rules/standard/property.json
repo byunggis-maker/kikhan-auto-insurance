@@ -1,0 +1,282 @@
+{
+  "id": "property",
+  "title": "대물배상 지급기준 (수리비, 대차료, 휴차료, 시세하락손해)",
+  "items": [
+    {
+      "id": "clause.liability_property",
+      "value": "지급보험금 = 보험금지급기준에 의해 산출한 금액 + 비용 − 공제액. 한도: 보험증권에 기재된 보험가입금액",
+      "unit": "text",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 49쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "보통약관 제10조(지급보험금의 계산)",
+        "clause": "① 2. 대인배상Ⅱ, 대물배상",
+        "page": 49
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "fault.propertyOffset",
+      "value": true,
+      "unit": "flag",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표4> 과실상계 등",
+        "clause": "1. 과실상계 가.(1) 대물배상에 의하여 산출한 금액에 대하여 피해자 측의 과실비율에 따라 상계",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "property.repair.capPercent",
+      "value": 120,
+      "unit": "percent",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 80쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표2> 대물배상 보험금 지급기준",
+        "clause": "1. 수리비용 나.(3) 수리비 및 열처리 도장료의 합계액은 피해물의 사고 직전 가액의 120%를 한도",
+        "page": 80
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "property.repair.capPercentExtended",
+      "value": 130,
+      "unit": "percent",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 80쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표2> 대물배상 보험금 지급기준",
+        "clause": "1. 수리비용 나.(3) 단서: 내용연수가 지난 경우, 차량충당연한을 적용받는 승용·승합·화물자동차는 130%",
+        "page": 80
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "property.rental.maxDays",
+      "value": 25,
+      "unit": "days",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 81쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표2> 대물배상 보험금 지급기준",
+        "clause": "3. 대차료 다.(1) 수리 가능한 경우 25일을 한도",
+        "page": 81
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "property.rental.maxDaysLongRepair",
+      "value": 30,
+      "unit": "days",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 81쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표2> 대물배상 보험금 지급기준",
+        "clause": "3. 대차료 다.(1) 실제 정비작업시간이 160시간을 초과하는 경우에는 30일",
+        "page": 81
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "property.rental.totalLossDays",
+      "value": 10,
+      "unit": "days",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 81쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표2> 대물배상 보험금 지급기준",
+        "clause": "3. 대차료 다.(2) 수리 불가능한 경우: 10일",
+        "page": 81
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "property.rental.notRentedPercent",
+      "value": 35,
+      "unit": "percent",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 81쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표2> 대물배상 보험금 지급기준",
+        "clause": "3. 대차료 나.(2) 대차를 하지 않는 경우: 통상의 요금의 35% 상당액",
+        "page": 81
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "property.idle.maxDays",
+      "value": 30,
+      "unit": "days",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표2> 대물배상 보험금 지급기준",
+        "clause": "4. 휴차료 다.(1)(가) 수리 가능한 경우 30일을 한도",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "property.idle.totalLossDays",
+      "value": 10,
+      "unit": "days",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표2> 대물배상 보험금 지급기준",
+        "clause": "4. 휴차료 다.(2) 수리 불가능한 경우: 10일",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "property.depreciation.maxVehicleAgeYears",
+      "value": 5,
+      "unit": "years",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표2> 대물배상 보험금 지급기준",
+        "clause": "6. 자동차시세하락손해 가. 출고 후 5년 이하인 자동차에 한함",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "property.depreciation.minRepairRatioPercent",
+      "value": 20,
+      "unit": "percent",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표2> 대물배상 보험금 지급기준",
+        "clause": "6. 자동차시세하락손해 가. 수리비용이 사고 직전 자동차가액의 20%를 초과하는 경우",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "property.depreciation.bands",
+      "value": [
+        {
+          "overYears": 0,
+          "upToYears": 1,
+          "percent": 20
+        },
+        {
+          "overYears": 1,
+          "upToYears": 2,
+          "percent": 15
+        },
+        {
+          "overYears": 2,
+          "upToYears": 5,
+          "percent": 10
+        }
+      ],
+      "unit": "table",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표2> 대물배상 보험금 지급기준",
+        "clause": "6. 자동차시세하락손해 나. 인정기준액: 출고 후 1년 이하 수리비용의 20%, 1년 초과 2년 이하 15%, 2년 초과 5년 이하 10%",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": "각 구간은 출고 후 overYears년 초과 upToYears년 이하. 맨 위 구간은 1년 이하 전부."
+    }
+  ]
+}

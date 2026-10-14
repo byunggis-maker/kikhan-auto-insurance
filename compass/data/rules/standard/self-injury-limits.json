@@ -1,0 +1,1966 @@
+{
+  "id": "self-injury-limits",
+  "title": "자기신체사고 급별 보험가입금액표",
+  "items": [
+    {
+      "id": "selfInjury.injury.limit.15000000.grade1",
+      "value": 15000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 1500만원) 1급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.15000000.grade2",
+      "value": 8000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 1500만원) 2급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.15000000.grade3",
+      "value": 7500000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 1500만원) 3급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.15000000.grade4",
+      "value": 7000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 1500만원) 4급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.15000000.grade5",
+      "value": 5000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 1500만원) 5급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.15000000.grade6",
+      "value": 4000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 1500만원) 6급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.15000000.grade7",
+      "value": 2500000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 1500만원) 7급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.15000000.grade8",
+      "value": 1800000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 1500만원) 8급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.15000000.grade9",
+      "value": 1400000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 1500만원) 9급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.15000000.grade10",
+      "value": 1200000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 1500만원) 10급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.15000000.grade11",
+      "value": 1200000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 1500만원) 11급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.15000000.grade12",
+      "value": 1200000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 1500만원) 12급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.15000000.grade13",
+      "value": 800000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 1500만원) 13급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.15000000.grade14",
+      "value": 500000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 1500만원) 14급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.30000000.grade1",
+      "value": 30000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 3000만원) 1급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.30000000.grade2",
+      "value": 16000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 3000만원) 2급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.30000000.grade3",
+      "value": 15000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 3000만원) 3급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.30000000.grade4",
+      "value": 14000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 3000만원) 4급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.30000000.grade5",
+      "value": 10000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 3000만원) 5급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.30000000.grade6",
+      "value": 8000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 3000만원) 6급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.30000000.grade7",
+      "value": 5000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 3000만원) 7급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.30000000.grade8",
+      "value": 3600000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 3000만원) 8급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.30000000.grade9",
+      "value": 2800000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 3000만원) 9급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.30000000.grade10",
+      "value": 2400000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 3000만원) 10급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.30000000.grade11",
+      "value": 2000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 3000만원) 11급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.30000000.grade12",
+      "value": 1800000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 3000만원) 12급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.30000000.grade13",
+      "value": 1300000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 3000만원) 13급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.30000000.grade14",
+      "value": 800000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 3000만원) 14급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.50000000.grade1",
+      "value": 50000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 5000만원) 1급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.50000000.grade2",
+      "value": 27000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 5000만원) 2급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.50000000.grade3",
+      "value": 25000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 5000만원) 3급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.50000000.grade4",
+      "value": 23000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 5000만원) 4급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.50000000.grade5",
+      "value": 16500000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 5000만원) 5급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.50000000.grade6",
+      "value": 13000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 5000만원) 6급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.50000000.grade7",
+      "value": 8000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 5000만원) 7급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.50000000.grade8",
+      "value": 6000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 5000만원) 8급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.50000000.grade9",
+      "value": 4500000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 5000만원) 9급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.50000000.grade10",
+      "value": 4000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 5000만원) 10급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.50000000.grade11",
+      "value": 3000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 5000만원) 11급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.50000000.grade12",
+      "value": 2900000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 5000만원) 12급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.50000000.grade13",
+      "value": 2100000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 5000만원) 13급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.injury.limit.50000000.grade14",
+      "value": 1300000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 82쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "1) 상해구분 및 급별 보험가입금액표 (가입금액 5000만원) 14급",
+        "page": 82
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.15000000.grade1",
+      "value": 15000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 1500만원) 1급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.15000000.grade2",
+      "value": 13500000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 1500만원) 2급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.15000000.grade3",
+      "value": 12000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 1500만원) 3급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.15000000.grade4",
+      "value": 10500000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 1500만원) 4급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.15000000.grade5",
+      "value": 9000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 1500만원) 5급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.15000000.grade6",
+      "value": 7500000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 1500만원) 6급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.15000000.grade7",
+      "value": 6000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 1500만원) 7급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.15000000.grade8",
+      "value": 4500000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 1500만원) 8급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.15000000.grade9",
+      "value": 3600000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 1500만원) 9급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.15000000.grade10",
+      "value": 2700000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 1500만원) 10급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.15000000.grade11",
+      "value": 2100000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 1500만원) 11급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.15000000.grade12",
+      "value": 1500000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 1500만원) 12급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.15000000.grade13",
+      "value": 900000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 1500만원) 13급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.15000000.grade14",
+      "value": 600000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 1500만원) 14급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.30000000.grade1",
+      "value": 30000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 3000만원) 1급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.30000000.grade2",
+      "value": 27000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 3000만원) 2급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.30000000.grade3",
+      "value": 24000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 3000만원) 3급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.30000000.grade4",
+      "value": 21000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 3000만원) 4급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.30000000.grade5",
+      "value": 18000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 3000만원) 5급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.30000000.grade6",
+      "value": 15000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 3000만원) 6급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.30000000.grade7",
+      "value": 12000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 3000만원) 7급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.30000000.grade8",
+      "value": 9000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 3000만원) 8급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.30000000.grade9",
+      "value": 7200000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 3000만원) 9급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.30000000.grade10",
+      "value": 5400000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 3000만원) 10급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.30000000.grade11",
+      "value": 4200000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 3000만원) 11급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.30000000.grade12",
+      "value": 3000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 3000만원) 12급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.30000000.grade13",
+      "value": 1800000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 3000만원) 13급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.30000000.grade14",
+      "value": 1200000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 3000만원) 14급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.50000000.grade1",
+      "value": 50000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 5000만원) 1급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.50000000.grade2",
+      "value": 45000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 5000만원) 2급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.50000000.grade3",
+      "value": 40000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 5000만원) 3급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.50000000.grade4",
+      "value": 35000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 5000만원) 4급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.50000000.grade5",
+      "value": 30000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 5000만원) 5급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.50000000.grade6",
+      "value": 25000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 5000만원) 6급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.50000000.grade7",
+      "value": 20000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 5000만원) 7급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.50000000.grade8",
+      "value": 15000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 5000만원) 8급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.50000000.grade9",
+      "value": 12000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 5000만원) 9급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.50000000.grade10",
+      "value": 9000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 5000만원) 10급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.50000000.grade11",
+      "value": 7000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 5000만원) 11급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.50000000.grade12",
+      "value": 5000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 5000만원) 12급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.50000000.grade13",
+      "value": 3000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 5000만원) 13급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.50000000.grade14",
+      "value": 2000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 5000만원) 14급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.100000000.grade1",
+      "value": 100000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 10000만원) 1급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.100000000.grade2",
+      "value": 90000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 10000만원) 2급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.100000000.grade3",
+      "value": 80000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 10000만원) 3급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.100000000.grade4",
+      "value": 70000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 10000만원) 4급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.100000000.grade5",
+      "value": 60000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 10000만원) 5급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.100000000.grade6",
+      "value": 50000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 10000만원) 6급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.100000000.grade7",
+      "value": 40000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 10000만원) 7급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.100000000.grade8",
+      "value": 30000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 10000만원) 8급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.100000000.grade9",
+      "value": 24000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 10000만원) 9급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.100000000.grade10",
+      "value": 18000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 10000만원) 10급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.100000000.grade11",
+      "value": 14000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 10000만원) 11급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.100000000.grade12",
+      "value": 10000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 10000만원) 12급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.100000000.grade13",
+      "value": 6000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 10000만원) 13급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "selfInjury.disability.amount.100000000.grade14",
+      "value": 4000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표3> 자기신체사고 보험금 지급기준",
+        "clause": "2) 후유장애구분 및 급별 보험가입금액표 (가입금액 10000만원) 14급",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    }
+  ]
+}

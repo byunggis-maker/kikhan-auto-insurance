@@ -1,0 +1,40 @@
+{
+  "sources": [
+    {
+      "id": "hi-personal-20251126",
+      "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+      "insurer": "현대해상",
+      "productLine": "personal",
+      "revisedOn": "2025-11-26",
+      "sha256": "47258f585384beb5a619a4f917362a0b8979c4562972bfa41de29b4bebb5a3ad",
+      "note": "보험사 약관이다. 금융감독원 자동차보험 표준약관 원문(docs/source/)과는 아직 대조하지 않았다. 쪽 번호는 약관에 인쇄된 번호다."
+    },
+    {
+      "id": "hi-motorcycle-1025",
+      "document": "현대해상 이륜자동차보험 약관 (표지 1025)",
+      "insurer": "현대해상",
+      "productLine": "motorcycle",
+      "revisedOn": null,
+      "sha256": "4b40b1fc303416683d35fca9829efb5a5fe1f610464fceaa04e2718400515aa0",
+      "note": "PDF에 개정일이 없다. 이 약관에서 읽은 항목은 모두 needs_check다. 쪽 번호는 약관에 인쇄된 번호다."
+    },
+    {
+      "id": "hi-business-1025",
+      "document": "현대해상 Hicar 업무용자동차보험 약관 (표지 1025)",
+      "insurer": "현대해상",
+      "productLine": "business",
+      "revisedOn": null,
+      "sha256": "cbb1da8d75571c2ac557ff6004606296d098b51825121519d46e8028d6124779",
+      "note": "PDF에 개정일이 없다. 이 약관에서 읽은 항목은 모두 needs_check다. 쪽 번호는 약관에 인쇄된 번호다."
+    },
+    {
+      "id": "hi-commercial-1025",
+      "document": "현대해상 Hicar 영업용자동차보험 약관 (표지 1025)",
+      "insurer": "현대해상",
+      "productLine": "commercial",
+      "revisedOn": null,
+      "sha256": "f313c52089022a2475af87f09db10fb0fd45faa2038a082948b983b5904f783d",
+      "note": "PDF에 개정일이 없다. 이 약관에서 읽은 항목은 모두 needs_check다. 쪽 번호는 약관에 인쇄된 번호다."
+    }
+  ]
+}

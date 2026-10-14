@@ -1,0 +1,1511 @@
+{
+  "id": "riders",
+  "title": "특별약관: 렌트비용지원, 법률비용 지원",
+  "items": [
+    {
+      "id": "clause.rider_rental",
+      "value": "자기차량손해 보험금이 지급되는 경우 렌트비용을 지급. 배상의무자의 대물배상(대차료 등)으로 지급될 수 있는 금액은 공제",
+      "unit": "text",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 126쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "렌트비용지원 특별약관",
+        "clause": "2. 보상하는 손해 (1), (3)",
+        "page": 126
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.rental.dailyLimit.small",
+      "value": 70000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 126쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "렌트비용지원 특별약관",
+        "clause": "2.(2)① 가. 1일당 차종별 렌트비용 한도금액",
+        "page": 126
+      },
+      "status": "confirmed",
+      "note": "small: (초)소형승용 1,600cc 이하, mid: 중형승용 2,000cc 이하, large: 대형승용 2,800cc 이하, xlarge: 대형승용 2,800cc 초과, multi: 다인승승용 7~10인"
+    },
+    {
+      "id": "rider.rental.dailyLimit.mid",
+      "value": 110000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 126쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "렌트비용지원 특별약관",
+        "clause": "2.(2)① 가. 1일당 차종별 렌트비용 한도금액",
+        "page": 126
+      },
+      "status": "confirmed",
+      "note": "small: (초)소형승용 1,600cc 이하, mid: 중형승용 2,000cc 이하, large: 대형승용 2,800cc 이하, xlarge: 대형승용 2,800cc 초과, multi: 다인승승용 7~10인"
+    },
+    {
+      "id": "rider.rental.dailyLimit.large",
+      "value": 210000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 126쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "렌트비용지원 특별약관",
+        "clause": "2.(2)① 가. 1일당 차종별 렌트비용 한도금액",
+        "page": 126
+      },
+      "status": "confirmed",
+      "note": "small: (초)소형승용 1,600cc 이하, mid: 중형승용 2,000cc 이하, large: 대형승용 2,800cc 이하, xlarge: 대형승용 2,800cc 초과, multi: 다인승승용 7~10인"
+    },
+    {
+      "id": "rider.rental.dailyLimit.xlarge",
+      "value": 350000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 126쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "렌트비용지원 특별약관",
+        "clause": "2.(2)① 가. 1일당 차종별 렌트비용 한도금액",
+        "page": 126
+      },
+      "status": "confirmed",
+      "note": "small: (초)소형승용 1,600cc 이하, mid: 중형승용 2,000cc 이하, large: 대형승용 2,800cc 이하, xlarge: 대형승용 2,800cc 초과, multi: 다인승승용 7~10인"
+    },
+    {
+      "id": "rider.rental.dailyLimit.multi",
+      "value": 140000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 126쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "렌트비용지원 특별약관",
+        "clause": "2.(2)① 가. 1일당 차종별 렌트비용 한도금액",
+        "page": 126
+      },
+      "status": "confirmed",
+      "note": "small: (초)소형승용 1,600cc 이하, mid: 중형승용 2,000cc 이하, large: 대형승용 2,800cc 이하, xlarge: 대형승용 2,800cc 초과, multi: 다인승승용 7~10인"
+    },
+    {
+      "id": "rider.rental.notRentedPercent",
+      "value": 35,
+      "unit": "percent",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 126쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "렌트비용지원 특별약관",
+        "clause": "2.(2)① 나. 대차를 하지 않는 경우 통상의 요금의 35%, 1일 지급한도는 한도금액의 35%",
+        "page": 126
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.rental.maxDays",
+      "value": 30,
+      "unit": "days",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 127쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "렌트비용지원 특별약관",
+        "clause": "2.(2)② 가. 수리 가능한 경우 30일을 한도",
+        "page": 127
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.rental.totalLossDays",
+      "value": 10,
+      "unit": "days",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 127쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "렌트비용지원 특별약관",
+        "clause": "2.(2)② 나. 수리 불가능한 경우: 10일",
+        "page": 127
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "clause.rider_legal",
+      "value": "피보험자동차의 사고로 다른 사람을 죽게 하거나 다치게 한 경우 형사합의금, 변호사선임비용, 벌금비용을 매 사고마다 지급",
+      "unit": "text",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 132쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2. 보상하는 손해 (1), (2)",
+        "page": 132
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.basic.death",
+      "value": 30000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 기본형 사망",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.basic.grade1",
+      "value": 20000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 기본형 상해등급 1급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.basic.grade2",
+      "value": 10000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 기본형 상해등급 2급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.basic.grade3",
+      "value": 10000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 기본형 상해등급 3급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.basic.grade4",
+      "value": 5000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 기본형 상해등급 4급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.basic.grade5",
+      "value": 5000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 기본형 상해등급 5급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.basic.grade6",
+      "value": 3000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 기본형 상해등급 6급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.basic.grade7",
+      "value": 3000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 기본형 상해등급 7급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.basic.grade8",
+      "value": 0,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 기본형 상해등급 8급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.basic.grade9",
+      "value": 0,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 기본형 상해등급 9급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.basic.grade10",
+      "value": 0,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 기본형 상해등급 10급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.basic.grade11",
+      "value": 0,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 기본형 상해등급 11급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.basic.grade12",
+      "value": 0,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 기본형 상해등급 12급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.basic.grade13",
+      "value": 0,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 기본형 상해등급 13급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.basic.grade14",
+      "value": 0,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 기본형 상해등급 14급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.premium.death",
+      "value": 30000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 고급형 사망",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.premium.grade1",
+      "value": 30000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 고급형 상해등급 1급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.premium.grade2",
+      "value": 20000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 고급형 상해등급 2급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.premium.grade3",
+      "value": 20000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 고급형 상해등급 3급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.premium.grade4",
+      "value": 7000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 고급형 상해등급 4급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.premium.grade5",
+      "value": 7000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 고급형 상해등급 5급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.premium.grade6",
+      "value": 5000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 고급형 상해등급 6급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.premium.grade7",
+      "value": 5000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 고급형 상해등급 7급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.premium.grade8",
+      "value": 0,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 고급형 상해등급 8급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.premium.grade9",
+      "value": 0,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 고급형 상해등급 9급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.premium.grade10",
+      "value": 0,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 고급형 상해등급 10급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.premium.grade11",
+      "value": 0,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 고급형 상해등급 11급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.premium.grade12",
+      "value": 0,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 고급형 상해등급 12급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.premium.grade13",
+      "value": 0,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 고급형 상해등급 13급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.premium.grade14",
+      "value": 0,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 고급형 상해등급 14급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.top.death",
+      "value": 30000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 최고급형 사망",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.top.grade1",
+      "value": 30000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 최고급형 상해등급 1급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.top.grade2",
+      "value": 30000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 최고급형 상해등급 2급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.top.grade3",
+      "value": 30000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 최고급형 상해등급 3급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.top.grade4",
+      "value": 7000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 최고급형 상해등급 4급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.top.grade5",
+      "value": 7000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 최고급형 상해등급 5급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.top.grade6",
+      "value": 5000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 최고급형 상해등급 6급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.top.grade7",
+      "value": 5000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 최고급형 상해등급 7급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.top.grade8",
+      "value": 1000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 최고급형 상해등급 8급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.top.grade9",
+      "value": 1000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 최고급형 상해등급 9급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.top.grade10",
+      "value": 1000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 최고급형 상해등급 10급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.top.grade11",
+      "value": 1000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 최고급형 상해등급 11급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.top.grade12",
+      "value": 1000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 최고급형 상해등급 12급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.top.grade13",
+      "value": 1000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 최고급형 상해등급 13급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.top.grade14",
+      "value": 1000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 최고급형 상해등급 14급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.top2.death",
+      "value": 50000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 최고급형Ⅱ 사망",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.top2.grade1",
+      "value": 50000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 최고급형Ⅱ 상해등급 1급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.top2.grade2",
+      "value": 50000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 최고급형Ⅱ 상해등급 2급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.top2.grade3",
+      "value": 50000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 최고급형Ⅱ 상해등급 3급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.top2.grade4",
+      "value": 10000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 최고급형Ⅱ 상해등급 4급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.top2.grade5",
+      "value": 10000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 최고급형Ⅱ 상해등급 5급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.top2.grade6",
+      "value": 7000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 최고급형Ⅱ 상해등급 6급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.top2.grade7",
+      "value": 7000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 최고급형Ⅱ 상해등급 7급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.top2.grade8",
+      "value": 2000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 최고급형Ⅱ 상해등급 8급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.top2.grade9",
+      "value": 2000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 최고급형Ⅱ 상해등급 9급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.top2.grade10",
+      "value": 2000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 최고급형Ⅱ 상해등급 10급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.top2.grade11",
+      "value": 2000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 최고급형Ⅱ 상해등급 11급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.top2.grade12",
+      "value": 2000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 최고급형Ⅱ 상해등급 12급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.top2.grade13",
+      "value": 2000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 최고급형Ⅱ 상해등급 13급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.settlement.top2.grade14",
+      "value": 2000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도 최고급형Ⅱ 상해등급 14급",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.plans",
+      "value": [
+        "basic",
+        "premium",
+        "top",
+        "top2"
+      ],
+      "unit": "list",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)① 형사합의금 한도표의 가입 유형: 기본형, 고급형, 최고급형, 최고급형Ⅱ",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": "증권의 가입 유형이 이 목록에 없으면 계산하지 않는다."
+    },
+    {
+      "id": "rider.legal.settlement.seriousInjury",
+      "value": 30000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3)② 중상해를 입혀 송치·공소제기된 사고: 3천만원",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.lawyer.limit",
+      "value": 5000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)② 변호사선임비용 (1) 1사고마다 5백만원 한도",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.fine.limit",
+      "value": 20000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)③ 벌금비용 (2) 2,000만원을 한도",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "rider.legal.fine.schoolZoneLimit",
+      "value": 30000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 133쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)③ 벌금비용 (2) 단서: 어린이 보호구역 사고는 3,000만원 한도",
+        "page": 133
+      },
+      "status": "confirmed",
+      "note": ""
+    }
+  ]
+}

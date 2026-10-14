@@ -1,0 +1,122 @@
+{
+  "id": "own-damage",
+  "title": "자기차량손해 지급보험금과 자기부담금",
+  "items": [
+    {
+      "id": "clause.own_damage",
+      "value": "지급보험금 = 피보험자동차에 생긴 손해액 + 비용 − 보험증권에 기재된 자기부담금. 손해액은 보험가입금액을 한도로 하고, 보험가입금액이 보험가액보다 많으면 보험가액을 한도로 한다",
+      "unit": "text",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 55쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "보통약관 제24조(지급보험금의 계산)",
+        "clause": "① 1. 가.~나.",
+        "page": 55
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "ownDamage.deductible.waivedOnTotalLoss",
+      "value": true,
+      "unit": "flag",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 56쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "보통약관 제24조(지급보험금의 계산)",
+        "clause": "① 3. 전부손해이거나 보상할 금액이 보험가입금액 전액 이상이면 자기부담금을 공제하지 않음",
+        "page": 56
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "ownDamage.deductible.onNetOfRecovery",
+      "value": true,
+      "unit": "flag",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 56쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "보통약관 제24조(지급보험금의 계산)",
+        "clause": "① 5. 자기부담금은 실제 손해액에서 구상금을 제외한 금액을 전제로 산정하며, 최종 자기부담금은 최소 자기부담금 이상",
+        "page": 56
+      },
+      "status": "confirmed",
+      "note": "과실이 양쪽에 있는 사고에서는 상대방 대물배상이 처리하는 금액(구상금)을 뺀 나머지 손해액에 자기부담금 비율을 적용한다."
+    },
+    {
+      "id": "ownDamage.deductible.options",
+      "value": [
+        {
+          "ratePercent": 20,
+          "min": 50000,
+          "max": 500000
+        },
+        {
+          "ratePercent": 20,
+          "min": 100000,
+          "max": 500000
+        },
+        {
+          "ratePercent": 20,
+          "min": 150000,
+          "max": 500000
+        },
+        {
+          "ratePercent": 20,
+          "min": 200000,
+          "max": 500000
+        },
+        {
+          "ratePercent": 20,
+          "min": 300000,
+          "max": 1000000
+        },
+        {
+          "ratePercent": 30,
+          "min": 300000,
+          "max": 1000000
+        },
+        {
+          "ratePercent": 30,
+          "min": 500000,
+          "max": 2000000
+        }
+      ],
+      "unit": "table",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 24쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "자동차보험의 구성 「자기차량손해」",
+        "clause": "자기부담금: 손해액의 20%(최소 5/10/15/20만원·최대 50만원, 최소 30만원·최대 100만원) 또는 30%(최소 30만원·최대 100만원, 최소 50만원·최대 200만원)",
+        "page": 24
+      },
+      "status": "confirmed",
+      "note": "약관이 안내하는 자기부담금 조합이다. 실제 비율·최소·최대는 증권에 적힌 값을 쓰고, 이 표에 없는 조합이면 확인 필요 표시를 붙인다."
+    }
+  ]
+}

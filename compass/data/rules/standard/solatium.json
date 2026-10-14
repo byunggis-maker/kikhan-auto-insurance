@@ -1,0 +1,527 @@
+{
+  "id": "solatium",
+  "title": "위자료 (부상·사망·후유장애)",
+  "items": [
+    {
+      "id": "solatium.injury.grade1",
+      "value": 2000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 77쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표1> 대인배상, 무보험자동차에 의한 상해 보험금 지급기준",
+        "clause": "나. 부상 2. 위자료 나. 지급기준 1급",
+        "page": 77
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "solatium.injury.grade2",
+      "value": 1760000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 77쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표1> 대인배상, 무보험자동차에 의한 상해 보험금 지급기준",
+        "clause": "나. 부상 2. 위자료 나. 지급기준 2급",
+        "page": 77
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "solatium.injury.grade3",
+      "value": 1520000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 77쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표1> 대인배상, 무보험자동차에 의한 상해 보험금 지급기준",
+        "clause": "나. 부상 2. 위자료 나. 지급기준 3급",
+        "page": 77
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "solatium.injury.grade4",
+      "value": 1280000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 77쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표1> 대인배상, 무보험자동차에 의한 상해 보험금 지급기준",
+        "clause": "나. 부상 2. 위자료 나. 지급기준 4급",
+        "page": 77
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "solatium.injury.grade5",
+      "value": 750000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 77쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표1> 대인배상, 무보험자동차에 의한 상해 보험금 지급기준",
+        "clause": "나. 부상 2. 위자료 나. 지급기준 5급",
+        "page": 77
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "solatium.injury.grade6",
+      "value": 500000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 77쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표1> 대인배상, 무보험자동차에 의한 상해 보험금 지급기준",
+        "clause": "나. 부상 2. 위자료 나. 지급기준 6급",
+        "page": 77
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "solatium.injury.grade7",
+      "value": 400000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 77쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표1> 대인배상, 무보험자동차에 의한 상해 보험금 지급기준",
+        "clause": "나. 부상 2. 위자료 나. 지급기준 7급",
+        "page": 77
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "solatium.injury.grade8",
+      "value": 300000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 77쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표1> 대인배상, 무보험자동차에 의한 상해 보험금 지급기준",
+        "clause": "나. 부상 2. 위자료 나. 지급기준 8급",
+        "page": 77
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "solatium.injury.grade9",
+      "value": 250000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 77쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표1> 대인배상, 무보험자동차에 의한 상해 보험금 지급기준",
+        "clause": "나. 부상 2. 위자료 나. 지급기준 9급",
+        "page": 77
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "solatium.injury.grade10",
+      "value": 200000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 77쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표1> 대인배상, 무보험자동차에 의한 상해 보험금 지급기준",
+        "clause": "나. 부상 2. 위자료 나. 지급기준 10급",
+        "page": 77
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "solatium.injury.grade11",
+      "value": 200000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 77쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표1> 대인배상, 무보험자동차에 의한 상해 보험금 지급기준",
+        "clause": "나. 부상 2. 위자료 나. 지급기준 11급",
+        "page": 77
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "solatium.injury.grade12",
+      "value": 150000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 77쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표1> 대인배상, 무보험자동차에 의한 상해 보험금 지급기준",
+        "clause": "나. 부상 2. 위자료 나. 지급기준 12급",
+        "page": 77
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "solatium.injury.grade13",
+      "value": 150000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 77쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표1> 대인배상, 무보험자동차에 의한 상해 보험금 지급기준",
+        "clause": "나. 부상 2. 위자료 나. 지급기준 13급",
+        "page": 77
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "solatium.injury.grade14",
+      "value": 150000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 77쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표1> 대인배상, 무보험자동차에 의한 상해 보험금 지급기준",
+        "clause": "나. 부상 2. 위자료 나. 지급기준 14급",
+        "page": 77
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "solatium.ageThreshold",
+      "value": 65,
+      "unit": "years",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 73쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표1> 대인배상, 무보험자동차에 의한 상해 보험금 지급기준",
+        "clause": "가. 사망 2. 위자료 / 다. 후유장애 1. 위자료 (65세 미만·이상)",
+        "page": 73
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "solatium.death.under",
+      "value": 80000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 73쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표1> 대인배상, 무보험자동차에 의한 상해 보험금 지급기준",
+        "clause": "가. 사망 2. 위자료 가.(1) 65세 미만",
+        "page": 73
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "solatium.death.over",
+      "value": 50000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 73쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표1> 대인배상, 무보험자동차에 의한 상해 보험금 지급기준",
+        "clause": "가. 사망 2. 위자료 가.(2) 65세 이상",
+        "page": 73
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "solatium.disability.highThresholdPercent",
+      "value": 50,
+      "unit": "percent",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 78쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표1> 대인배상, 무보험자동차에 의한 상해 보험금 지급기준",
+        "clause": "다. 후유장애 1. 위자료 나.(1) 노동능력상실률 50% 이상",
+        "page": 78
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "solatium.disability.high.under",
+      "value": 45000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 78쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표1> 대인배상, 무보험자동차에 의한 상해 보험금 지급기준",
+        "clause": "다. 후유장애 1. 위자료 나.(1)(가) 65세 미만",
+        "page": 78
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "solatium.disability.high.over",
+      "value": 40000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 78쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표1> 대인배상, 무보험자동차에 의한 상해 보험금 지급기준",
+        "clause": "다. 후유장애 1. 위자료 나.(1)(나) 65세 이상",
+        "page": 78
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "solatium.disability.high.factorPercent",
+      "value": 85,
+      "unit": "percent",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 78쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표1> 대인배상, 무보험자동차에 의한 상해 보험금 지급기준",
+        "clause": "다. 후유장애 1. 위자료 나.(1) × 노동능력상실률 × 85%",
+        "page": 78
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "solatium.disability.lowBands",
+      "value": [
+        {
+          "fromPercent": 45,
+          "toPercent": 50,
+          "amount": 4000000
+        },
+        {
+          "fromPercent": 35,
+          "toPercent": 45,
+          "amount": 2400000
+        },
+        {
+          "fromPercent": 27,
+          "toPercent": 35,
+          "amount": 2000000
+        },
+        {
+          "fromPercent": 20,
+          "toPercent": 27,
+          "amount": 1600000
+        },
+        {
+          "fromPercent": 14,
+          "toPercent": 20,
+          "amount": 1200000
+        },
+        {
+          "fromPercent": 9,
+          "toPercent": 14,
+          "amount": 1000000
+        },
+        {
+          "fromPercent": 5,
+          "toPercent": 9,
+          "amount": 800000
+        },
+        {
+          "fromPercent": 0,
+          "toPercent": 5,
+          "amount": 500000
+        }
+      ],
+      "unit": "table",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 79쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표1> 대인배상, 무보험자동차에 의한 상해 보험금 지급기준",
+        "clause": "다. 후유장애 1. 위자료 나.(2) 노동능력상실률 50% 미만",
+        "page": 79
+      },
+      "status": "confirmed",
+      "note": "각 구간은 fromPercent 이상 toPercent 미만. 맨 아래 구간만 0 초과 5 미만."
+    },
+    {
+      "id": "solatium.disability.overlap",
+      "value": "larger_only",
+      "unit": "enum",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 79쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표1> 대인배상, 무보험자동차에 의한 상해 보험금 지급기준",
+        "clause": "다. 후유장애 1. 위자료 다. 부상 위자료 해당액이 더 많은 경우 그 금액을 후유장애 위자료로 지급",
+        "page": 79
+      },
+      "status": "needs_check",
+      "note": "후유장애 위자료를 줄 때 부상 위자료를 따로 또 주는지는 약관 문구만으로 확실하지 않다. 최소·예상은 둘 중 큰 금액 하나만 주는 것으로 계산한다."
+    },
+    {
+      "id": "solatium.disability.overlapMax",
+      "value": "sum_both",
+      "unit": "enum",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 79쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표1> 대인배상, 무보험자동차에 의한 상해 보험금 지급기준",
+        "clause": "다. 후유장애 1. 위자료 다. 부상 위자료 해당액이 더 많은 경우 그 금액을 후유장애 위자료로 지급",
+        "page": 79
+      },
+      "status": "needs_check",
+      "note": "해석이 갈리는 부분이라 최대값은 부상 위자료와 후유장애 위자료를 둘 다 더한 금액으로 계산한다(2026-10-13 사용자 지시). 결과에 '해석에 따라 금액 차이 있음'을 표시한다."
+    }
+  ]
+}

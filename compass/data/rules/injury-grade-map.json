@@ -1,0 +1,3165 @@
+{
+  "id": "injury-grade-map",
+  "version": "2025-11-26",
+  "title": "상해급수(1~14급) 후보 찾기용 상해 구분표",
+  "source": {
+    "law": "자동차손해배상보장법 시행령 [별표 1] 상해의 구분과 책임보험금의 한도금액(제3조제1항제2호 관련) 1. 상해 구분별 한도금액",
+    "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정) <붙임>",
+    "pages": "85~90쪽",
+    "guidelines": "같은 별표의 2. 영역별 세부지침(91~92쪽)은 이 파일에 옮기지 않았다. 병급, 보존적 치료 시 하향 등으로 급수가 달라질 수 있다."
+  },
+  "effectiveFrom": "2025-11-26",
+  "effectiveFromStatus": "needs_check",
+  "items": [
+    {
+      "id": "g1-1",
+      "grade": 1,
+      "no": 1,
+      "text": "수술 여부와 상관없이 뇌손상으로 신경학적 증상이 고도인 상해 (신경학적 증상이 48시간 이상 지속되는 경우에 해당한다)",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 1급 1호",
+      "page": 85,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g1-2",
+      "grade": 1,
+      "no": 2,
+      "text": "양안 안구 파열로 안구 적출술 또는 안구내용 제거술과 의안 삽입술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 1급 2호",
+      "page": 85,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g1-3",
+      "grade": 1,
+      "no": 3,
+      "text": "심장 파열로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 1급 3호",
+      "page": 85,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g1-4",
+      "grade": 1,
+      "no": 4,
+      "text": "흉부 대동맥 손상 또는 이에 준하는 대혈관 손상으로 수술 또는 스탠트그라프트 삽입술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 1급 4호",
+      "page": 85,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g1-5",
+      "grade": 1,
+      "no": 5,
+      "text": "척주(등골뼈) 손상으로 완전 사지마비 또는 완전 하반신마비를 동반한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 1급 5호",
+      "page": 85,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g1-6",
+      "grade": 1,
+      "no": 6,
+      "text": "척수 손상을 동반한 불안정성 방출성 척추 골절",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 1급 6호",
+      "page": 85,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g1-7",
+      "grade": 1,
+      "no": 7,
+      "text": "척수 손상을 동반한 척추 신연손상 또는 전위성(회전성) 골절",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 1급 7호",
+      "page": 85,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g1-8",
+      "grade": 1,
+      "no": 8,
+      "text": "상완신경총 완전 손상으로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 1급 8호",
+      "page": 85,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g1-9",
+      "grade": 1,
+      "no": 9,
+      "text": "위팔 부위 완전 절단(팔꿈치관절 부위 분리절단을 포함한다) 소실로 재접합술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 1급 9호",
+      "page": 85,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g1-10",
+      "grade": 1,
+      "no": 10,
+      "text": "불안정성 골반골 골절로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 1급 10호",
+      "page": 85,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g1-11",
+      "grade": 1,
+      "no": 11,
+      "text": "비구 골절 또는 비구 골절 탈구로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 1급 11호",
+      "page": 85,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g1-12",
+      "grade": 1,
+      "no": 12,
+      "text": "넓적다리 부위 완전 절단(무릎관절 부위 분리절단을 포함한다) 소실로 재접합술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 1급 12호",
+      "page": 85,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g1-13",
+      "grade": 1,
+      "no": 13,
+      "text": "골의 분절 소실로 유리생골 이식술 을 시행한 상해 (근육, 근막 또는 피부 등 연부 조직을 포함한 경우에 해당한다)",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 1급 13호",
+      "page": 85,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g1-14",
+      "grade": 1,
+      "no": 14,
+      "text": "화상 좌창 괴사창 등 연부 조직의 심한 손상이 몸 표면의 9퍼센트 이상인 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 1급 14호",
+      "page": 85,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g1-15",
+      "grade": 1,
+      "no": 15,
+      "text": "그 밖에 1급에 해당한다고 인정되는 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 1급 15호",
+      "page": 85,
+      "surgery": "any",
+      "catchAll": true,
+      "status": "confirmed"
+    },
+    {
+      "id": "g2-1",
+      "grade": 2,
+      "no": 1,
+      "text": "뇌손상으로 신경학적 증상이 중등도인 상해 (신경학적 증상이 48시간 이상 지속되는 경우로 수술을 시행한 경우에 적용한다)",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 2급 1호",
+      "page": 85,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g2-2",
+      "grade": 2,
+      "no": 2,
+      "text": "흉부 기관, 기관지 파열, 폐 손상 또는 식도 손상으로 절제술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 2급 2호",
+      "page": 85,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g2-3",
+      "grade": 2,
+      "no": 3,
+      "text": "내부 장기 손상으로 장기의 일부분이라도 적출 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 2급 3호",
+      "page": 85,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g2-4",
+      "grade": 2,
+      "no": 4,
+      "text": "신장 파열로 수술한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 2급 4호",
+      "page": 85,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g2-5",
+      "grade": 2,
+      "no": 5,
+      "text": "척주 손상으로 불완전 사지마비를 동반한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 2급 5호",
+      "page": 85,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g2-6",
+      "grade": 2,
+      "no": 6,
+      "text": "신경 손상 없는 불안정성 방출성 척추 골절로 수술적 고정술을 시행한 상해 또는 목뼈 골절 (치돌기 골절을 포함한다) 또는 탈구로 목뼈고정기(할로베스트)나 수술적 고정술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 2급 6호",
+      "page": 85,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g2-7",
+      "grade": 2,
+      "no": 7,
+      "text": "상완 신경총 상부간부 또는 하부간부의 완전 손상으로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 2급 7호",
+      "page": 85,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g2-8",
+      "grade": 2,
+      "no": 8,
+      "text": "아래팔 완전 절단(손목관절 부위 분리절단을 포함한다) 소실로 재접합술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 2급 8호",
+      "page": 85,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g2-9",
+      "grade": 2,
+      "no": 9,
+      "text": "엉덩관절의 골절성 탈구로 수술을 시행한 상해(비구 골절을 동반하지 않은 경우에 적용한다)",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 2급 9호",
+      "page": 85,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g2-10",
+      "grade": 2,
+      "no": 10,
+      "text": "넓적다리뼈머리 골절로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 2급 10호",
+      "page": 85,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g2-11",
+      "grade": 2,
+      "no": 11,
+      "text": "넓적다리뼈 윗목부 분쇄 골절, 돌기 아랫부분 분쇄 골절, 관절융기 분쇄 골절, 정강이뼈(경골) 관절융기 분쇄 골절 또는 정강이뼈 먼쪽 관절내 분쇄 골절",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 2급 11호",
+      "page": 85,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g2-12",
+      "grade": 2,
+      "no": 12,
+      "text": "무릎관절의 골절 및 탈구로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 2급 12호",
+      "page": 85,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g2-13",
+      "grade": 2,
+      "no": 13,
+      "text": "종아리 완전 절단(발목관절 부위 분리절단을 포함한다) 소실로 재접합술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 2급 13호",
+      "page": 85,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g2-14",
+      "grade": 2,
+      "no": 14,
+      "text": "팔다리 연부 조직에 손상이 심하여 유리 피판술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 2급 14호",
+      "page": 85,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g2-15",
+      "grade": 2,
+      "no": 15,
+      "text": "그 밖에 2급에 해당한다고 인정되는 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 2급 15호",
+      "page": 85,
+      "surgery": "any",
+      "catchAll": true,
+      "status": "confirmed"
+    },
+    {
+      "id": "g3-1",
+      "grade": 3,
+      "no": 1,
+      "text": "뇌손상으로 신경학적 증상이 고도인 상해 (신경학적 증상이 48시간 미만 지속되는 경우로 수술을 시행한 경우에 해당한다)",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 3급 1호",
+      "page": 85,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g3-2",
+      "grade": 3,
+      "no": 2,
+      "text": "뇌손상으로 신경학적 증상이 중등도인 상해 (신경학적 증상이 48시간 이상 지속되는 경우로 수술을 시행하지 않은 경우에 해당한다)",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 3급 2호",
+      "page": 85,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g3-3",
+      "grade": 3,
+      "no": 3,
+      "text": "단안 안구 적출술 또는 안구 내용 제거술과 의안 삽입술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 3급 3호",
+      "page": 85,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g3-4",
+      "grade": 3,
+      "no": 4,
+      "text": "흉부 대동맥 손상 또는 이에 준하는 대혈관 손상으로 수술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 3급 4호",
+      "page": 85,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g3-5",
+      "grade": 3,
+      "no": 5,
+      "text": "절제술을 제외한 개흉 또는 흉강경 수술을 시행한 상해 (진단적 목적으로 시행한 경우에는 4급에 해당한다)",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 3급 5호",
+      "page": 85,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g3-6",
+      "grade": 3,
+      "no": 6,
+      "text": "요도 파열로 요도 성형술 또는 요도 내시경을 이용한 요도 절개술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 3급 6호",
+      "page": 85,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g3-7",
+      "grade": 3,
+      "no": 7,
+      "text": "내부 장기 손상(장간막 파열을 포함한다)으로 장기 적출 없이 재건수술 또는 지혈수술 등을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 3급 7호",
+      "page": 85,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g3-8",
+      "grade": 3,
+      "no": 8,
+      "text": "척주 손상으로 불완전 하반신마비를 동반한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 3급 8호",
+      "page": 85,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g3-9",
+      "grade": 3,
+      "no": 9,
+      "text": "어깨관절 골절 및 탈구로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 3급 9호",
+      "page": 86,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g3-10",
+      "grade": 3,
+      "no": 10,
+      "text": "위팔 부위 완전 절단(팔꿈치관절 부위 분리절단을 포함한다) 소실로 재접합술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 3급 10호",
+      "page": 86,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g3-11",
+      "grade": 3,
+      "no": 11,
+      "text": "팔꿈치관절 골절 및 탈구로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 3급 11호",
+      "page": 86,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g3-12",
+      "grade": 3,
+      "no": 12,
+      "text": "손목 부위 완전 절단 소실로 재접합술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 3급 12호",
+      "page": 86,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g3-13",
+      "grade": 3,
+      "no": 13,
+      "text": "넓적다리뼈 또는 정강이뼈 골절(넓적다리뼈머리 골절은 제외한다)",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 3급 13호",
+      "page": 86,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g3-14",
+      "grade": 3,
+      "no": 14,
+      "text": "넓적다리 부위 완전 절단(무릎관절 부위 분리절단을 포함한다) 소실로 재접합술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 3급 14호",
+      "page": 86,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g3-15",
+      "grade": 3,
+      "no": 15,
+      "text": "무릎관절의 전방 및 후방 십자인대의 파열",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 3급 15호",
+      "page": 86,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g3-16",
+      "grade": 3,
+      "no": 16,
+      "text": "발목관절 골절 및 탈구로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 3급 16호",
+      "page": 86,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g3-17",
+      "grade": 3,
+      "no": 17,
+      "text": "발목관절의 손상으로 발목뼈의 완전탈구가 동반된 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 3급 17호",
+      "page": 86,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g3-18",
+      "grade": 3,
+      "no": 18,
+      "text": "발목 완전 절단 소실로 재접합술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 3급 18호",
+      "page": 86,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g3-19",
+      "grade": 3,
+      "no": 19,
+      "text": "그 밖에 3급에 해당한다고 인정되는 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 3급 19호",
+      "page": 86,
+      "surgery": "any",
+      "catchAll": true,
+      "status": "confirmed"
+    },
+    {
+      "id": "g4-1",
+      "grade": 4,
+      "no": 1,
+      "text": "뇌손상으로 신경학적 증상이 고도인 상해 (신경학적 증상이 48시간 미만 지속되는 경우로 수술을 시행하지 않은 경우에 해당한다)",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 4급 1호",
+      "page": 86,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g4-2",
+      "grade": 4,
+      "no": 2,
+      "text": "각막 이식술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 4급 2호",
+      "page": 86,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g4-3",
+      "grade": 4,
+      "no": 3,
+      "text": "후안부 안내 수술을 시행한 상해(유리체 출혈, 망막박리 등으로 수술을 시행한 경우에 적용한다)",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 4급 3호",
+      "page": 86,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g4-4",
+      "grade": 4,
+      "no": 4,
+      "text": "흉부 또는 복합 손상으로 인공호흡기를 시행한 상해(기관절개술을 시행한 경우도 포함한다)",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 4급 4호",
+      "page": 86,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g4-5",
+      "grade": 4,
+      "no": 5,
+      "text": "진단적 목적으로 복부 또는 흉부 수술을 시행한 상해(복강경 또는 흉강경 수술도 포함한다)",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 4급 5호",
+      "page": 86,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g4-6",
+      "grade": 4,
+      "no": 6,
+      "text": "상완신경총 완전 손상으로 수술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 4급 6호",
+      "page": 86,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g4-7",
+      "grade": 4,
+      "no": 7,
+      "text": "상완신경총 불완전 손상(2개 이상의 주요 말초신경 장애를 보이는 손상에 적용한다)으로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 4급 7호",
+      "page": 86,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g4-8",
+      "grade": 4,
+      "no": 8,
+      "text": "위팔뼈목 골절",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 4급 8호",
+      "page": 86,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g4-9",
+      "grade": 4,
+      "no": 9,
+      "text": "위팔뼈 몸통 분쇄성 골절",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 4급 9호",
+      "page": 86,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g4-10",
+      "grade": 4,
+      "no": 10,
+      "text": "위팔뼈 위관절융기 또는 위팔뼈 먼쪽 부위 관절내 골절(경과 골절, 과간 골절, 내과 골절, 작은 머리 골절에 적용한다)로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 4급 10호",
+      "page": 86,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g4-11",
+      "grade": 4,
+      "no": 11,
+      "text": "노뼈 먼쪽 부위 골절과 자뼈머리 탈구가 동반된 상해(갈레아찌 골절을 말한다)",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 4급 11호",
+      "page": 86,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g4-12",
+      "grade": 4,
+      "no": 12,
+      "text": "자뼈 몸쪽 부위 골절과 노뼈머리 탈구가 동반된 상해(몬테지아 골절을 말한다)",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 4급 12호",
+      "page": 86,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g4-13",
+      "grade": 4,
+      "no": 13,
+      "text": "아래팔 완전 절단(손목관절 부위 분리절단을 포함한다) 소실로 재접합술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 4급 13호",
+      "page": 86,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g4-14",
+      "grade": 4,
+      "no": 14,
+      "text": "노손목관절 골절 및 탈구(손목뼈간 관절 탈구, 먼쪽 노자관절 탈구를 포함한다)로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 4급 14호",
+      "page": 86,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g4-15",
+      "grade": 4,
+      "no": 15,
+      "text": "손목뼈 골절 및 탈구가 동반된 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 4급 15호",
+      "page": 86,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g4-16",
+      "grade": 4,
+      "no": 16,
+      "text": "무지 또는 다발성 손가락의 완전 절단 소실로 재접합술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 4급 16호",
+      "page": 86,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g4-17",
+      "grade": 4,
+      "no": 17,
+      "text": "불안정성 골반뼈 골절로 수술하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 4급 17호",
+      "page": 86,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g4-18",
+      "grade": 4,
+      "no": 18,
+      "text": "골반고리가 안정적인 골반뼈 골절(엉치뼈 골절 및 꼬리뼈 골절을 포함한다)로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 4급 18호",
+      "page": 86,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g4-19",
+      "grade": 4,
+      "no": 19,
+      "text": "골반뼈 관절의 분리로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 4급 19호",
+      "page": 86,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g4-20",
+      "grade": 4,
+      "no": 20,
+      "text": "비구 골절 또는 비구 골절 탈구로 수술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 4급 20호",
+      "page": 86,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g4-21",
+      "grade": 4,
+      "no": 21,
+      "text": "무릎관절 탈구로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 4급 21호",
+      "page": 86,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g4-22",
+      "grade": 4,
+      "no": 22,
+      "text": "종아리 완전 절단(발목관절 부위 분리절단을 포함한다) 소실로 재접합술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 4급 22호",
+      "page": 86,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g4-23",
+      "grade": 4,
+      "no": 23,
+      "text": "목말뼈 또는 발꿈치뼈 골절",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 4급 23호",
+      "page": 86,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g4-24",
+      "grade": 4,
+      "no": 24,
+      "text": "무족지 또는 다발성 발가락의 완전 절단 소실로 재접합술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 4급 24호",
+      "page": 86,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g4-25",
+      "grade": 4,
+      "no": 25,
+      "text": "팔다리의 연부 조직에 손상이 심하여 유경 피판술 또는 원거리 피판술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 4급 25호",
+      "page": 86,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g4-26",
+      "grade": 4,
+      "no": 26,
+      "text": "화상, 좌창, 괴사창 등으로 연부 조직의 손상이 몸 표면의 약 4.5퍼센트 이상인 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 4급 26호",
+      "page": 86,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g4-27",
+      "grade": 4,
+      "no": 27,
+      "text": "그 밖에 4급에 해당한다고 인정되는 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 4급 27호",
+      "page": 86,
+      "surgery": "any",
+      "catchAll": true,
+      "status": "confirmed"
+    },
+    {
+      "id": "g5-1",
+      "grade": 5,
+      "no": 1,
+      "text": "뇌손상으로 신경학적 증상이 중등도에 해당하는 상해 (신경학적 증상이 48시간 미만 지속되는 경우로 수술을 시행한 경우에 적용한다)",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 5급 1호",
+      "page": 86,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g5-2",
+      "grade": 5,
+      "no": 2,
+      "text": "안와 골절에 의한 겹보임[복시(複視)]으로 안와 골절 재건술과 사시 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 5급 2호",
+      "page": 86,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g5-3",
+      "grade": 5,
+      "no": 3,
+      "text": "복강내 출혈 또는 장기 파열 등으로 중재적 방사선학적 시술을 통하여 지혈술을 시행하거나 경피적 배액술 등을 시행하여 보존적으로 치료한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 5급 3호",
+      "page": 86,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g5-4",
+      "grade": 5,
+      "no": 4,
+      "text": "안정성 추체 골절",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 5급 4호",
+      "page": 86,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g5-5",
+      "grade": 5,
+      "no": 5,
+      "text": "상완 신경총 상부 몸통 또는 하부 몸통의 완전 손상으로 수술하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 5급 5호",
+      "page": 86,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g5-6",
+      "grade": 5,
+      "no": 6,
+      "text": "위팔뼈 몸통 골절",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 5급 6호",
+      "page": 86,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g5-7",
+      "grade": 5,
+      "no": 7,
+      "text": "노뼈머리 또는 자뼈 갈고리돌기 골절로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 5급 7호",
+      "page": 86,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g5-8",
+      "grade": 5,
+      "no": 8,
+      "text": "노뼈와 자뼈의 몸통 골절이 동반된 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 5급 8호",
+      "page": 87,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g5-9",
+      "grade": 5,
+      "no": 9,
+      "text": "노뼈 붓돌기 골절",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 5급 9호",
+      "page": 87,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g5-10",
+      "grade": 5,
+      "no": 10,
+      "text": "노뼈 먼쪽부위 관절내 골절",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 5급 10호",
+      "page": 87,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g5-11",
+      "grade": 5,
+      "no": 11,
+      "text": "손목 손배뼈 골절",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 5급 11호",
+      "page": 87,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g5-12",
+      "grade": 5,
+      "no": 12,
+      "text": "수근부 완전 절단 소실로 재접합술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 5급 12호",
+      "page": 87,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g5-13",
+      "grade": 5,
+      "no": 13,
+      "text": "무지를 제외한 단일 수지의 완전 절단 소실로 재접합술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 5급 13호",
+      "page": 87,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g5-14",
+      "grade": 5,
+      "no": 14,
+      "text": "엉덩관절의 골절성 탈구로 수술을 시행하지 않은 상해(비구 골절을 동반하지 않은 경우에 해당한다)",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 5급 14호",
+      "page": 87,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g5-15",
+      "grade": 5,
+      "no": 15,
+      "text": "엉덩관절 탈구로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 5급 15호",
+      "page": 87,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g5-16",
+      "grade": 5,
+      "no": 16,
+      "text": "넓적다리뼈머리 골절로 수술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 5급 16호",
+      "page": 87,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g5-17",
+      "grade": 5,
+      "no": 17,
+      "text": "넓적다리뼈 또는 몸쪽 정강이뼈의 견열골절",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 5급 17호",
+      "page": 87,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g5-18",
+      "grade": 5,
+      "no": 18,
+      "text": "무릎관절의 골절 및 탈구로 수술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 5급 18호",
+      "page": 87,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g5-19",
+      "grade": 5,
+      "no": 19,
+      "text": "무릎관절의 전방 또는 후방 십자인대의 파열",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 5급 19호",
+      "page": 87,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g5-20",
+      "grade": 5,
+      "no": 20,
+      "text": "무릎뼈 골절",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 5급 20호",
+      "page": 87,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g5-21",
+      "grade": 5,
+      "no": 21,
+      "text": "발목관절의 양과 골절 또는 삼과 골절(내과, 외과, 후과를 말한다)",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 5급 21호",
+      "page": 87,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g5-22",
+      "grade": 5,
+      "no": 22,
+      "text": "발목관절 탈구로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 5급 22호",
+      "page": 87,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g5-23",
+      "grade": 5,
+      "no": 23,
+      "text": "그 밖의 발목뼈 골절(목말뼈 및 발꿈치뼈는 제외한다)",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 5급 23호",
+      "page": 87,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g5-24",
+      "grade": 5,
+      "no": 24,
+      "text": "발목발허리(리스프랑)관절 손상",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 5급 24호",
+      "page": 87,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g5-25",
+      "grade": 5,
+      "no": 25,
+      "text": "3개 이상의 발허리뼈 골절로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 5급 25호",
+      "page": 87,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g5-26",
+      "grade": 5,
+      "no": 26,
+      "text": "발목 완전 절단 소실로 재접합술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 5급 26호",
+      "page": 87,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g5-27",
+      "grade": 5,
+      "no": 27,
+      "text": "무족지를 제외한 단일 발가락의 완전 절단 소실로 재접합술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 5급 27호",
+      "page": 87,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g5-28",
+      "grade": 5,
+      "no": 28,
+      "text": "아킬레스건, 무릎인대, 넓적다리 사두건 또는 넓적다리 이두건 파열로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 5급 28호",
+      "page": 87,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g5-29",
+      "grade": 5,
+      "no": 29,
+      "text": "팔다리 근육 또는 힘줄 파열로 6개 이상의 근육 또는 힘줄 봉합술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 5급 29호",
+      "page": 87,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g5-30",
+      "grade": 5,
+      "no": 30,
+      "text": "다발성 팔다리의 주요 혈관 손상으로 봉합술 또는 이식술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 5급 30호",
+      "page": 87,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g5-31",
+      "grade": 5,
+      "no": 31,
+      "text": "팔다리의 주요 말초 신경 손상으로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 5급 31호",
+      "page": 87,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g5-32",
+      "grade": 5,
+      "no": 32,
+      "text": "23치 이상의 치과보철을 필요로 하는 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 5급 32호",
+      "page": 87,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g5-33",
+      "grade": 5,
+      "no": 33,
+      "text": "그 밖에 5급에 해당한다고 인정되는 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 5급 33호",
+      "page": 87,
+      "surgery": "any",
+      "catchAll": true,
+      "status": "confirmed"
+    },
+    {
+      "id": "g6-1",
+      "grade": 6,
+      "no": 1,
+      "text": "뇌손상으로 신경학증상이 경도인 상해(수술을 시행한 경우에 적용한다)",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 6급 1호",
+      "page": 87,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g6-2",
+      "grade": 6,
+      "no": 2,
+      "text": "뇌손상으로 신경학적 증상이 중등도에 해당하는 상해 (신경학적 증상이 48시간 미만 지속되는 경우로 수술을 시행하지 않은 경우에 적용한다)",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 6급 2호",
+      "page": 87,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g6-3",
+      "grade": 6,
+      "no": 3,
+      "text": "전안부 안내 수술을 시행한 상해(외상성 백내장, 녹내장 등으로 수술을 시행한 경우에 적용한다)",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 6급 3호",
+      "page": 87,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g6-4",
+      "grade": 6,
+      "no": 4,
+      "text": "심장 타박",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 6급 4호",
+      "page": 87,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g6-5",
+      "grade": 6,
+      "no": 5,
+      "text": "폐타박상(일측 폐의 50퍼센트 이상 면적을 흉부 CT 등에서 확인한 경우에 한정한다)",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 6급 5호",
+      "page": 87,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g6-6",
+      "grade": 6,
+      "no": 6,
+      "text": "요도 파열로 유치 카테타, 부지 삽입술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 6급 6호",
+      "page": 87,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g6-7",
+      "grade": 6,
+      "no": 7,
+      "text": "혈흉(혈액가슴증) 또는 기흉(공기가슴증)이 발생하여 폐쇄식 흉관 삽관수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 6급 7호",
+      "page": 87,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g6-8",
+      "grade": 6,
+      "no": 8,
+      "text": "어깨관절의 회전근개 파열로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 6급 8호",
+      "page": 87,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g6-9",
+      "grade": 6,
+      "no": 9,
+      "text": "외상성 상부관절와순 파열로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 6급 9호",
+      "page": 87,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g6-10",
+      "grade": 6,
+      "no": 10,
+      "text": "어깨관절 탈구로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 6급 10호",
+      "page": 87,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g6-11",
+      "grade": 6,
+      "no": 11,
+      "text": "어깨관절의 골절 및 탈구로 수술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 6급 11호",
+      "page": 87,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g6-12",
+      "grade": 6,
+      "no": 12,
+      "text": "위팔뼈 대결절 견열 골절",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 6급 12호",
+      "page": 87,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g6-13",
+      "grade": 6,
+      "no": 13,
+      "text": "위팔뼈 먼쪽 부위 견열골절(외상과 골절, 내상과 골절 등에 해당한다)",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 6급 13호",
+      "page": 87,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g6-14",
+      "grade": 6,
+      "no": 14,
+      "text": "팔꿈치관절 골절 및 탈구로 수술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 6급 14호",
+      "page": 87,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g6-15",
+      "grade": 6,
+      "no": 15,
+      "text": "팔꿈치관절 탈구로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 6급 15호",
+      "page": 87,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g6-16",
+      "grade": 6,
+      "no": 16,
+      "text": "팔꿈치관절 내측 또는 외측 측부 인대 파열로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 6급 16호",
+      "page": 87,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g6-17",
+      "grade": 6,
+      "no": 17,
+      "text": "노뼈 몸통 또는 먼쪽 부위 관절외 골절",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 6급 17호",
+      "page": 87,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g6-18",
+      "grade": 6,
+      "no": 18,
+      "text": "노뼈목 골절",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 6급 18호",
+      "page": 87,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g6-19",
+      "grade": 6,
+      "no": 19,
+      "text": "자뼈 팔꿈치머리 부위 골절",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 6급 19호",
+      "page": 87,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g6-20",
+      "grade": 6,
+      "no": 20,
+      "text": "자뼈 몸통 골절(몸쪽 부위 골절은 제외한다)",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 6급 20호",
+      "page": 87,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g6-21",
+      "grade": 6,
+      "no": 21,
+      "text": "다발성 손목손허리뼈 관절 탈구 또는 다발성 골절탈구",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 6급 21호",
+      "page": 87,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g6-22",
+      "grade": 6,
+      "no": 22,
+      "text": "무지 또는 다발성 손가락의 완전 절단 소실로 재접합술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 6급 22호",
+      "page": 87,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g6-23",
+      "grade": 6,
+      "no": 23,
+      "text": "무릎관절 탈구로 수술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 6급 23호",
+      "page": 87,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g6-24",
+      "grade": 6,
+      "no": 24,
+      "text": "무릎관절 내측 또는 외측 측부인대 파열로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 6급 24호",
+      "page": 88,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g6-25",
+      "grade": 6,
+      "no": 25,
+      "text": "반월상(반달모양) 연골 파열로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 6급 25호",
+      "page": 88,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g6-26",
+      "grade": 6,
+      "no": 26,
+      "text": "발목관절 골절 및 탈구로 수술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 6급 26호",
+      "page": 88,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g6-27",
+      "grade": 6,
+      "no": 27,
+      "text": "발목관절 내측 또는 외측 측부인대의 파열 또는 골절을 동반하지 않은 먼쪽 정강이뼈ㆍ종아리뼈 분리",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 6급 27호",
+      "page": 88,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g6-28",
+      "grade": 6,
+      "no": 28,
+      "text": "2개 이하의 발허리뼈 골절로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 6급 28호",
+      "page": 88,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g6-29",
+      "grade": 6,
+      "no": 29,
+      "text": "무족지 또는 다발성 발가락의 완전 절단 소실로 재접합술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 6급 29호",
+      "page": 88,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g6-30",
+      "grade": 6,
+      "no": 30,
+      "text": "팔다리 근육 또는 힘줄 파열로 3개 이상 5개 이하의 근육 또는 힘줄 봉합술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 6급 30호",
+      "page": 88,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g6-31",
+      "grade": 6,
+      "no": 31,
+      "text": "19치 이상 22치 이하의 치과보철을 필요로 하는 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 6급 31호",
+      "page": 88,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g6-32",
+      "grade": 6,
+      "no": 32,
+      "text": "그 밖에 6급에 해당한다고 인정되는 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 6급 32호",
+      "page": 88,
+      "surgery": "any",
+      "catchAll": true,
+      "status": "confirmed"
+    },
+    {
+      "id": "g7-1",
+      "grade": 7,
+      "no": 1,
+      "text": "다발성 얼굴 머리뼈 골절 또는 뇌신경 손상과 동반된 얼굴 머리뼈 골절",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 7급 1호",
+      "page": 88,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g7-2",
+      "grade": 7,
+      "no": 2,
+      "text": "겹보임을 동반한 마비 또는 제한 사시로 사시수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 7급 2호",
+      "page": 88,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g7-3",
+      "grade": 7,
+      "no": 3,
+      "text": "안와 골절로 재건술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 7급 3호",
+      "page": 88,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g7-4",
+      "grade": 7,
+      "no": 4,
+      "text": "골다공증성 척추 압박골절",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 7급 4호",
+      "page": 88,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g7-5",
+      "grade": 7,
+      "no": 5,
+      "text": "쇄골(빗장뼈) 골절",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 7급 5호",
+      "page": 88,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g7-6",
+      "grade": 7,
+      "no": 6,
+      "text": "어깨뼈(어깨뼈가시, 어깨뼈몸통, 가슴우리 탈구, 어깨뼈목, 봉우리돌기 및 부리돌기 포함) 골절",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 7급 6호",
+      "page": 88,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g7-7",
+      "grade": 7,
+      "no": 7,
+      "text": "견봉 쇄골인대 및 오구 쇄골인대 완전 파열",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 7급 7호",
+      "page": 88,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g7-8",
+      "grade": 7,
+      "no": 8,
+      "text": "상완신경총 불완전 손상으로 수술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 7급 8호",
+      "page": 88,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g7-9",
+      "grade": 7,
+      "no": 9,
+      "text": "노뼈머리 또는 자뼈 갈고리돌기 골절로 수술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 7급 9호",
+      "page": 88,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g7-10",
+      "grade": 7,
+      "no": 10,
+      "text": "자뼈 붓돌기 기저부 골절",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 7급 10호",
+      "page": 88,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g7-11",
+      "grade": 7,
+      "no": 11,
+      "text": "삼각섬유연골 복합체 손상",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 7급 11호",
+      "page": 88,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g7-12",
+      "grade": 7,
+      "no": 12,
+      "text": "노손목관절 탈구(손목뼈간관절 탈구, 먼쪽 노자관절 탈구를 포함한다)로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 7급 12호",
+      "page": 88,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g7-13",
+      "grade": 7,
+      "no": 13,
+      "text": "노손목관절 골절 및 탈구(손목뼈간관절 탈구, 먼쪽 노자관절 탈구를 포함한다)로 수술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 7급 13호",
+      "page": 88,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g7-14",
+      "grade": 7,
+      "no": 14,
+      "text": "손배뼈 외 손목뼈 골절",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 7급 14호",
+      "page": 88,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g7-15",
+      "grade": 7,
+      "no": 15,
+      "text": "손목 부위 손배뼈ㆍ반달뼈 사이 인대 파열",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 7급 15호",
+      "page": 88,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g7-16",
+      "grade": 7,
+      "no": 16,
+      "text": "손목손허리뼈 관절의 탈구 또는 골절탈구",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 7급 16호",
+      "page": 88,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g7-17",
+      "grade": 7,
+      "no": 17,
+      "text": "다발성 손허리뼈 골절",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 7급 17호",
+      "page": 88,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g7-18",
+      "grade": 7,
+      "no": 18,
+      "text": "손허리손가락관절의 골절 및 탈구",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 7급 18호",
+      "page": 88,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g7-19",
+      "grade": 7,
+      "no": 19,
+      "text": "무지를 제외한 단일 수지의 완전 절단 소실로 재접합술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 7급 19호",
+      "page": 88,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g7-20",
+      "grade": 7,
+      "no": 20,
+      "text": "골반뼈 관절의 분리로 수술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 7급 20호",
+      "page": 88,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g7-21",
+      "grade": 7,
+      "no": 21,
+      "text": "엉덩관절 탈구로 수술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 7급 21호",
+      "page": 88,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g7-22",
+      "grade": 7,
+      "no": 22,
+      "text": "종아리뼈 몸통 골절 또는 뼈머리 골절",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 7급 22호",
+      "page": 88,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g7-23",
+      "grade": 7,
+      "no": 23,
+      "text": "발목관절 탈구로 수술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 7급 23호",
+      "page": 88,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g7-24",
+      "grade": 7,
+      "no": 24,
+      "text": "발목관절 내과, 외과 또는 후과 골절",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 7급 24호",
+      "page": 88,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g7-25",
+      "grade": 7,
+      "no": 25,
+      "text": "무족지를 제외한 단일 발가락의 완전 절단 소실로 재접합술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 7급 25호",
+      "page": 88,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g7-26",
+      "grade": 7,
+      "no": 26,
+      "text": "16치 이상 18치 이하의 치과보철을 필요로 하는 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 7급 26호",
+      "page": 88,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g7-27",
+      "grade": 7,
+      "no": 27,
+      "text": "그 밖에 7급에 해당한다고 인정되는 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 7급 27호",
+      "page": 88,
+      "surgery": "any",
+      "catchAll": true,
+      "status": "confirmed"
+    },
+    {
+      "id": "g8-1",
+      "grade": 8,
+      "no": 1,
+      "text": "뇌손상으로 신경학적 증상이 경도인 상해(수술을 시행하지 않은 경우에 적용한다)",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 8급 1호",
+      "page": 88,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g8-2",
+      "grade": 8,
+      "no": 2,
+      "text": "위턱뼈, 아래턱뼈, 이틀뼈 등의 얼굴 머리뼈 골절",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 8급 2호",
+      "page": 88,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g8-3",
+      "grade": 8,
+      "no": 3,
+      "text": "외상성 시신경병증",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 8급 3호",
+      "page": 88,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g8-4",
+      "grade": 8,
+      "no": 4,
+      "text": "외상성 안검하수로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 8급 4호",
+      "page": 88,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g8-5",
+      "grade": 8,
+      "no": 5,
+      "text": "복합 고막 파열",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 8급 5호",
+      "page": 88,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g8-6",
+      "grade": 8,
+      "no": 6,
+      "text": "혈흉 또는 기흉이 발생하여 폐쇄식 흉관 삽관수술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 8급 6호",
+      "page": 88,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g8-7",
+      "grade": 8,
+      "no": 7,
+      "text": "3개 이상의 다발성 갈비뼈 골절",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 8급 7호",
+      "page": 88,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g8-8",
+      "grade": 8,
+      "no": 8,
+      "text": "각종 돌기 골절(극돌기, 횡돌기) 또는 후궁 골절",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 8급 8호",
+      "page": 88,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g8-9",
+      "grade": 8,
+      "no": 9,
+      "text": "어깨관절 탈구로 수술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 8급 9호",
+      "page": 88,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g8-10",
+      "grade": 8,
+      "no": 10,
+      "text": "위팔뼈 위관절융기 또는 위팔뼈 먼쪽 부위 관절내 골절(경과 골절, 과간 골절. 내과 골절, 작은 머리 골절 등을 말한다)로 수술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 8급 10호",
+      "page": 88,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g8-11",
+      "grade": 8,
+      "no": 11,
+      "text": "팔꿈치관절 탈구로 수술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 8급 11호",
+      "page": 88,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g8-12",
+      "grade": 8,
+      "no": 12,
+      "text": "손허리뼈 골절",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 8급 12호",
+      "page": 88,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g8-13",
+      "grade": 8,
+      "no": 13,
+      "text": "손가락뼈의 몸쪽 손가락뼈 사이 또는 먼쪽 손가락뼈 사이 골절 탈구",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 8급 13호",
+      "page": 89,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g8-14",
+      "grade": 8,
+      "no": 14,
+      "text": "다발성 손가락뼈 골절",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 8급 14호",
+      "page": 89,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g8-15",
+      "grade": 8,
+      "no": 15,
+      "text": "무지 손허리손가락관절 측부인대 파열",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 8급 15호",
+      "page": 89,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g8-16",
+      "grade": 8,
+      "no": 16,
+      "text": "골반고리가 안정적인 골반뼈 골절(엉치뼈 골절 및 꼬리뼈 골절을 포함한다)로 수술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 8급 16호",
+      "page": 89,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g8-17",
+      "grade": 8,
+      "no": 17,
+      "text": "무릎관절 십자인대 부분 파열로 수술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 8급 17호",
+      "page": 89,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g8-18",
+      "grade": 8,
+      "no": 18,
+      "text": "3개 이상의 발허리뼈 골절로 수술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 8급 18호",
+      "page": 89,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g8-19",
+      "grade": 8,
+      "no": 19,
+      "text": "손발가락뼈 골절 및 탈구로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 8급 19호",
+      "page": 89,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g8-20",
+      "grade": 8,
+      "no": 20,
+      "text": "팔다리의 근육 또는 힘줄 파열로 하나 또는 두개의 근육 또는 힘줄 봉합술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 8급 20호",
+      "page": 89,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g8-21",
+      "grade": 8,
+      "no": 21,
+      "text": "팔다리의 주요 말초 신경 손상으로 수술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 8급 21호",
+      "page": 89,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g8-22",
+      "grade": 8,
+      "no": 22,
+      "text": "팔다리의 감각 신경 손상으로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 8급 22호",
+      "page": 89,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g8-23",
+      "grade": 8,
+      "no": 23,
+      "text": "팔다리의 다발성 주요 혈관손상으로 봉합술 혹은 이식술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 8급 23호",
+      "page": 89,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g8-24",
+      "grade": 8,
+      "no": 24,
+      "text": "팔다리의 연부 조직 손상으로 피부 이식술이나 국소 피판술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 8급 24호",
+      "page": 89,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g8-25",
+      "grade": 8,
+      "no": 25,
+      "text": "13치 이상 15치 이하의 치과보철을 필요로 하는 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 8급 25호",
+      "page": 89,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g8-26",
+      "grade": 8,
+      "no": 26,
+      "text": "그 밖에 8급에 해당한다고 인정되는 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 8급 26호",
+      "page": 89,
+      "surgery": "any",
+      "catchAll": true,
+      "status": "confirmed"
+    },
+    {
+      "id": "g9-1",
+      "grade": 9,
+      "no": 1,
+      "text": "얼굴 부위의 코뼈 골절로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 9급 1호",
+      "page": 89,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g9-2",
+      "grade": 9,
+      "no": 2,
+      "text": "2개 이하의 단순 갈비뼈 골절",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 9급 2호",
+      "page": 89,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g9-3",
+      "grade": 9,
+      "no": 3,
+      "text": "고환 손상으로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 9급 3호",
+      "page": 89,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g9-4",
+      "grade": 9,
+      "no": 4,
+      "text": "음경 손상으로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 9급 4호",
+      "page": 89,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g9-5",
+      "grade": 9,
+      "no": 5,
+      "text": "복장뼈(흉골) 골절",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 9급 5호",
+      "page": 89,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g9-6",
+      "grade": 9,
+      "no": 6,
+      "text": "추간판 탈출증",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 9급 6호",
+      "page": 89,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g9-7",
+      "grade": 9,
+      "no": 7,
+      "text": "흉쇄관절 탈구",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 9급 7호",
+      "page": 89,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g9-8",
+      "grade": 9,
+      "no": 8,
+      "text": "팔꿈치관절 내측 또는 외측 측부 인대 파열로 수술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 9급 8호",
+      "page": 89,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g9-9",
+      "grade": 9,
+      "no": 9,
+      "text": "노손목관절 탈구(손목뼈간관절 탈구, 먼쪽 노자관절 탈구를 포함한다)로 수술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 9급 9호",
+      "page": 89,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g9-10",
+      "grade": 9,
+      "no": 10,
+      "text": "손가락뼈 골절로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 9급 10호",
+      "page": 89,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g9-11",
+      "grade": 9,
+      "no": 11,
+      "text": "손가락관절 탈구",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 9급 11호",
+      "page": 89,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g9-12",
+      "grade": 9,
+      "no": 12,
+      "text": "무릎관절 측부인대 부분 파열로 수술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 9급 12호",
+      "page": 89,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g9-13",
+      "grade": 9,
+      "no": 13,
+      "text": "2개 이하의 발허리뼈 골절로 수술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 9급 13호",
+      "page": 89,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g9-14",
+      "grade": 9,
+      "no": 14,
+      "text": "발가락뼈 골절 또는 발가락관절 탈구로 수술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 9급 14호",
+      "page": 89,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g9-15",
+      "grade": 9,
+      "no": 15,
+      "text": "그 밖에 견열골절 등 제불완전골절",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 9급 15호",
+      "page": 89,
+      "surgery": "any",
+      "catchAll": true,
+      "status": "confirmed"
+    },
+    {
+      "id": "g9-16",
+      "grade": 9,
+      "no": 16,
+      "text": "아킬레스건, 무릎인대, 넓적다리 사두건 또는 넓적다리 이두건 파열로 수술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 9급 16호",
+      "page": 89,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g9-17",
+      "grade": 9,
+      "no": 17,
+      "text": "손가락ㆍ발가락 폄근힘줄 1개의 파열로 힘줄 봉합술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 9급 17호",
+      "page": 89,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g9-18",
+      "grade": 9,
+      "no": 18,
+      "text": "팔다리의 주요 혈관손상으로 봉합술 혹은 이식술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 9급 18호",
+      "page": 89,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g9-19",
+      "grade": 9,
+      "no": 19,
+      "text": "11치 이상 12치 이하의 치과보철을 필요로 하는 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 9급 19호",
+      "page": 89,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g9-20",
+      "grade": 9,
+      "no": 20,
+      "text": "그 밖에 9급에 해당한다고 인정되는 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 9급 20호",
+      "page": 89,
+      "surgery": "any",
+      "catchAll": true,
+      "status": "confirmed"
+    },
+    {
+      "id": "g10-1",
+      "grade": 10,
+      "no": 1,
+      "text": "3cm 이상 얼굴 부위 찢김상처(열상)",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 10급 1호",
+      "page": 89,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g10-2",
+      "grade": 10,
+      "no": 2,
+      "text": "안검과 누소관 찢김상처로 봉합술과 누소관 재건술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 10급 2호",
+      "page": 89,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g10-3",
+      "grade": 10,
+      "no": 3,
+      "text": "각막, 공막 등의 찢김상처로 일차 봉합술만 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 10급 3호",
+      "page": 89,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g10-4",
+      "grade": 10,
+      "no": 4,
+      "text": "어깨관절부위의 회전근개 파열로 수술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 10급 4호",
+      "page": 89,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g10-5",
+      "grade": 10,
+      "no": 5,
+      "text": "외상성 상부관절와순 파열 중 수술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 10급 5호",
+      "page": 89,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g10-6",
+      "grade": 10,
+      "no": 6,
+      "text": "손발가락관절 골절 및 탈구로 수술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 10급 6호",
+      "page": 89,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g10-7",
+      "grade": 10,
+      "no": 7,
+      "text": "다리 3대 관절의 혈관절증",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 10급 7호",
+      "page": 89,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g10-8",
+      "grade": 10,
+      "no": 8,
+      "text": "연부조직 또는 피부 결손으로 수술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 10급 8호",
+      "page": 89,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g10-9",
+      "grade": 10,
+      "no": 9,
+      "text": "9치 이상 10치 이하의 치과보철을 필요로 하는 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 10급 9호",
+      "page": 89,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g10-10",
+      "grade": 10,
+      "no": 10,
+      "text": "그 밖에 10급에 해당한다고 인정되는 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 10급 10호",
+      "page": 89,
+      "surgery": "any",
+      "catchAll": true,
+      "status": "confirmed"
+    },
+    {
+      "id": "g11-1",
+      "grade": 11,
+      "no": 1,
+      "text": "뇌진탕",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 11급 1호",
+      "page": 89,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g11-2",
+      "grade": 11,
+      "no": 2,
+      "text": "얼굴 부위의 코뼈 골절로 수술을 시행하지 않는 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 11급 2호",
+      "page": 89,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g11-3",
+      "grade": 11,
+      "no": 3,
+      "text": "손가락뼈 골절 또는 손가락관절 탈구로 수술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 11급 3호",
+      "page": 89,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g11-4",
+      "grade": 11,
+      "no": 4,
+      "text": "발가락뼈 골절 또는 발가락관절 탈구로 수술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 11급 4호",
+      "page": 89,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g11-5",
+      "grade": 11,
+      "no": 5,
+      "text": "6치 이상 8치 이하의 치과보철을 필요로 하는 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 11급 5호",
+      "page": 89,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g11-6",
+      "grade": 11,
+      "no": 6,
+      "text": "그 밖에 11급에 해당한다고 인정되는 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 11급 6호",
+      "page": 89,
+      "surgery": "any",
+      "catchAll": true,
+      "status": "confirmed"
+    },
+    {
+      "id": "g12-1",
+      "grade": 12,
+      "no": 1,
+      "text": "외상 후 급성 스트레스 장애",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 12급 1호",
+      "page": 90,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g12-2",
+      "grade": 12,
+      "no": 2,
+      "text": "3cm 미만 얼굴 부위 찢김상처",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 12급 2호",
+      "page": 90,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g12-3",
+      "grade": 12,
+      "no": 3,
+      "text": "척추 염좌",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 12급 3호",
+      "page": 90,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g12-4",
+      "grade": 12,
+      "no": 4,
+      "text": "팔다리 관절의 근육 또는 힘줄의 단순 염좌",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 12급 4호",
+      "page": 90,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g12-5",
+      "grade": 12,
+      "no": 5,
+      "text": "팔다리의 찢김상처로 창상 봉합술을 시행한 상해(길이에 관계없이 적용한다)",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 12급 5호",
+      "page": 90,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g12-6",
+      "grade": 12,
+      "no": 6,
+      "text": "팔다리 감각 신경 손상으로 수술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 12급 6호",
+      "page": 90,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g12-7",
+      "grade": 12,
+      "no": 7,
+      "text": "4치 이상 5치 이하의 치과보철을 필요로 하는 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 12급 7호",
+      "page": 90,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g12-8",
+      "grade": 12,
+      "no": 8,
+      "text": "그 밖에 12급에 해당한다고 인정되는 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 12급 8호",
+      "page": 90,
+      "surgery": "any",
+      "catchAll": true,
+      "status": "confirmed"
+    },
+    {
+      "id": "g13-1",
+      "grade": 13,
+      "no": 1,
+      "text": "결막의 찢김상처로 일차 봉합술을 시행한 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 13급 1호",
+      "page": 90,
+      "surgery": "with",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g13-2",
+      "grade": 13,
+      "no": 2,
+      "text": "단순 고막 파열",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 13급 2호",
+      "page": 90,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g13-3",
+      "grade": 13,
+      "no": 3,
+      "text": "흉부 타박상으로 갈비뼈 골절 없이 흉부의 동통을 동반한상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 13급 3호",
+      "page": 90,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g13-4",
+      "grade": 13,
+      "no": 4,
+      "text": "2치 이상 3치 이하의 치과보철을 필요로 하는 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 13급 4호",
+      "page": 90,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g13-5",
+      "grade": 13,
+      "no": 5,
+      "text": "그 밖에 13급에 해당한다고 인정되는 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 13급 5호",
+      "page": 90,
+      "surgery": "any",
+      "catchAll": true,
+      "status": "confirmed"
+    },
+    {
+      "id": "g14-1",
+      "grade": 14,
+      "no": 1,
+      "text": "방광, 요도, 고환, 음경, 신장, 간, 지라 등 내부장기 손상(장간막파열을 포함한다)으로 수술을 시행하지 않은 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 14급 1호",
+      "page": 90,
+      "surgery": "without",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g14-2",
+      "grade": 14,
+      "no": 2,
+      "text": "손발가락 관절 염좌",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 14급 2호",
+      "page": 90,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g14-3",
+      "grade": 14,
+      "no": 3,
+      "text": "팔다리의 단순 타박",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 14급 3호",
+      "page": 90,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g14-4",
+      "grade": 14,
+      "no": 4,
+      "text": "1치 이하의 치과보철을 필요로 하는 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 14급 4호",
+      "page": 90,
+      "surgery": "any",
+      "catchAll": false,
+      "status": "confirmed"
+    },
+    {
+      "id": "g14-5",
+      "grade": 14,
+      "no": 5,
+      "text": "그 밖에 14급에 해당한다고 인정되는 상해",
+      "basis": "자동차손해배상보장법 시행령 별표 1, 14급 5호",
+      "page": 90,
+      "surgery": "any",
+      "catchAll": true,
+      "status": "confirmed"
+    }
+  ],
+  "matching": {
+    "status": "needs_check",
+    "note": "진단서의 낱말과 별표의 낱말을 잇기 위한 검색 보조 자료다. 약관·법령의 문구가 아니며 급수를 정하지 않는다.",
+    "synonyms": {
+      "추간판탈출증": [
+        "추간판탈출증"
+      ],
+      "추간판탈출": [
+        "추간판탈출증"
+      ],
+      "디스크": [
+        "추간판탈출증"
+      ],
+      "추간판": [
+        "추간판탈출증"
+      ],
+      "외상후스트레스": [
+        "스트레스장애"
+      ],
+      "스트레스장애": [
+        "스트레스장애"
+      ],
+      "경막하출혈": [
+        "뇌손상"
+      ],
+      "경막외출혈": [
+        "뇌손상"
+      ],
+      "지주막하출혈": [
+        "뇌손상"
+      ],
+      "거미막하출혈": [
+        "뇌손상"
+      ],
+      "뇌출혈": [
+        "뇌손상"
+      ],
+      "뇌좌상": [
+        "뇌손상"
+      ],
+      "뇌타박상": [
+        "뇌손상"
+      ],
+      "두개내출혈": [
+        "뇌손상"
+      ],
+      "경추": [
+        "목뼈",
+        "척추"
+      ],
+      "경부": [
+        "목뼈",
+        "척추"
+      ],
+      "요추": [
+        "척추"
+      ],
+      "요부": [
+        "척추"
+      ],
+      "흉추": [
+        "척추"
+      ],
+      "허리": [
+        "척추"
+      ],
+      "척추": [
+        "척추"
+      ],
+      "목뼈": [
+        "목뼈",
+        "척추"
+      ],
+      "대퇴골": [
+        "넓적다리뼈",
+        "팔다리"
+      ],
+      "대퇴": [
+        "넓적다리",
+        "팔다리"
+      ],
+      "넓적다리뼈": [
+        "넓적다리뼈",
+        "팔다리"
+      ],
+      "경골": [
+        "정강이뼈",
+        "팔다리"
+      ],
+      "정강이뼈": [
+        "정강이뼈",
+        "팔다리"
+      ],
+      "비골": [
+        "코뼈",
+        "종아리뼈"
+      ],
+      "종아리뼈": [
+        "종아리뼈",
+        "팔다리"
+      ],
+      "요골": [
+        "노뼈",
+        "팔다리"
+      ],
+      "척골": [
+        "자뼈",
+        "팔다리"
+      ],
+      "상완골": [
+        "위팔뼈",
+        "팔다리"
+      ],
+      "상완": [
+        "위팔",
+        "팔다리"
+      ],
+      "전완": [
+        "아래팔",
+        "팔다리"
+      ],
+      "늑골": [
+        "갈비뼈"
+      ],
+      "흉골": [
+        "복장뼈"
+      ],
+      "슬개골": [
+        "무릎뼈",
+        "팔다리"
+      ],
+      "견갑골": [
+        "어깨뼈"
+      ],
+      "골반골": [
+        "골반"
+      ],
+      "천골": [
+        "엉치뼈",
+        "골반"
+      ],
+      "미골": [
+        "꼬리뼈",
+        "골반"
+      ],
+      "중수골": [
+        "손허리뼈",
+        "팔다리"
+      ],
+      "중족골": [
+        "발허리뼈",
+        "팔다리"
+      ],
+      "족지골": [
+        "발가락",
+        "손발가락",
+        "팔다리"
+      ],
+      "수지골": [
+        "손가락",
+        "손발가락",
+        "팔다리"
+      ],
+      "거골": [
+        "목말뼈",
+        "발목",
+        "팔다리"
+      ],
+      "종골": [
+        "발꿈치뼈",
+        "발목",
+        "팔다리"
+      ],
+      "주상골": [
+        "손배뼈",
+        "손목",
+        "팔다리"
+      ],
+      "두개골": [
+        "머리뼈"
+      ],
+      "견관절": [
+        "어깨관절",
+        "팔다리"
+      ],
+      "주관절": [
+        "팔꿈치",
+        "팔다리"
+      ],
+      "완관절": [
+        "손목",
+        "팔다리"
+      ],
+      "수관절": [
+        "손목",
+        "팔다리"
+      ],
+      "고관절": [
+        "엉덩관절",
+        "팔다리"
+      ],
+      "슬관절": [
+        "무릎",
+        "팔다리"
+      ],
+      "족관절": [
+        "발목",
+        "팔다리"
+      ],
+      "손가락": [
+        "손가락",
+        "손발가락",
+        "팔다리"
+      ],
+      "발가락": [
+        "발가락",
+        "손발가락",
+        "팔다리"
+      ],
+      "수지": [
+        "손가락",
+        "손발가락",
+        "팔다리"
+      ],
+      "족지": [
+        "발가락",
+        "손발가락",
+        "팔다리"
+      ],
+      "손목": [
+        "손목",
+        "팔다리"
+      ],
+      "발목": [
+        "발목",
+        "팔다리"
+      ],
+      "무릎": [
+        "무릎",
+        "팔다리"
+      ],
+      "어깨": [
+        "어깨관절",
+        "어깨뼈",
+        "팔다리"
+      ],
+      "팔꿈치": [
+        "팔꿈치",
+        "팔다리"
+      ],
+      "안면부": [
+        "얼굴"
+      ],
+      "안면": [
+        "얼굴"
+      ],
+      "얼굴": [
+        "얼굴"
+      ],
+      "코뼈": [
+        "코뼈",
+        "얼굴"
+      ],
+      "전방십자인대": [
+        "십자인대",
+        "무릎",
+        "팔다리"
+      ],
+      "후방십자인대": [
+        "십자인대",
+        "무릎",
+        "팔다리"
+      ],
+      "십자인대": [
+        "십자인대",
+        "무릎",
+        "팔다리"
+      ],
+      "반월상연골": [
+        "반월상",
+        "무릎",
+        "팔다리"
+      ],
+      "반월판": [
+        "반월상",
+        "무릎",
+        "팔다리"
+      ],
+      "아킬레스건": [
+        "아킬레스건",
+        "팔다리"
+      ],
+      "열상": [
+        "찢김상처"
+      ],
+      "열창": [
+        "찢김상처"
+      ],
+      "타박상": [
+        "타박"
+      ],
+      "좌상": [
+        "타박"
+      ],
+      "긴장": [
+        "염좌"
+      ],
+      "다리": [
+        "팔다리"
+      ],
+      "하지": [
+        "팔다리"
+      ],
+      "상지": [
+        "팔다리"
+      ],
+      "손등": [
+        "팔다리"
+      ],
+      "손바닥": [
+        "팔다리"
+      ],
+      "발등": [
+        "팔다리"
+      ],
+      "발바닥": [
+        "팔다리"
+      ],
+      "팔뚝": [
+        "팔다리"
+      ],
+      "사지": [
+        "팔다리"
+      ]
+    },
+    "bodyParts": [
+      "머리뼈",
+      "얼굴",
+      "안구",
+      "안와",
+      "각막",
+      "결막",
+      "고막",
+      "코뼈",
+      "턱뼈",
+      "목뼈",
+      "척추",
+      "척주",
+      "척수",
+      "추체",
+      "갈비뼈",
+      "복장뼈",
+      "흉부",
+      "심장",
+      "복부",
+      "내부장기",
+      "신장",
+      "방광",
+      "요도",
+      "골반",
+      "비구",
+      "엉치뼈",
+      "꼬리뼈",
+      "쇄골",
+      "빗장뼈",
+      "어깨뼈",
+      "어깨관절",
+      "회전근개",
+      "상완신경총",
+      "위팔뼈",
+      "위팔",
+      "팔꿈치",
+      "아래팔",
+      "노뼈",
+      "자뼈",
+      "손목",
+      "손배뼈",
+      "손허리뼈",
+      "손발가락",
+      "손가락",
+      "엉덩관절",
+      "넓적다리뼈",
+      "넓적다리",
+      "무릎뼈",
+      "무릎",
+      "십자인대",
+      "측부인대",
+      "반월상",
+      "정강이뼈",
+      "종아리뼈",
+      "발목",
+      "목말뼈",
+      "발꿈치뼈",
+      "발허리뼈",
+      "발가락",
+      "아킬레스건",
+      "힘줄",
+      "근육",
+      "혈관",
+      "팔다리",
+      "연부조직"
+    ],
+    "injuryTypes": [
+      "추간판탈출증",
+      "스트레스장애",
+      "뇌손상",
+      "뇌진탕",
+      "치과보철",
+      "찢김상처",
+      "골절",
+      "탈구",
+      "염좌",
+      "타박",
+      "파열",
+      "절단",
+      "화상",
+      "혈흉",
+      "기흉",
+      "혈관절증",
+      "손상"
+    ]
+  }
+}

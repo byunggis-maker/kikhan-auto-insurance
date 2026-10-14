@@ -1,0 +1,70 @@
+{
+  "id": "fault",
+  "title": "과실상계와 치료비 보장",
+  "items": [
+    {
+      "id": "fault.medicalFloor",
+      "value": true,
+      "unit": "flag",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표4> 과실상계 등",
+        "clause": "1. 과실상계 가.(2)·(3) 상계 후 금액이 치료관계비와 간병비의 합산액에 미달하면 치료관계비(입원환자 식대 포함)와 간병비를 보상",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "fault.minorInjuryGrades",
+      "value": [
+        12,
+        13,
+        14
+      ],
+      "unit": "list",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표4> 과실상계 등",
+        "clause": "1. 과실상계 가.(3) 단서: 차량운전자가 12급 내지 14급의 상해를 입은 경우",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": "상계 전 치료관계비가 대인배상Ⅰ 한도를 넘으면 넘는 금액에 본인 과실비율을 곱한 금액을 보험회사가 청구할 수 있다. 이 금액을 대인배상Ⅱ·무보험자동차상해의 치료비 보장액에서 뺀다."
+    },
+    {
+      "id": "rounding.won",
+      "value": "floor",
+      "unit": "enum",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표4> 과실상계 등",
+        "clause": "1. 과실상계 가.(1)",
+        "page": 83
+      },
+      "status": "needs_check",
+      "note": "과실상계·비율 계산에서 원 미만이 생길 때의 처리 방식은 약관에 없다. 버림으로 계산하고, 실제로 원 미만이 버려진 칸에만 확인 필요 표시를 붙인다."
+    }
+  ]
+}

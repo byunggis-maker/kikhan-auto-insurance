@@ -1,0 +1,57 @@
+{
+  "id": "business",
+  "title": "업무용자동차보험: 개인용과 다른 점",
+  "items": [
+    {
+      "id": "product.coverages",
+      "value": [
+        "liability_bodily_1",
+        "liability_bodily_2",
+        "liability_property",
+        "self_injury",
+        "auto_injury",
+        "uninsured",
+        "own_damage"
+      ],
+      "unit": "list",
+      "productLines": [
+        "business"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-business-1025",
+        "source": "현대해상 업무용 약관 (개정일 미확인) 본문 6쪽",
+        "document": "현대해상 Hicar 업무용자동차보험 약관 (표지 1025)",
+        "appendix": "보통약관 제2조(Hicar 업무용자동차보험의 구성)",
+        "clause": "① 6가지 보장종목과 특별약관(자동차상해 특별약관 85쪽)",
+        "page": 6
+      },
+      "status": "needs_check",
+      "note": "약관 PDF에 개정일이 없어 적용 시작일을 확인하지 못했다(개인용 약관의 날짜를 임시로 씀). 담보 구성은 개인용과 같다."
+    },
+    {
+      "id": "product.riders",
+      "value": [
+        "rider_legal",
+        "rider_rental"
+      ],
+      "unit": "list",
+      "productLines": [
+        "business"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-business-1025",
+        "source": "현대해상 업무용 약관 (개정일 미확인) 본문 97쪽",
+        "document": "현대해상 Hicar 업무용자동차보험 약관 (표지 1025)",
+        "appendix": "특별약관",
+        "clause": "렌트비용지원 특별약관(97쪽), 법률비용 지원 특별약관(104쪽)",
+        "page": 97
+      },
+      "status": "needs_check",
+      "note": "약관 PDF에 개정일이 없어 적용 시작일을 확인하지 못했다(개인용 약관의 날짜를 임시로 씀). 대조한 지급기준과 두 특약의 한도가 모두 개인용과 같았다. 이 파일에 다른 값은 없다."
+    }
+  ]
+}

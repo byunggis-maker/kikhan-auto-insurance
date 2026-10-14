@@ -1,0 +1,137 @@
+{
+  "id": "motorcycle",
+  "title": "이륜자동차보험: 담보 구성과 개인용과 다른 점",
+  "items": [
+    {
+      "id": "product.coverages",
+      "value": [
+        "liability_bodily_1",
+        "liability_bodily_2",
+        "liability_property",
+        "self_injury",
+        "uninsured",
+        "own_damage"
+      ],
+      "unit": "list",
+      "productLines": [
+        "motorcycle"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-motorcycle-1025",
+        "source": "현대해상 이륜자동차보험 약관 (개정일 미확인) 본문 6쪽",
+        "document": "현대해상 이륜자동차보험 약관 (표지 1025)",
+        "appendix": "보통약관 제2조(이륜자동차보험의 구성)",
+        "clause": "① 6가지 보장종목. 특별약관 목록에 자동차상해 특별약관이 없음",
+        "page": 6
+      },
+      "status": "needs_check",
+      "note": "약관 PDF에 개정일이 없어 적용 시작일을 확인하지 못했다(개인용 약관의 날짜를 임시로 씀). 자동차상해는 이 약관에 없어 계산하지 않는다."
+    },
+    {
+      "id": "product.riders",
+      "value": [
+        "rider_legal"
+      ],
+      "unit": "list",
+      "productLines": [
+        "motorcycle"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-motorcycle-1025",
+        "source": "현대해상 이륜자동차보험 약관 (개정일 미확인) 본문 64쪽",
+        "document": "현대해상 이륜자동차보험 약관 (표지 1025)",
+        "appendix": "특별약관",
+        "clause": "법률비용 지원 특별약관(64쪽). 렌트비용지원 특별약관은 없음",
+        "page": 64
+      },
+      "status": "needs_check",
+      "note": "약관 PDF에 개정일이 없어 적용 시작일을 확인하지 못했다(개인용 약관의 날짜를 임시로 씀)."
+    },
+    {
+      "id": "rider.legal.plans",
+      "value": [
+        "basic"
+      ],
+      "unit": "list",
+      "productLines": [
+        "motorcycle"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-motorcycle-1025",
+        "source": "현대해상 이륜자동차보험 약관 (개정일 미확인) 본문 64쪽",
+        "document": "현대해상 이륜자동차보험 약관 (표지 1025)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3) 형사합의금 한도표에 가입 유형 구분이 없음(지급보험금 한 줄)",
+        "page": 64
+      },
+      "status": "needs_check",
+      "note": "약관 PDF에 개정일이 없어 적용 시작일을 확인하지 못했다(개인용 약관의 날짜를 임시로 씀). 한도는 1급 2,000만원, 2~3급 1,000만원, 4~5급 500만원, 6~7급 300만원, 사망 3천만원으로 개인용 약관의 기본형과 같다."
+    },
+    {
+      "id": "rider.legal.defaultPlan",
+      "value": "basic",
+      "unit": "enum",
+      "productLines": [
+        "motorcycle"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-motorcycle-1025",
+        "source": "현대해상 이륜자동차보험 약관 (개정일 미확인) 본문 64쪽",
+        "document": "현대해상 이륜자동차보험 약관 (표지 1025)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)① (3) 형사합의금 한도표에 가입 유형 구분이 없음",
+        "page": 64
+      },
+      "status": "needs_check",
+      "note": "약관 PDF에 개정일이 없어 적용 시작일을 확인하지 못했다(개인용 약관의 날짜를 임시로 씀). 증권에 가입 유형이 없어도 이 한도표(개인용의 기본형과 같은 값)를 쓴다."
+    },
+    {
+      "id": "rider.legal.fine.schoolZoneLimit",
+      "value": 20000000,
+      "unit": "KRW",
+      "productLines": [
+        "motorcycle"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-motorcycle-1025",
+        "source": "현대해상 이륜자동차보험 약관 (개정일 미확인) 본문 65쪽",
+        "document": "현대해상 이륜자동차보험 약관 (표지 1025)",
+        "appendix": "법률비용 지원 특별약관",
+        "clause": "2.(2)③ 벌금비용: 2,000만원을 한도로 지급. 어린이 보호구역 사고의 3,000만원 단서가 없음",
+        "page": 65
+      },
+      "status": "needs_check",
+      "note": "약관 PDF에 개정일이 없어 적용 시작일을 확인하지 못했다(개인용 약관의 날짜를 임시로 씀). 개인용 약관과 다르다. 어린이 보호구역 사고여도 한도가 늘지 않는다."
+    },
+    {
+      "id": "product.minorInjuryDriverRule",
+      "value": false,
+      "unit": "flag",
+      "productLines": [
+        "motorcycle"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-motorcycle-1025",
+        "source": "현대해상 이륜자동차보험 약관 (개정일 미확인) 별표 43쪽",
+        "document": "현대해상 이륜자동차보험 약관 (표지 1025)",
+        "appendix": "<별표4> 과실상계 등",
+        "clause": "1. 과실상계 가.(3) 용어풀이: 차량운전자의 '차량'에서 이륜자동차는 제외",
+        "page": 43
+      },
+      "status": "needs_check",
+      "note": "약관 PDF에 개정일이 없어 적용 시작일을 확인하지 못했다(개인용 약관의 날짜를 임시로 씀). 이륜자동차 운전자에게는 경상환자(12~14급) 치료비 과실 부담 규정을 적용하지 않는다. 입력의 vehicleDriver를 false로 둔다."
+    }
+  ]
+}
