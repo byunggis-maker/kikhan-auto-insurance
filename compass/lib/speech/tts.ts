@@ -1,5 +1,5 @@
 import { ApiError } from "@/lib/guard/http";
-import { maskResidentNumbers } from "@/lib/privacy/rrn";
+import { redact } from "@/lib/privacy/redact";
 
 // 글을 음성으로 바꾼다(OpenAI 음성 합성 API). 글과 음성은 저장하지 않고 로그에도 남기지 않는다.
 
@@ -19,7 +19,8 @@ export function ttsConfig(env: Record<string, string | undefined> = process.env)
 
 /** mp3 음성을 돌려준다. 제공자의 응답 원문은 오류에 싣지 않는다 */
 export async function synthesize(text: string, config: TtsConfig, send: typeof fetch = fetch): Promise<ArrayBuffer> {
-  const input = maskResidentNumbers(text).trim();
+  // 보내기 전에 한 번 더 가린다(화면은 신원정보를 뺀 글만 보낸다).
+  const input = redact(text).text.trim();
   if (!input) throw new ApiError(400, "INVALID_INPUT", "읽을 내용이 없습니다.");
   if (input.length > MAX_TTS_TEXT) throw new ApiError(413, "TOO_LARGE", "읽을 내용이 너무 깁니다.");
   let response: Response;

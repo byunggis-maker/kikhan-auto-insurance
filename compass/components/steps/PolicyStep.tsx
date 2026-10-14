@@ -2,6 +2,7 @@
 
 import { useRef, useState, type ReactNode } from "react";
 import { StepShell } from "@/components/StepShell";
+import { MaskEditor } from "@/components/MaskEditor";
 import { TicketBadge, TicketGate } from "@/components/TicketGate";
 import { Card, outlineButton } from "@/components/ui";
 import { paidFetch } from "@/lib/guard/paid-client";
@@ -17,6 +18,7 @@ const LINES = (Object.keys(PRODUCT_LINE_LABELS) as ProductLine[]).map((value) =>
   value,
   label: PRODUCT_LINE_LABELS[value].replace(" 자동차보험", "").replace("자동차보험", ""),
 }));
+// 파일 이름에는 사람 이름이 들어 있을 수 있어 저장하지 않고, 이 이름만 남긴다.
 const SOURCE_LABELS = { "pdf-text": "PDF의 글자", "pdf-scan": "PDF 스캔본", image: "사진" };
 
 function Flag() {
@@ -65,7 +67,7 @@ function Pick<T extends string>(props: { label: string; value: T | ""; options: 
 type ReadState =
   | { status: "idle" }
   | { status: "reading" }
-  | { status: "done"; source: keyof typeof SOURCE_LABELS; missing: number; reused?: boolean }
+  | { status: "done"; source: keyof typeof SOURCE_LABELS; missing: number; redacted: number; reused?: boolean }
   | { status: "error"; message: string; needPassword: boolean };
 
 function countMissing(reading: PolicyReading) {
@@ -85,6 +87,8 @@ export function PolicyStep() {
   const [password, setPassword] = useState("");
   // 비밀번호를 물어야 할 때 같은 파일을 다시 보내기 위해 들고 있는다. 화면을 떠나면 사라진다.
   const picked = useRef<File | null>(null);
+  // 사진은 올리기 전에 칠해 가리는 화면을 먼저 연다.
+  const [masking, setMasking] = useState<File | null>(null);
 
   return (
     <StepShell step={1} lead="증권이나 가입증명서를 올리고, 읽어온 담보를 확인합니다.">
@@ -116,10 +120,10 @@ export function PolicyStep() {
             const digest = await fileDigest(upload);
             const cached = cachedReading(digest);
             if (cached) {
-              update((d) => ({ ...d, policy: { ...applyReading(d.policy, cached.reading, () => crypto.randomUUID()), fileName: file.name } }));
+              update((d) => ({ ...d, policy: { ...applyReading(d.policy, cached.reading, () => crypto.randomUUID()), fileName: SOURCE_LABELS[cached.source] } }));
               picked.current = null;
               setPassword("");
-              return setRead({ status: "done", source: cached.source, missing: countMissing(cached.reading), reused: true });
+              return setRead({ status: "done", source: cached.source, missing: countMissing(cached.reading), redacted: cached.redacted, reused: true });
             }
             const form = new FormData();
             form.set("file", upload);
@@ -137,10 +141,10 @@ export function PolicyStep() {
             const result = readResponseSchema.safeParse(body);
             if (!result.success) return setRead({ status: "error", needPassword: false, message: "증권을 읽지 못했습니다. 아래에 직접 입력해 주세요." });
             rememberReading(digest, result.data);
-            update((d) => ({ ...d, policy: { ...applyReading(d.policy, result.data.reading, () => crypto.randomUUID()), fileName: file.name } }));
+            update((d) => ({ ...d, policy: { ...applyReading(d.policy, result.data.reading, () => crypto.randomUUID()), fileName: SOURCE_LABELS[result.data.source] } }));
             picked.current = null;
             setPassword("");
-            setRead({ status: "done", source: result.data.source, missing: countMissing(result.data.reading) });
+            setRead({ status: "done", source: result.data.source, missing: countMissing(result.data.reading), redacted: result.data.redacted });
           } catch {
             setRead({ status: "error", needPassword: false, message: "서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요." });
           }
@@ -149,8 +153,11 @@ export function PolicyStep() {
         function choose(file: File | undefined) {
           if (!file) return;
           if (hasInput(policy) && !window.confirm("읽어온 값으로 아래 내용을 바꿉니다. 직접 입력한 내용은 지워집니다. 계속할까요?")) return;
-          picked.current = file;
-          void send(file, "");
+          const pdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+          if (pdf) {
+            picked.current = file;
+            void send(file, "");
+          } else setMasking(file);
         }
 
         return (
@@ -162,6 +169,17 @@ export function PolicyStep() {
                   <p className="text-muted">아래에 직접 입력할 수 있습니다.</p>
                 </>
               ) : (
+                masking ? (
+                  <MaskEditor
+                    file={masking}
+                    onCancel={() => setMasking(null)}
+                    onDone={(masked) => {
+                      setMasking(null);
+                      picked.current = masked;
+                      void send(masked, "");
+                    }}
+                  />
+                ) : (
                 <>
                   <label className={`${outlineButton} cursor-pointer ${read.status === "reading" ? "pointer-events-none opacity-40" : ""}`}>
                     {read.status === "reading" ? "읽는 중… (30초쯤 걸립니다)" : "사진 또는 PDF 고르기"}
@@ -185,6 +203,7 @@ export function PolicyStep() {
                         {read.missing > 0
                           ? `읽지 못한 칸 ${read.missing}곳을 노란색으로 표시했습니다. 나머지도 증권과 같은지 확인해 주세요.`
                           : "아래 표가 증권과 같은지 확인하고, 다르면 고쳐 주세요."}
+                        {read.redacted > 0 && <span className="mt-1 block font-semibold">개인정보 {read.redacted}건을 가렸습니다.</span>}
                       </p>
                     )}
                     {read.status === "error" && <p className="rounded-xl bg-warn-soft px-4 py-3 font-semibold text-warn-ink">{read.message}</p>}
@@ -215,6 +234,7 @@ export function PolicyStep() {
                   </div>
                   {policy.fileName && read.status !== "reading" && <p className="break-all text-sm text-muted">마지막으로 읽은 파일: {policy.fileName}</p>}
                 </>
+                )
               )}
             </Card>
 

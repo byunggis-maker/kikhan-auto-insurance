@@ -32,6 +32,7 @@ export function applyFacts(draft: CaseDraft, facts: AccidentFacts, newId: () => 
     outpatientDays: person.outpatientDays,
     faultPercent: person.faultPercent,
     occupation: person.occupation ?? "",
+    age: person.age,
     inferred: [...person.inferred],
   }));
 

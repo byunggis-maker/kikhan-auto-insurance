@@ -31,24 +31,6 @@ const FORBIDDEN = [
 
 // 계획된 단계에서 없앨 칸만 예외로 둔다. 그 단계에서 칸을 없애면 이 목록에서도 지워야 테스트가 통과한다.
 const PENDING: Record<string, string> = {
-  "rawReadingSchema.policyNumber": "5단계: 증권 판독에서 신원 칸을 없앤다",
-  "rawReadingSchema.policyholderName": "5단계",
-  "rawReadingSchema.insuredName": "5단계",
-  "rawReadingSchema.birthDateText": "5단계",
-  "rawReadingSchema.genderText": "5단계",
-  "rawReadingSchema.vehicleNumber": "5단계",
-  "policyReadingSchema.policyNumber": "5단계",
-  "policyReadingSchema.policyholderName": "5단계",
-  "policyReadingSchema.insuredName": "5단계",
-  "policyReadingSchema.birthDate": "5단계",
-  "policyReadingSchema.gender": "5단계",
-  "policyReadingSchema.vehicleNumber": "5단계",
-  "readResponseSchema.reading.policyNumber": "5단계",
-  "readResponseSchema.reading.policyholderName": "5단계",
-  "readResponseSchema.reading.insuredName": "5단계",
-  "readResponseSchema.reading.birthDate": "5단계",
-  "readResponseSchema.reading.gender": "5단계",
-  "readResponseSchema.reading.vehicleNumber": "5단계",
 };
 
 type Def = { type: string; shape?: Record<string, z.ZodType>; element?: z.ZodType; innerType?: z.ZodType; options?: z.ZodType[]; in?: z.ZodType; out?: z.ZodType; valueType?: z.ZodType; left?: z.ZodType; right?: z.ZodType; items?: z.ZodType[]; rest?: z.ZodType; getter?: () => z.ZodType };

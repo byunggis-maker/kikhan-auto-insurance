@@ -155,6 +155,7 @@ export function AccidentStep() {
               </button>
               <p className="text-center text-xl font-bold">사고 내용 말로 설명하기</p>
               <p className="text-center text-muted">언제, 어디서, 어떻게 났는지와 누가 어디를 다쳤는지 말해 주세요. 5분까지 녹음됩니다.</p>
+              <p className="text-center text-sm font-semibold text-navy">이름은 말하지 않아도 됩니다. &ldquo;나&rdquo;, &ldquo;아내&rdquo;, &ldquo;상대 운전자&rdquo;처럼 말해 주세요.</p>
               {pressed && guest && !needsConsent && (
                 <>
                   <TicketGate route="stt" what="음성을 글로 바꾸기" />

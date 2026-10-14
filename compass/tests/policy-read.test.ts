@@ -12,21 +12,13 @@ import { policyReadingSchema, type RawReading } from "@/lib/schemas/policy-readi
 // 비전 LLM은 가짜로 바꿔 끼운다. 실제 제공자가 그림을 얼마나 잘 읽는지는 이 테스트가 확인하지 않는다.
 const fixture = (name: string) => new Uint8Array(readFileSync(new URL(`./fixtures/${name}`, import.meta.url)));
 
-/** LLM이 샘플 증권을 제대로 읽었을 때의 응답. 지시를 어기고 주민등록번호를 적은 경우까지 넣었다. */
+/** LLM이 샘플 증권을 제대로 읽었을 때의 응답(보험 정보만). */
 const ANSWER: RawReading = {
   insurer: "가상화재해상보험",
   productName: "가상 개인용 자동차보험",
   productLine: "personal",
-  policyNumber: "가상-2026-000123",
   periodStart: "2026-01-01",
   periodEnd: "2027.01.01",
-  policyholderName: "홍길동",
-  insuredName: "홍길동 (800505-1234567)",
-  residentFront6: "800505",
-  residentBackFirst: "1",
-  birthDateText: null,
-  genderText: null,
-  vehicleNumber: "12가3456",
   vehicleModel: "가상세단 2.0",
   driverScope: "부부한정",
   driverAgeLimit: "만 30세 이상",
@@ -38,6 +30,18 @@ const ANSWER: RawReading = {
   ],
   riders: ["긴급출동서비스 특약", "블랙박스 장착 할인 특약"],
 };
+
+/** 지시를 어긴 LLM: 없는 칸에 신원정보를 적고, 담보·특약 칸에도 섞어 적었다. */
+const LEAKY = {
+  ...ANSWER,
+  policyNumber: "가상-2026-000123",
+  insuredName: "홍길동",
+  residentFront6: "800505",
+  vehicleNumber: "12가3456",
+  coverages: [...ANSWER.coverages.slice(0, 3), { name: "대물배상 (피보험자 홍길동)", limit: null, deductible: null }],
+  riders: ["긴급출동서비스 특약 (연락처 010-1234-5678)", "주민번호 800505-1234567", "블랙박스 장착 할인 특약"],
+};
+const SECRETS = ["홍길동", "800505", "1234567", "12가3456", "가상-2026-000123", "010-1234-5678"];
 
 function fakeVision(answers: unknown[] = [ANSWER]) {
   const requests: VisionRequest[] = [];
@@ -76,20 +80,19 @@ describe("파일 형식 판별", () => {
 });
 
 describe("가짜 증권 샘플 읽기", () => {
-  it("PDF: 글자를 뽑아 보내고, 주민등록번호 뒷자리는 LLM에 보내지 않는다", async () => {
+  it("PDF: 글자를 뽑고 개인정보를 가린 글만 LLM에 보낸다(그림은 보내지 않는다)", async () => {
     const prepared = await prepareFile(fixture("policy-sample.pdf"));
     expect(prepared.source).toBe("pdf-text");
     expect(prepared.images).toHaveLength(0);
     expect(prepared.text).toContain("가상화재해상보험");
     expect(prepared.text).toContain("자기차량손해");
-    expect(prepared.text).toContain("800505-******");
-    expect(prepared.text).not.toContain("1234567");
+    expect(prepared.redacted).toBeGreaterThan(0);
+    for (const secret of SECRETS) expect(prepared.text, secret).not.toContain(secret);
 
-    // LLM이 생년월일·성별을 못 채워도 서버가 PDF 글자에서 직접 만든다.
-    const vision = fakeVision([{ ...ANSWER, residentFront6: null, residentBackFirst: null, insuredName: "홍길동" }]);
-    const reading = await readPolicy(prepared, vision.call);
-    expect(vision.requests[0].text).not.toContain("1234567");
-    expect(reading).toMatchObject({ birthDate: "1980-05-05", gender: "M", insurer: "가상화재해상보험", periodEnd: "2027-01-01" });
+    const vision = fakeVision();
+    const { reading } = await readPolicy(prepared, vision.call);
+    for (const secret of SECRETS) expect(vision.requests[0].text, secret).not.toContain(secret);
+    expect(reading).toMatchObject({ insurer: "가상화재해상보험", periodEnd: "2027-01-01" });
   });
 
   it("HEIC: JPEG로 바꿔 보낸다", async () => {
@@ -99,7 +102,7 @@ describe("가짜 증권 샘플 읽기", () => {
     expect(prepared.images).toHaveLength(1);
     expect(await isRealPicture(prepared.images[0])).toBe(true);
     const vision = fakeVision();
-    const reading = await readPolicy(prepared, vision.call);
+    const { reading } = await readPolicy(prepared, vision.call);
     expect(vision.requests[0].images).toHaveLength(1);
     expect(reading.coverages).toHaveLength(4);
   });
@@ -108,8 +111,8 @@ describe("가짜 증권 샘플 읽기", () => {
     const prepared = await prepareFile(fixture("policy-sample.jpg"));
     expect(prepared.source).toBe("image");
     expect(await isRealPicture(prepared.images[0])).toBe(true);
-    const reading = await readPolicy(prepared, fakeVision().call);
-    expect(reading.insuredName).toBe("홍길동 (800505-******)");
+    const { reading } = await readPolicy(prepared, fakeVision().call);
+    expect(reading.insurer).toBe("가상화재해상보험");
   });
 
   it("글자가 없는 스캔 PDF: 쪽을 그림으로 바꿔 보낸다", async () => {
@@ -128,26 +131,28 @@ describe("가짜 증권 샘플 읽기", () => {
     expect(prepared.text).toContain("가상화재해상보험");
   });
 
-  it("세 형식 모두 같은 모양의 결과가 나오고, 어디에도 주민등록번호 뒷자리가 없다", async () => {
+  it("세 형식 모두 같은 모양의 결과가 나오고, LLM이 신원정보를 적어도 결과 어디에도 남지 않는다", async () => {
     for (const name of ["policy-sample.pdf", "policy-sample.heic", "policy-sample.jpg"]) {
-      const reading = await readPolicy(await prepareFile(fixture(name)), fakeVision().call);
+      const { reading, redacted } = await readPolicy(await prepareFile(fixture(name)), fakeVision([LEAKY]).call);
       expect(policyReadingSchema.safeParse(reading).success).toBe(true);
-      expect(JSON.stringify(reading)).not.toContain("1234567");
-      expect(reading).not.toHaveProperty("residentFront6");
-      expect(reading).toMatchObject({ birthDate: "1980-05-05", gender: "M", productLine: "personal", policyNumber: "가상-2026-000123" });
+      const raw = JSON.stringify(reading);
+      for (const secret of SECRETS) expect(raw, `${name} ${secret}`).not.toContain(secret);
+      for (const key of ["policyNumber", "policyholderName", "insuredName", "birthDate", "gender", "vehicleNumber", "residentFront6"]) expect(reading).not.toHaveProperty(key);
+      expect(redacted).toBe(3);
+      expect(reading).toMatchObject({ productLine: "personal" });
       // 금액은 숫자로 바꾸지 않고 적힌 그대로 둔다.
       expect(reading.coverages[1]).toEqual({ name: "자동차상해", limit: "사망·후유장애 2억원, 부상 3천만원", deductible: "" });
-      expect(reading.coverages[3]).toEqual({ name: "대물배상", limit: null, deductible: null });
+      expect(reading.coverages[3]).toEqual({ name: "대물배상 (피보험자 ******)", limit: null, deductible: null });
     }
   });
 });
 
 describe("판독 결과 검증", () => {
-  const image = { source: "image" as const, text: null, images: [Buffer.from("x")], resident: null };
+  const image = { source: "image" as const, text: null, images: [Buffer.from("x")], redacted: 0 };
 
   it("모양이 맞지 않으면 한 번만 다시 시킨다", async () => {
     const vision = fakeVision([{ insurer: 3 }, ANSWER]);
-    const reading = await readPolicy(image, vision.call);
+    const { reading } = await readPolicy(image, vision.call);
     expect(vision.requests).toHaveLength(2);
     expect(vision.requests[1].instructions).toContain("직전 응답");
     expect(reading.insurer).toBe("가상화재해상보험");
@@ -159,16 +164,10 @@ describe("판독 결과 검증", () => {
     expect(vision.requests).toHaveLength(2);
   });
 
-  it("LLM이 다른 칸에 주민등록번호를 적어도 가리고, 거기서 생년월일·성별을 뽑는다", async () => {
-    const leaked = { ...ANSWER, residentFront6: null, residentBackFirst: null, insuredName: "홍길동", riders: ["주민번호 020304-4123456"] };
-    const reading = await readPolicy(image, fakeVision([leaked]).call);
-    expect(reading.riders).toEqual(["주민번호 020304-******"]);
-    expect(reading).toMatchObject({ birthDate: "2002-03-04", gender: "F" });
-  });
-
-  it("주민등록번호가 없으면 따로 적힌 생년월일과 성별을 쓴다", async () => {
-    const answer = { ...ANSWER, residentFront6: null, residentBackFirst: null, insuredName: "홍길동", birthDateText: "1980년 5월 5일", genderText: "여" };
-    expect(await readPolicy(image, fakeVision([answer]).call)).toMatchObject({ birthDate: "1980-05-05", gender: "F" });
+  it("판독 지시에 신원정보를 읽지 말라고 적는다", async () => {
+    const vision = fakeVision();
+    await readPolicy(image, vision.call);
+    expect(vision.requests[0].instructions).toContain("이름·주민등록번호·생년월일·성별·증권번호·차량번호·주소·전화번호·이메일·계좌번호·카드번호는 읽지도 적지도 않는다");
   });
 
   it("날짜가 아닌 값은 비워 둔다", () => {
@@ -229,11 +228,11 @@ describe("비전 제공자 호출", () => {
 
 describe("읽은 값을 입력 초안에 옮기기", () => {
   it("읽은 값은 채우고, 읽지 못한 칸은 비워 둔 채 표시한다", async () => {
-    const reading = await readPolicy(await prepareFile(fixture("policy-sample.jpg")), fakeVision([{ ...ANSWER, vehicleModel: null, productLine: null }]).call);
+    const { reading } = await readPolicy(await prepareFile(fixture("policy-sample.jpg")), fakeVision([{ ...ANSWER, vehicleModel: null, productLine: null }]).call);
     let n = 0;
     const policy = applyReading(newPolicy(), reading, () => `id${++n}`);
     expect(policy).toMatchObject({ insurer: "가상화재해상보험", vehicleModel: "", productLine: "" });
-    // 판독 결과에 신원 칸이 있어도 입력 초안으로 옮기지 않는다(v2).
+    // 입력 초안에도 신원 칸이 없다(v2).
     for (const key of ["policyNumber", "policyholderName", "insuredName", "birthDate", "gender", "vehicleNumber"]) expect(policy).not.toHaveProperty(key);
     expect(policy.unread).toEqual(["vehicleModel", "productLine"]);
     expect(policy.riders).toHaveLength(2);

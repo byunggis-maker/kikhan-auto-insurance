@@ -17,15 +17,11 @@ const ANSWER = {
   insurer: "가상화재해상보험",
   productName: null,
   productLine: "personal",
+  // 지시를 어긴 LLM이 없는 칸에 적은 신원정보. 검증에서 버려지고 응답에 남지 않아야 한다.
   policyNumber: "가상-2026-000123",
   periodStart: "2026-01-01",
   periodEnd: "2027-01-01",
-  policyholderName: "홍길동",
   insuredName: "홍길동",
-  residentFront6: "800505",
-  residentBackFirst: "1",
-  birthDateText: null,
-  genderText: null,
   vehicleNumber: "12가3456",
   vehicleModel: null,
   driverScope: null,
@@ -82,13 +78,15 @@ it.each(["policy-sample.pdf", "policy-sample.heic", "policy-sample.jpg", "policy
   expect(response.status).toBe(200);
   expect(response.headers.get("cache-control")).toContain("no-store");
   const text = await response.text();
-  // 응답 어디에도 주민등록번호 뒷자리가 없다.
-  expect(text).not.toContain("1234567");
+  // 응답 어디에도 신원정보가 없다.
+  for (const secret of ["1234567", "800505", "홍길동", "12가3456", "가상-2026-000123"]) expect(text, secret).not.toContain(secret);
   const body = JSON.parse(text);
   expect(body.source).toBe({ "policy-sample.pdf": "pdf-text", "policy-scan.pdf": "pdf-scan" }[name] ?? "image");
-  expect(body.reading).toMatchObject({ insurer: "가상화재해상보험", birthDate: "1980-05-05", gender: "M", vehicleModel: null });
-  expect(body.reading.coverages[0]).toEqual({ name: "자기차량손해", limit: "2,500만원 (주민 800505-******)", deductible: null });
+  expect(body.reading).toMatchObject({ insurer: "가상화재해상보험", vehicleModel: null });
+  for (const key of ["policyNumber", "insuredName", "vehicleNumber", "birthDate", "gender"]) expect(body.reading).not.toHaveProperty(key);
+  expect(body.reading.coverages[0]).toEqual({ name: "자기차량손해", limit: "2,500만원 (주민 ******)", deductible: null });
+  expect(body.redacted).toBeGreaterThanOrEqual(1);
   expect(provider).toHaveBeenCalledTimes(1);
-  // PDF 글자를 보낼 때는 제공자에게도 뒷자리를 보내지 않는다.
-  if (name === "policy-sample.pdf") expect(provider.mock.calls[0][1].body as string).not.toContain("1234567");
+  // 글자 PDF는 가린 글만 제공자에게 보낸다.
+  if (name === "policy-sample.pdf") for (const secret of ["800505", "홍길동", "12가3456", "가상-2026-000123"]) expect(provider.mock.calls[0][1].body as string, secret).not.toContain(secret);
 });

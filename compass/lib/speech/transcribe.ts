@@ -1,6 +1,6 @@
 import { ApiError } from "@/lib/guard/http";
 import { postJson, type LlmErrors } from "@/lib/llm/structured";
-import { maskResidentNumbers } from "@/lib/privacy/rrn";
+import { redact } from "@/lib/privacy/redact";
 
 // 음성을 글로 바꾼다(OpenAI 음성 전사 API). 음성은 요청 메모리에서만 다루고 저장하지 않는다.
 
@@ -52,6 +52,6 @@ export async function transcribe(audio: Blob, config: SttConfig): Promise<string
   } | null;
   const text = typeof data?.text === "string" ? data.text.trim() : "";
   if (!text) throw new ApiError(422, "AUDIO_SILENT", "말소리를 알아듣지 못했습니다. 조금 더 또렷하게 다시 말해 주세요.");
-  // 말하다가 주민등록번호를 불렀을 수도 있다. 뒷자리를 가린다.
-  return maskResidentNumbers(text).slice(0, MAX_TEXT);
+  // 말하다가 이름·주민등록번호·전화번호·차량번호를 불렀을 수도 있다. 화면으로 돌려주기 전에 가린다.
+  return redact(text).text.slice(0, MAX_TEXT);
 }

@@ -24,7 +24,6 @@ const ANSWER: RawFacts = {
   accident: { date: "2026-10-12", time: "15:00", place: "시청 앞 사거리", kind: "car_car", vehicleDamage: "뒤 범퍼 파손", inferred: ["date", "kind"] },
   people: [
     {
-      label: "본인",
       role: "driver",
       injury: "목을 다침",
       diagnosis: "경추 염좌",
@@ -33,10 +32,10 @@ const ANSWER: RawFacts = {
       outpatientVisits: null,
       faultPercent: 0,
       occupation: "회사원",
+      age: 42,
       inferred: ["role"],
     },
     {
-      label: "아내",
       role: "passenger",
       injury: "허리가 아픔",
       diagnosis: null,
@@ -45,6 +44,7 @@ const ANSWER: RawFacts = {
       outpatientVisits: "5회",
       faultPercent: null,
       occupation: null,
+      age: null,
       inferred: ["diagnosis", "surgery"],
     },
   ],
@@ -79,9 +79,13 @@ describe("사고 사실 추출", () => {
     const facts = await extractFacts(SAID, "2026-10-13", llm.call);
     expect(llm.requests[0].instructions).toContain("오늘은 2026-10-13");
     expect(facts.accident).toEqual({ date: "2026-10-12", time: "15:00", place: "시청 앞 사거리", kind: "car_car", vehicleDamage: "뒤 범퍼 파손", inferred: ["date", "kind"] });
-    expect(facts.people[0]).toMatchObject({ label: "본인", role: "driver", diagnosis: "경추 염좌", hospitalDays: 14, faultPercent: 0, occupation: "회사원" });
+    expect(facts.people[0]).toMatchObject({ role: "driver", diagnosis: "경추 염좌", hospitalDays: 14, faultPercent: 0, occupation: "회사원", age: 42 });
+    // 사람은 역할로만 가린다. 사람을 가리키는 말(이름이 들어갈 수 있는 칸)은 없다.
+    expect(facts.people[0]).not.toHaveProperty("label");
+    // 말한 나이는 만 나이인지 알 수 없어 늘 추정으로 표시한다.
+    expect(facts.people[0].inferred).toContain("age");
     // "2주"를 14일로 바꾼 값은 추정으로 표시한다.
-    expect(facts.people[0].inferred).toEqual(["role", "hospitalDays"]);
+    expect(facts.people[0].inferred).toEqual(["role", "hospitalDays", "age"]);
     expect(facts.people[1]).toMatchObject({ role: "passenger", diagnosis: null, outpatientDays: 5, faultPercent: null });
   });
 
@@ -108,11 +112,15 @@ describe("사고 사실 추출", () => {
     await expect(extractFacts(SAID, "2026-10-13", fakeLlm([null]).call)).rejects.toMatchObject({ status: 502, code: "EXTRACT_INVALID" });
   });
 
-  it("주민등록번호가 섞여 있으면 LLM에 보내기 전에 가리고, 결과에서도 가린다", async () => {
-    const llm = fakeLlm([{ ...ANSWER, accident: { ...ANSWER.accident, place: "주민번호 800505-1234567" } }]);
-    const facts = await extractFacts(`${SAID} 제 주민번호는 800505-1234567입니다.`, "2026-10-13", llm.call);
-    expect(llm.requests[0].text).not.toContain("1234567");
-    expect(JSON.stringify(facts)).not.toContain("1234567");
+  it("이름·주민번호·전화·차량번호가 섞여 있으면 LLM에 보내기 전에 가리고, 결과에서도 가린다", async () => {
+    const leaked = { ...ANSWER, accident: { ...ANSWER.accident, place: "주민번호 800505-1234567, 12가3456 차 앞" }, people: [{ ...ANSWER.people[0], label: "홍길동", injury: "목을 다침(연락처 010-1234-5678)" }] };
+    const llm = fakeLlm([leaked]);
+    const facts = await extractFacts(`${SAID} 제 이름은 성명 홍길동, 주민번호는 800505-1234567, 차는 12가3456, 전화는 010-1234-5678입니다.`, "2026-10-13", llm.call);
+    for (const secret of ["홍길동", "800505", "1234567", "12가3456", "010-1234-5678"]) {
+      expect(llm.requests[0].text, secret).not.toContain(secret);
+      expect(JSON.stringify(facts), secret).not.toContain(secret);
+    }
+    expect(llm.requests[0].instructions).toContain("사람은 역할로만 구분한다");
   });
 });
 
@@ -125,7 +133,7 @@ describe("뽑은 사실을 입력 초안에 옮기기", () => {
     expect(draft.accident).toMatchObject({ date: "2026-10-12", time: "15:00", kind: "car_car", text: SAID, inferred: ["date", "kind"] });
     expect(draft.vehicle.damage).toBe("뒤 범퍼 파손");
     expect(draft.people).toHaveLength(2);
-    expect(draft.people[0]).toMatchObject({ id: "p1", role: "driver", diagnosis: "경추 염좌", hospitalDays: 14, faultPercent: 0, inferred: ["role", "hospitalDays"] });
+    expect(draft.people[0]).toMatchObject({ id: "p1", role: "driver", diagnosis: "경추 염좌", hospitalDays: 14, faultPercent: 0, age: 42, inferred: ["role", "hospitalDays", "age"] });
     // 말하지 않은 값은 0이 아니라 null(입력하지 않음)로 남는다. 급수와 소득은 추출하지 않는다.
     expect(draft.people[1]).toMatchObject({ hospitalDays: null, faultPercent: null, surgery: null, injuryGrade: null, monthlyIncome: null });
   });
@@ -186,7 +194,7 @@ describe("/api/stt", () => {
     const provider = setup();
     const response = await sttPost(audioRequest("audio/mp4"));
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ text: "어제 사고가 났습니다. 주민번호는 800505-******" });
+    expect(await response.json()).toEqual({ text: "어제 사고가 났습니다. 주민번호는 ******" });
     const [url, init] = provider.mock.calls[0];
     const form = init.body as FormData;
     expect(url).toBe("https://api.openai.com/v1/audio/transcriptions");

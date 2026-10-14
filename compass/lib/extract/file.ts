@@ -3,7 +3,7 @@ import { join } from "node:path";
 import convert from "heic-convert";
 import sharp from "sharp";
 import { definePDFJSModule, extractText, getDocumentProxy, renderPageAsImage } from "unpdf";
-import { findResidentNumber, maskResidentNumbers, type ResidentParts } from "@/lib/privacy/rrn";
+import { redact } from "@/lib/privacy/redact";
 
 // 올린 파일을 비전 LLM에 보낼 수 있는 꼴로 바꾼다.
 // - HEIC(아이폰 사진)는 JPEG로 바꾼다.
@@ -22,12 +22,12 @@ export type FileKind = "pdf" | "jpeg" | "png" | "heic";
 
 export type Prepared = {
   source: "pdf-text" | "pdf-scan" | "image";
-  /** 주민등록번호 뒷자리를 가린 글. 글이 없으면 null */
+  /** 개인정보를 가린 글(lib/privacy/redact.ts). 글이 없으면 null. 가리기 전 글은 이 객체 밖으로 나가지 않는다 */
   text: string | null;
   /** JPEG 그림들 */
   images: Buffer[];
-  /** PDF 글자에서 서버가 직접 찾은 주민등록번호의 앞 6자리와 뒷자리 첫 숫자 */
-  resident: ResidentParts | null;
+  /** 글에서 가린 개인정보 건수 */
+  redacted: number;
 };
 
 // 한국 보험사 PDF에는 한글 문자표(CMap)가 따로 있어야 글자가 읽히는 글꼴이 많다.
@@ -94,7 +94,9 @@ async function preparePdf(bytes: Uint8Array, password: string | undefined): Prom
     const { text } = await extractText(document, { mergePages: true });
     if (text.replace(/\s/g, "").length >= MIN_TEXT_CHARS) {
       const cut = text.slice(0, MAX_TEXT_CHARS);
-      return { source: "pdf-text", text: maskResidentNumbers(cut), images: [], resident: findResidentNumber(cut) };
+      // 가린 글만 LLM에 보낸다. 그림은 보내지 않는다.
+      const safe = redact(cut);
+      return { source: "pdf-text", text: safe.text, images: [], redacted: safe.count };
     }
     // 글자가 없는 스캔본: 앞쪽 몇 쪽을 그림으로 바꾼다.
     const images: Buffer[] = [];
@@ -102,7 +104,7 @@ async function preparePdf(bytes: Uint8Array, password: string | undefined): Prom
       const png = await renderPageAsImage(document, page, { canvasImport: () => import("@napi-rs/canvas"), scale: 2 });
       images.push(await toJpeg(new Uint8Array(png)));
     }
-    return { source: "pdf-scan", text: null, images, resident: null };
+    return { source: "pdf-scan", text: null, images, redacted: 0 };
   } catch (error) {
     if (error instanceof ApiError) throw error;
     throw fail(422, "FILE_UNREADABLE", "PDF를 읽지 못했습니다. 화면을 캡처한 사진으로 올려 주세요.");
@@ -118,5 +120,5 @@ export async function prepareFile(bytes: Uint8Array, options: { password?: strin
   if (!kind) throw fail(415, "FILE_TYPE", "PDF, JPG, PNG, HEIC(아이폰 사진) 파일만 읽을 수 있습니다.");
   if (kind === "pdf") return preparePdf(bytes, options.password);
   const image = kind === "heic" ? await heicToJpeg(bytes) : await toJpeg(bytes);
-  return { source: "image", text: null, images: [image], resident: null };
+  return { source: "image", text: null, images: [image], redacted: 0 };
 }

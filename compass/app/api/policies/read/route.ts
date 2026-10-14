@@ -31,8 +31,8 @@ export async function POST(request: Request) {
     const prepared = await prepareFile(bytes, {
       password: typeof password === "string" && password.length > 0 && password.length <= 64 ? password : undefined,
     });
-    const reading = await readPolicy(prepared, providerCall(config));
-    const body: ReadResponse = { reading, source: prepared.source };
+    const { reading, redacted } = await readPolicy(prepared, providerCall(config));
+    const body: ReadResponse = { reading, source: prepared.source, redacted: prepared.redacted + redacted };
     return Response.json(body, { headers: privateHeaders });
   } catch (error) {
     // 결과를 돌려주지 못했으면 이번에 깎은 횟수를 돌려준다.
