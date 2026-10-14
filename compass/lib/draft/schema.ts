@@ -58,8 +58,8 @@ export const personDraftSchema = z.strictObject({
   outpatientDays: amount,
   treatmentCost: amount,
   daysOffWork: amount,
-  // 7단계에서 만 나이(age)로 바꾼다. 그때까지 tests/privacy-fields.test.ts가 이 칸만 예외로 둔다.
-  birthDate: text,
+  /** 사고일의 만 나이. 3단계까지의 초안에 있던 생년월일(birthDate)은 읽을 때 만 나이로 바꾼다(lib/draft/store.ts). */
+  age: z.number().int().min(0).max(120).nullable().default(null),
   occupation: text,
   monthlyIncome: amount,
   faultPercent: amount,

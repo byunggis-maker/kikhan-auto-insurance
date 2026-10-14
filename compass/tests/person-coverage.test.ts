@@ -18,7 +18,7 @@ function person(change: Partial<PersonClaim>): PersonClaim {
   return {
     id: "p1",
     label: "가상 인물",
-    birthDate: "1986-09-01",
+    age: 40,
     faultPercent: 0,
     occupationType: "employee",
     monthlyIncome: null,
@@ -31,6 +31,13 @@ function person(change: Partial<PersonClaim>): PersonClaim {
     receivedFromLiableParty: 0,
     ...change,
   };
+}
+
+/** v1 손 검산 값(생년월일로 계산)이 만 나이로 낸 최소~최대 안에 드는지 */
+function within(range: { min: number; max: number } | null | undefined, v1: number) {
+  expect(range).toBeTruthy();
+  expect(range!.min).toBeLessThanOrEqual(v1);
+  expect(range!.max).toBeGreaterThanOrEqual(v1);
 }
 
 const FULL = { status: "full" as const, bodily2Limit: "unlimited" as const };
@@ -222,19 +229,24 @@ describe("부상", () => {
 
 describe("사망", () => {
   // 약관 용어해설 105의 예시와 같은 조건(사고일만 규칙 시행일 뒤로 옮김):
-  // 1970-08-15생, 2026-04-01 사망(만 55세), 월현실소득 300만원(증명)
+  // v1: 1970-08-15생, 2026-04-01 사망(만 55세), 월현실소득 300만원(증명). v2는 생년월일 대신 만 55세만 받는다.
+  // v2 범위: 생일은 1970-04-02 ~ 1971-04-01 → 65세까지 108 ~ 120개월. 예상은 가운데 생일 1970-10-01 → 114개월
+  //   상실수익액 최소 178,040,400 / 예상 186,234,000 / 최대 194,290,200 (v1 값 183,518,400이 범위 안)
   // 취업가능월수: 2026-04-01 ~ 2035-08-15(65세) = 9년 4개월 14일 → 112개월, 호프만 계수 91.7592
   // 상실수익액 3,000,000 × (1 − 1/3) × 91.7592 = 183,518,400
   // 장례비 5,000,000 + 위자료(65세 미만) 80,000,000 + 183,518,400 = 268,518,400
-  const dead = (faultPercent: number) => person({ birthDate: "1970-08-15", faultPercent, monthlyIncome: 3_000_000, incomeProven: true, death: { date: "2026-04-01" } });
+  const dead = (faultPercent: number) => person({ age: 55, faultPercent, monthlyIncome: 3_000_000, incomeProven: true, death: { date: "2026-04-01" } });
 
   it("과실 0%: 대인배상Ⅰ 1억5천만원, 나머지는 대인배상Ⅱ", () => {
     // 대인배상Ⅰ: 사망 한도 150,000,000
     // 대인배상Ⅱ: 268,518,400 − 150,000,000 = 118,518,400
     const { cell, expected } = run({ accidentDate: "2026-04-01", person: dead(0) });
-    expect(cell("liability_bodily_1").lines.find((l) => l.item === "lost_earnings_death")?.amount?.expected).toBe(183_518_400);
+    const earnings = cell("liability_bodily_1").lines.find((l) => l.item === "lost_earnings_death")?.amount;
+    within(earnings, 183_518_400);
+    expect(earnings).toEqual({ min: 178_040_400, expected: 186_234_000, max: 194_290_200 });
     expect(expected("liability_bodily_1")).toBe(150_000_000);
-    expect(expected("liability_bodily_2")).toBe(118_518_400);
+    within(cell("liability_bodily_2").amount, 118_518_400);
+    expect(expected("liability_bodily_2")).toBe(186_234_000 + 85_000_000 - 150_000_000);
     expect(expected("auto_injury")).toBe(0);
   });
 
@@ -242,10 +254,13 @@ describe("사망", () => {
     // 268,518,400 × 80% = 214,814,720
     // 대인배상Ⅰ 150,000,000 / 대인배상Ⅱ 214,814,720 − 150,000,000 = 64,814,720
     // 자동차상해(사망 2억원): 268,518,400 − 214,814,720 = 53,703,680
-    const { expected } = run({ accidentDate: "2026-04-01", person: dead(20) });
+    const { cell, expected } = run({ accidentDate: "2026-04-01", person: dead(20) });
     expect(expected("liability_bodily_1")).toBe(150_000_000);
-    expect(expected("liability_bodily_2")).toBe(64_814_720);
-    expect(expected("auto_injury")).toBe(53_703_680);
+    within(cell("liability_bodily_2").amount, 64_814_720);
+    within(cell("auto_injury").amount, 53_703_680);
+    // 예상: 손해액 271,234,000 × 80% = 216,987,200 → 대인배상Ⅱ 66,987,200, 자동차상해 271,234,000 − 216,987,200 = 54,246,800
+    expect(expected("liability_bodily_2")).toBe(66_987_200);
+    expect(expected("auto_injury")).toBe(54_246_800);
   });
 
   it("과실 95%: 대인배상Ⅰ 사망 최저 보상 2,000만원", () => {
@@ -262,7 +277,7 @@ describe("사망", () => {
     // 1955-03-10생, 2026-04-01 사망(만 71세) → 67세부터 76세 미만: 24개월, 호프만 계수 22.8290
     // 상실수익액 2,400,000 × 2/3 × 22.8290 = 36,526,400
     // 5,000,000 + 50,000,000 + 36,526,400 = 91,526,400 → 대인배상Ⅰ 한도 이내
-    const { expected } = run({ accidentDate: "2026-04-01", person: person({ birthDate: "1955-03-10", monthlyIncome: 2_400_000, incomeProven: true, death: { date: "2026-04-01" } }) });
+    const { expected } = run({ accidentDate: "2026-04-01", person: person({ age: 71, monthlyIncome: 2_400_000, incomeProven: true, death: { date: "2026-04-01" } }) });
     expect(expected("liability_bodily_1")).toBe(91_526_400);
     expect(expected("liability_bodily_2")).toBe(0);
   });
@@ -274,7 +289,8 @@ describe("사망", () => {
 });
 
 describe("후유장애", () => {
-  // 1986-09-01생(만 40세), 사고·판정 2026-09-01, 월소득 400만원(증명), 노동능력상실률 30%, 후유장애 9급, 상해 7급 치료비 1,000만원
+  // v1: 1986-09-01생(만 40세). v2는 만 40세만 받는다. 생일 1985-09-02 ~ 1986-09-01 → 65세까지 288 ~ 300개월(예상 294개월).
+  // v1 값은 생일이 사고일과 같은 경우라 v2 범위의 최대와 같다. 사고·판정 2026-09-01, 월소득 400만원(증명), 노동능력상실률 30%, 후유장애 9급, 상해 7급 치료비 1,000만원
   // 취업가능월수: 2026-09-01 ~ 2051-09-01 = 300개월, 호프만 계수 194.3457
   // 상실수익액 4,000,000 × 30% × 194.3457 = 233,214,840
   // 후유장애 위자료: 27% 이상 35% 미만 → 2,000,000 (부상 위자료 7급 400,000보다 많으므로 최소·예상은 이 금액 하나만. 최대는 둘 다 합산)
@@ -286,11 +302,14 @@ describe("후유장애", () => {
     // 대인배상Ⅰ: 부상 7급 한도 5,000,000 + 후유장애 9급 한도 38,000,000 = 43,000,000
     // 대인배상Ⅱ: 245,214,840 − 43,000,000 = 202,214,840
     const { cell, expected } = run({ person: disabled(0) });
-    expect(cell("liability_bodily_1").lines.find((l) => l.item === "lost_earnings_disability")?.amount?.expected).toBe(233_214_840);
+    const earnings = cell("liability_bodily_1").lines.find((l) => l.item === "lost_earnings_disability")?.amount;
+    within(earnings, 233_214_840);
+    expect(earnings).toEqual({ min: 226_748_760, expected: 229_999_920, max: 233_214_840 });
     expect(cell("liability_bodily_1").lines.find((l) => l.item === "solatium_disability")?.amount?.expected).toBe(2_000_000);
     expect(cell("liability_bodily_1").lines.find((l) => l.item === "solatium_injury")?.amount).toEqual({ min: 0, expected: 0, max: 400_000 });
     expect(expected("liability_bodily_1")).toBe(43_000_000);
-    expect(expected("liability_bodily_2")).toBe(202_214_840);
+    within(cell("liability_bodily_2").amount, 202_214_840);
+    expect(expected("liability_bodily_2")).toBe(229_999_920 + 2_000_000 + 10_000_000 - 43_000_000);
     // 일용근로자 임금과 위자료 중복 처리는 확인되지 않은 규칙이다.
     expect(cell("liability_bodily_2").needsCheckRuleIds).toEqual(expect.arrayContaining(["dailyWage.amount", "solatium.disability.overlap"]));
   });
@@ -298,10 +317,12 @@ describe("후유장애", () => {
   it("위자료 중복: 최소·예상은 큰 금액 하나만, 최대는 둘 다 합산하고 '해석에 따라 금액 차이 있음'을 붙인다", () => {
     // 최소·예상 손해액 245,214,840 / 최대 손해액 245,214,840 + 부상 위자료 400,000 = 245,614,840
     // 대인배상Ⅰ은 한도(부상 5,000,000 + 후유장애 38,000,000)에 걸려 세 값이 같다.
-    // 대인배상Ⅱ: 최소·예상 202,214,840 / 최대 245,614,840 − 43,000,000 = 202,614,840
+    // 대인배상Ⅱ(v1): 최소·예상 202,214,840 / 최대 245,614,840 − 43,000,000 = 202,614,840
+    // v2는 생일 폭 때문에 최소가 더 낮다(상실수익액 최소 226,748,760). 최대는 v1과 같다.
     const { cell } = run({ person: disabled(0) });
     expect(cell("liability_bodily_1").amount).toEqual({ min: 43_000_000, expected: 43_000_000, max: 43_000_000 });
-    expect(cell("liability_bodily_2").amount).toEqual({ min: 202_214_840, expected: 202_214_840, max: 202_614_840 });
+    expect(cell("liability_bodily_2").amount).toEqual({ min: 195_748_760, expected: 198_999_920, max: 202_614_840 });
+    within(cell("liability_bodily_2").amount, 202_214_840);
     const line = cell("liability_bodily_2").lines.find((l) => l.item === "solatium_injury");
     expect(line?.flags).toEqual(["interpretation_varies"]);
     expect(line?.formula).toContain("해석에 따라 금액 차이 있음");
@@ -333,10 +354,10 @@ describe("후유장애", () => {
     // 자동차상해 부상: 10,000,000 − (5,000,000 + 1,000,000) = 4,000,000 (3천만원 이내)
     // 자동차상해 후유장애: 235,214,840 − (38,000,000 + 103,128,904) = 94,085,936 (2억원 이내)
     // 자동차상해 합계 98,085,936. 세 칸의 합 = 245,214,840 = 손해액 합계
-    const { expected } = run({ person: disabled(40) });
+    const { cell, expected } = run({ person: disabled(40) });
     expect(expected("liability_bodily_1")).toBe(43_000_000);
-    expect(expected("liability_bodily_2")).toBe(104_128_904);
-    expect(expected("auto_injury")).toBe(98_085_936);
+    within(cell("liability_bodily_2").amount, 104_128_904);
+    within(cell("auto_injury").amount, 98_085_936);
   });
 
   it("노동능력상실률 60%: 위자료 4,500만원 × 60% × 85% = 22,950,000", () => {
@@ -347,6 +368,49 @@ describe("후유장애", () => {
   it("자기신체사고 단독사고 후유장애 9급: 가입금액 3천만원의 9급 보험금액 720만원 + 부상 치료비(7급 한도 500만원)", () => {
     const { expected } = run({ own: SELF_INJURY, liable: { status: "no_counterparty", bodily2Limit: null }, person: disabled(100) });
     expect(expected("self_injury")).toBe(7_200_000 + 5_000_000);
+  });
+});
+
+describe("만 나이로 계산(생년월일을 받지 않음)", () => {
+  const line = (result: ReturnType<typeof run>["result"], item: string) => result.ledger.lines.find((l) => l.item === item);
+
+  it("정년 직전 만 61세 후유장애 50%: 생일 폭에 따라 취업가능월수 36~48개월", () => {
+    // 사고·판정 2026-09-01, 만 61세 → 생일 1964-09-02 ~ 1965-09-01, 가운데 1965-03-01
+    // 65세가 되는 날까지: 36개월(계수 33.4777) / 42개월(38.6299) / 48개월(43.6739)
+    // 상실수익액 3,000,000 × 50% × 계수 = 50,216,550 / 57,944,850 / 65,510,850
+    const { result } = run({ person: person({ age: 61, monthlyIncome: 3_000_000, incomeProven: true, disability: { lossRatePercent: "50", grade: 3, determinedOn: null } }) });
+    expect(line(result, "lost_earnings_disability")?.amount).toEqual({ min: 50_216_550, expected: 57_944_850, max: 65_510_850 });
+    expect(line(result, "lost_earnings_disability")?.formula).toContain("사고일 만 61세");
+  });
+
+  it("만 62세는 고령 기준(62세 이상 67세 미만 36개월)이라 생일과 관계없이 한 값", () => {
+    // 3,000,000 × 50% × 33.4777 = 50,216,550
+    const { result } = run({ person: person({ age: 62, monthlyIncome: 3_000_000, incomeProven: true, disability: { lossRatePercent: "50", grade: 3, determinedOn: null } }) });
+    expect(line(result, "lost_earnings_disability")?.amount).toEqual({ min: 50_216_550, expected: 50_216_550, max: 50_216_550 });
+  });
+
+  it("사고 때 만 64세, 반년 뒤 사망: 사망 당시 65세 앞뒤라 위자료 5천만~8천만원", () => {
+    // 사고 2026-04-01 만 64세 → 생일 1961-04-02 ~ 1962-04-01, 가운데 1961-10-01
+    // 사망 2026-10-01: 가장 이른 생일·가운데는 65세(5천만원), 가장 늦은 생일은 64세(8천만원)
+    // 상실수익액: 사망 당시 64~65세 → 모두 36개월(33.4777) → 3,000,000 × 2/3 × 33.4777 = 66,955,400
+    const { result } = run({ accidentDate: "2026-04-01", person: person({ age: 64, monthlyIncome: 3_000_000, incomeProven: true, death: { date: "2026-10-01" } }) });
+    expect(line(result, "solatium_death")?.amount).toEqual({ min: 50_000_000, expected: 50_000_000, max: 80_000_000 });
+    expect(line(result, "lost_earnings_death")?.amount).toEqual({ min: 66_955_400, expected: 66_955_400, max: 66_955_400 });
+  });
+
+  it("만 나이를 모르면 0원이 아니라 정보 부족", () => {
+    const { result } = run({ person: person({ age: null, monthlyIncome: 3_000_000, incomeProven: true, death: { date: "2026-09-01" } }) });
+    expect(line(result, "solatium_death")?.status).toBe("missing");
+    expect(line(result, "solatium_death")?.missing).toEqual([{ field: "age", message: "만 나이를 입력하면 계산됩니다" }]);
+  });
+
+  it("생일 범위: 사고일에 만 N세인 사람은 1년 폭 안에서 태어났다", async () => {
+    const { birthRangeFromAge, nextDay, addMonths } = await import("@/lib/engine/age");
+    expect(birthRangeFromAge(40, "2026-09-01")).toEqual({ earliest: "1985-09-02", expected: "1986-03-01", latest: "1986-09-01" });
+    expect(birthRangeFromAge(0, "2024-02-29")).toEqual({ earliest: "2023-03-01", expected: "2023-08-29", latest: "2024-02-29" });
+    expect(nextDay("2023-12-31")).toBe("2024-01-01");
+    expect(nextDay("2024-02-28")).toBe("2024-02-29");
+    expect(addMonths("2026-08-31", -6)).toBe("2026-02-28");
   });
 });
 

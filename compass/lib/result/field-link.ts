@@ -12,7 +12,7 @@ const PERSON_FIELDS: Record<string, string> = {
   faultPercent: "faultPercent",
   occupationType: "occupation",
   monthlyIncome: "monthlyIncome",
-  birthDate: "birthDate",
+  age: "age",
 };
 
 const VEHICLE_FIELDS: Record<string, string> = {

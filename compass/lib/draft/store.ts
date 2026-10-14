@@ -60,7 +60,7 @@ export function newPerson(id: string, role: PersonRole): PersonDraft {
     outpatientDays: null,
     treatmentCost: null,
     daysOffWork: null,
-    birthDate: "",
+    age: null,
     occupation: "",
     monthlyIncome: null,
     faultPercent: null,
@@ -105,9 +105,34 @@ function parseJson(raw: string | null): unknown {
   }
 }
 
+/** 사고일의 만 나이. 날짜가 하나라도 없거나 잘못됐으면 null */
+function ageFromBirth(birthDate: unknown, accidentDate: unknown): number | null {
+  const iso = /^\d{4}-\d{2}-\d{2}$/;
+  if (typeof birthDate !== "string" || typeof accidentDate !== "string" || !iso.test(birthDate) || !iso.test(accidentDate)) return null;
+  const [by, bm, bd] = birthDate.split("-").map(Number);
+  const [ay, am, ad] = accidentDate.split("-").map(Number);
+  const age = ay - by - (am < bm || (am === bm && ad < bd) ? 1 : 0);
+  return age >= 0 && age <= 120 ? age : null;
+}
+
+/**
+ * 7단계 전 초안의 사람 칸에 있던 생년월일(birthDate)을 사고일의 만 나이(age)로 바꾸고 생년월일은 버린다.
+ * 사고일을 모르면 나이도 비운다. 다른 칸은 건드리지 않는다.
+ */
+function withAgeInsteadOfBirth(value: unknown): unknown {
+  if (!value || typeof value !== "object" || !Array.isArray((value as { people?: unknown }).people)) return value;
+  const draft = value as { people: unknown[]; accident?: { date?: unknown } };
+  const people = draft.people.map((person) => {
+    if (!person || typeof person !== "object" || !("birthDate" in person)) return person;
+    const { birthDate, ...rest } = person as Record<string, unknown>;
+    return { ...rest, age: "age" in rest ? rest.age : ageFromBirth(birthDate, draft.accident?.date) };
+  });
+  return { ...draft, people };
+}
+
 /** 저장된 초안을 스키마로 검증해 읽는다. 모르는 칸(신원 칸 포함)이 있거나 깨졌으면 null */
 export function parseDraft(raw: string | null): CaseDraft | null {
-  const result = caseDraftSchema.safeParse(parseJson(raw));
+  const result = caseDraftSchema.safeParse(withAgeInsteadOfBirth(parseJson(raw)));
   return result.success ? result.data : null;
 }
 
@@ -117,7 +142,7 @@ export function parseLegacyDraft(raw: string | null): CaseDraft | null {
   if (!value || typeof value !== "object") return null;
   const draft = value as Record<string, unknown>;
   const people = Array.isArray(draft.people) ? draft.people.map((person) => withoutKeys(person, PERSON_IDENTITY)) : draft.people;
-  const result = caseDraftSchema.safeParse({ ...draft, policy: withoutKeys(draft.policy, POLICY_IDENTITY), people });
+  const result = caseDraftSchema.safeParse(withAgeInsteadOfBirth({ ...draft, policy: withoutKeys(draft.policy, POLICY_IDENTITY), people }));
   return result.success ? result.data : null;
 }
 

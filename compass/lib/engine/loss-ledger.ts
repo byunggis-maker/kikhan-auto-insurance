@@ -12,7 +12,7 @@ import { CATEGORIES, NOTICES, type ByCategory, type Ledger, type LossCategory, t
 
 export function buildLedger(person: PersonClaim, accidentDate: string, rules: Rules): Ledger {
   const [injury, disability] = mergeSolatium(injuryLosses(person, rules), disabilityLosses(person, accidentDate, rules), rules);
-  return { lines: [...injury, ...disability, ...deathLosses(person, rules)] };
+  return { lines: [...injury, ...disability, ...deathLosses(person, accidentDate, rules)] };
 }
 
 /**

@@ -98,7 +98,7 @@ describe("사고 한 건 전체", () => {
   const human = (id: string, label: string, faultPercent: number) => ({
     id,
     label,
-    birthDate: "1986-09-01",
+    age: 40,
     faultPercent,
     occupationType: "unemployed",
     monthlyIncome: null,
@@ -174,5 +174,61 @@ describe("사고 한 건 전체", () => {
       }
       expect(cell.inTotal).toBe(cell.status === "calculated");
     }
+  });
+});
+
+describe("엔진이 만든 행렬의 합산 불변식(만 나이·사망·후유장애 포함)", () => {
+  const personArbitrary = fc.record({
+    age: fc.option(fc.integer({ min: 0, max: 95 }), { nil: null }),
+    faultPercent: fc.integer({ min: 0, max: 100 }),
+    monthlyIncome: fc.option(fc.integer({ min: 0, max: 20_000_000 }), { nil: null }),
+    incomeProven: fc.option(fc.boolean(), { nil: null }),
+    kind: fc.constantFrom("injury", "death", "disability"),
+    lossRate: fc.integer({ min: 0, max: 100 }),
+    deathAfterDays: fc.integer({ min: 0, max: 400 }),
+  });
+  const addDays = (date: string, days: number) => new Date(Date.parse(`${date}T00:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10);
+
+  it("무작위 사람 1~3명: 칸마다 최소 ≤ 예상 ≤ 최대, 사람별 합 = 담보별 합 = 총합", () => {
+    fc.assert(
+      fc.property(fc.array(personArbitrary, { minLength: 1, maxLength: 3 }), (people) => {
+        const claim = accidentClaimSchema.parse({
+          accidentDate: "2026-09-01",
+          productLine: "personal",
+          persons: people.map((p, index) => ({
+            side: index === 0 ? "mine" : "others",
+            liable: { status: "full", bodily2Limit: "unlimited" },
+            own: index === 0 ? { autoInjury: { injuryLimit: 30_000_000, deathDisabilityLimit: 200_000_000 }, selfInjury: null, uninsured: { limit: 200_000_000 } } : null,
+            person: {
+              id: `p${index}`,
+              label: `사람 ${index}`,
+              age: p.age,
+              faultPercent: p.faultPercent,
+              occupationType: "employee",
+              monthlyIncome: p.monthlyIncome,
+              incomeProven: p.incomeProven,
+              vehicleDriver: true,
+              injury: { grade: 7, treatmentCost: 3_000_000, futureTreatmentCost: 0, hospitalDays: 10, outpatientDays: 5, daysOffWork: 0, dailyIncomeLoss: null, mealsNotProvided: 0, nursingProven: false },
+              death: p.kind === "death" ? { date: addDays("2026-09-01", p.deathAfterDays) } : null,
+              disability: p.kind === "disability" ? { lossRatePercent: String(p.lossRate), grade: 9, determinedOn: null } : null,
+              receivedFromThirdParty: 0,
+              receivedFromLiableParty: 0,
+            },
+          })),
+          vehicles: [],
+          legal: null,
+          otherRiders: [],
+        });
+        const matrix = calculateAccident(claim, rulesFor("personal"));
+        for (const cell of matrix.cells) {
+          if (!cell.amount) continue;
+          expect(cell.amount.min).toBeLessThanOrEqual(cell.amount.expected);
+          expect(cell.amount.expected).toBeLessThanOrEqual(cell.amount.max);
+          expect(Number.isInteger(cell.amount.min) && Number.isInteger(cell.amount.max)).toBe(true);
+        }
+        expectInvariants(matrix);
+      }),
+      { numRuns: 300 },
+    );
   });
 });

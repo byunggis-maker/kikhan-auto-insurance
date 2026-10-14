@@ -89,7 +89,8 @@ export type PersonDraft = {
   treatmentCost: number | null;
   /** 일을 쉰 날수 */
   daysOffWork: number | null;
-  birthDate: string;
+  /** 사고일의 만 나이. 생년월일은 받지 않는다. */
+  age: number | null;
   occupation: string;
   monthlyIncome: number | null;
   faultPercent: number | null;

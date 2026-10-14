@@ -178,6 +178,20 @@ describe("입력 초안 저장", () => {
     expect(clearHealth(storage)).toBe(0);
   });
 
+  it("7단계 전 초안의 생년월일은 사고일의 만 나이로 바꾸고 생년월일은 버린다", () => {
+    const draft = newDraft("a", "2026-10-13T00:00:00.000Z");
+    draft.accident.date = "2026-09-01";
+    const { age, ...rest } = newPerson("p1", "driver");
+    void age;
+    const old = { ...draft, people: [{ ...rest, birthDate: "1986-09-02" }, { ...rest, id: "p2", birthDate: "" }] };
+    const parsed = parseDraft(JSON.stringify(old))!;
+    expect(parsed.people.map((p) => p.age)).toEqual([39, null]);
+    expect(JSON.stringify(parsed)).not.toContain("1986-09-02");
+    expect(parsed.people[0]).not.toHaveProperty("birthDate");
+    // 사고일을 모르면 나이도 비운다.
+    expect(parseDraft(JSON.stringify({ ...old, accident: { ...old.accident, date: "" } }))!.people[0].age).toBeNull();
+  });
+
   it("이어서 하기: 입력이 빈 첫 단계를 연다", () => {
     const draft = newDraft("a", "2026-10-13T00:00:00.000Z");
     expect(resumeStep(draft)).toBe("policy");

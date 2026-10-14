@@ -180,7 +180,7 @@ export function PeopleStep() {
                     />
                     <InjuryGradePicker person={person} onPick={(injuryGrade) => setPerson(person.id, { injuryGrade })} />
                   </>
-                <TextField anchor={`f-${person.id}-birthDate`} label="생년월일" type="date" value={person.birthDate} onChange={(birthDate) => setPerson(person.id, { birthDate })} />
+                <NumberField anchor={`f-${person.id}-age`} label="만 나이 (사고일 기준)" unit="세" max={120} value={person.age} onChange={(age) => setPerson(person.id, { age })} onConfirmGuess={guess(person, "age")} />
                 <TextField
                   anchor={`f-${person.id}-occupation`}
                   label="직업"

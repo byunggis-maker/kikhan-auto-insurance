@@ -15,7 +15,8 @@ export const occupationTypeSchema = z.enum(["employee", "self_employed", "homema
 export const personClaimSchema = z.object({
   id: z.string().min(1),
   label: z.string(),
-  birthDate: date.nullable(),
+  /** 사고일의 만 나이. 생년월일은 받지 않는다(개인정보). 모르면 null */
+  age: z.number().int().min(0).max(120).nullable(),
   /** 이 사람 쪽의 과실비율(%). 0~100 */
   faultPercent: z.number().int().min(0).max(100).nullable(),
   occupationType: occupationTypeSchema.nullable(),

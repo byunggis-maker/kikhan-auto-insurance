@@ -110,7 +110,7 @@ export function toClaim(draft: CaseDraft): ClaimResult {
       person: {
         id: person.id,
         label: personLabel(draft.people, index),
-        birthDate: person.birthDate || null,
+        age: person.age,
         faultPercent: person.faultPercent,
         occupationType: occupationType(person.occupation),
         monthlyIncome: person.monthlyIncome,

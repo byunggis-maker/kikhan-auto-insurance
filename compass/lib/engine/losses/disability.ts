@@ -1,10 +1,12 @@
 import type { PersonClaim } from "@/lib/schemas/person-claim";
+import { birthRangeFromAge, overBirths } from "../age";
 import { ageOn } from "../dates";
 import { atLeast, isPositive, lessThan } from "../decimal";
-import { won } from "../range";
+import { rangeText, won } from "../range";
 import { scale, type Rules } from "../rules";
 import type { LossLine } from "../types";
 import { hoffmanCoefficient, monthlyIncomeBasis } from "./earnings";
+import { AGE_MISSING, ageNote } from "./death";
 import { calculated, missing, needsCheck } from "./line";
 
 // 후유장애 손해 항목: 위자료, 상실수익액. 대인배상 지급기준 "다. 후유장애".
@@ -36,36 +38,47 @@ export function disabilityLosses(person: PersonClaim, accidentDate: string, rule
   const lines: LossLine[] = [];
   const from = disability.determinedOn ?? accidentDate;
   const rate = disability.lossRatePercent;
-  const need = [
-    ...(rate === null ? [{ field: "disability.lossRatePercent", message: "노동능력상실률을 입력하면 계산됩니다" }] : []),
-    ...(person.birthDate === null ? [{ field: "birthDate", message: "생년월일을 입력하면 계산됩니다" }] : []),
-  ];
+  const need = [...(rate === null ? [{ field: "disability.lossRatePercent", message: "노동능력상실률을 입력하면 계산됩니다" }] : []), ...(person.age === null ? [AGE_MISSING] : [])];
 
   const solatium = { item: "solatium_disability", category: "disability" as const, label: "위자료(후유장애)", required: true };
   const earnings = { item: "lost_earnings_disability", category: "disability" as const, label: "상실수익액(후유장애)" };
-  if (rate === null || person.birthDate === null) return [missing(solatium, need), missing(earnings, need)];
+  if (rate === null || person.age === null) return [missing(solatium, need), missing(earnings, need)];
   if (!isPositive(rate)) return [calculated(solatium, 0, "노동능력상실률 0% → 0원"), calculated(earnings, 0, "노동능력상실률 0% → 0원")];
+  const births = birthRangeFromAge(person.age, accidentDate);
+  const age = person.age;
 
   {
     const used: string[] = [];
-    const result = solatiumAmount(rate, ageOn(person.birthDate, from), rules, used);
     const overlap = rules.text("solatium.disability.overlap", used);
-    if (result === null || overlap !== "larger_only") lines.push(needsCheck(solatium, "후유장애 위자료 기준을 확인하지 못했습니다", used));
-    else lines.push(calculated(solatium, result.amount, result.formula, used));
+    const result = overBirths<{ amount: number; formula: string }>(births, (birth) => {
+      const found = solatiumAmount(rate, ageOn(birth, from), rules, used);
+      return found === null ? { ok: false, text: "후유장애 위자료 기준을 확인하지 못했습니다" } : { ok: true, amount: found.amount, formula: found.formula };
+    });
+    if (!result.ok || overlap !== "larger_only") lines.push(needsCheck(solatium, "후유장애 위자료 기준을 확인하지 못했습니다", [...new Set(used)]));
+    else lines.push(calculated(solatium, result.amount, result.amount.min === result.amount.max ? result.expected.formula : `${ageNote(age)}: 나이 기준 앞뒤라 ${rangeText(result.amount)}`, [...new Set(used)]));
   }
 
   {
     const used: string[] = [];
     const income = monthlyIncomeBasis(person, rules, used);
-    const coefficient = hoffmanCoefficient(person.birthDate, from, rules, used);
-    if (!income.ok) lines.push(needsCheck(earnings, income.text, used, income.flags));
-    else if (!coefficient.ok) lines.push(needsCheck(earnings, coefficient.text, used));
+    if (!income.ok) lines.push(needsCheck(earnings, income.text, [...new Set(used)], income.flags));
     else {
-      const amount = scale(rules, used, income.value, [[rate, 100], [coefficient.value, 1]]);
+      const result = overBirths<{ amount: number; coefficient: string }>(births, (birth) => {
+        const coefficient = hoffmanCoefficient(birth, from, rules, used);
+        if (!coefficient.ok) return coefficient;
+        const amount = scale(rules, used, income.value, [[rate, 100], [coefficient.value, 1]]);
+        return amount === null ? { ok: false, text: "원 미만 처리 방식을 확인하지 못했습니다" } : { ok: true, amount, coefficient: coefficient.text };
+      });
       lines.push(
-        amount === null
-          ? needsCheck(earnings, "원 미만 처리 방식을 확인하지 못했습니다", used)
-          : calculated(earnings, amount, `${income.text} × 노동능력상실률 ${rate}% × ${coefficient.text} = ${won(amount)}`, used, income.flags),
+        !result.ok
+          ? needsCheck(earnings, result.text, [...new Set(used)])
+          : calculated(
+              earnings,
+              result.amount,
+              `${ageNote(age)}. 예상: ${income.text} × 노동능력상실률 ${rate}% × ${result.expected.coefficient} = ${won(result.amount.expected)}${result.amount.min === result.amount.max ? "" : ` (생일에 따라 ${rangeText(result.amount)})`}`,
+              [...new Set(used)],
+              income.flags,
+            ),
       );
     }
   }

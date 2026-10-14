@@ -276,7 +276,7 @@ describe("보험 종류", () => {
     person: {
       id: "p1",
       label: "가상 운전자",
-      birthDate: "1986-09-01",
+      age: 40,
       faultPercent: 100,
       occupationType: "unemployed" as const,
       monthlyIncome: null,

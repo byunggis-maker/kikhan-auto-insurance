@@ -31,11 +31,6 @@ const FORBIDDEN = [
 
 // 계획된 단계에서 없앨 칸만 예외로 둔다. 그 단계에서 칸을 없애면 이 목록에서도 지워야 테스트가 통과한다.
 const PENDING: Record<string, string> = {
-  "caseDraftSchema.people[].birthDate": "7단계: 만 나이(age)로 바꾼다",
-  "personDraftSchema.birthDate": "7단계: 만 나이(age)로 바꾼다",
-  "personClaimSchema.birthDate": "7단계: 만 나이(age)로 바꾼다",
-  "personCoverageInputSchema.person.birthDate": "7단계: 만 나이(age)로 바꾼다",
-  "accidentClaimSchema.persons[].person.birthDate": "7단계: 만 나이(age)로 바꾼다",
   "rawReadingSchema.policyNumber": "5단계: 증권 판독에서 신원 칸을 없앤다",
   "rawReadingSchema.policyholderName": "5단계",
   "rawReadingSchema.insuredName": "5단계",
