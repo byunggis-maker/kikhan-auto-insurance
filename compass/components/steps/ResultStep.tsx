@@ -28,9 +28,9 @@ function Amounts({ amount }: { amount: Range }) {
   return (
     <dl className="grid grid-cols-3 gap-2 text-center">
       {(["min", "expected", "max"] as const).map((key) => (
-        <div key={key} className={`rounded-xl px-1 py-3 ${key === "expected" ? "bg-navy-soft" : "bg-white"}`}>
+        <div key={key} className={`rounded-[14px] px-1 py-3 ${key === "expected" ? "bg-navy-soft" : "bg-surface"}`}>
           <dt className="text-sm text-muted">{key === "min" ? "최소" : key === "expected" ? "예상" : "최대"}</dt>
-          <dd className={`break-all font-bold ${key === "expected" ? "text-lg text-navy" : "text-base"}`}>{won(amount[key])}</dd>
+          <dd className={`num break-all font-bold ${key === "expected" ? "text-lg text-navy" : "text-base"}`}>{won(amount[key])}</dd>
         </div>
       ))}
     </dl>
@@ -38,18 +38,19 @@ function Amounts({ amount }: { amount: Range }) {
 }
 
 /** 맨 위의 총 예상 보험금: 예상값을 크게, 최소~최대를 그 아래에 */
-function Total({ title, amount, counted }: { title: string; amount: Range | null; counted: number }) {
+function Total({ title, amount, counted, size = "lg" }: { title: string; amount: Range | null; counted: number; size?: "lg" | "md" }) {
   return (
     <div>
-      <p className="font-semibold text-muted">{title}</p>
+      <p className="text-base font-semibold text-muted">{title}</p>
       {counted === 0 || !amount ? (
         <p className="mt-1 text-lg font-bold">정보 부족: 아직 계산된 담보가 없습니다</p>
       ) : (
         <>
-          <p className="mt-1 break-all text-4xl font-bold text-navy">{won(amount.expected)}</p>
-          <p className="mt-1 text-muted">
-            최소 {won(amount.min)} ~ 최대 {won(amount.max)}
+          <p className={`num mt-1 break-all font-bold tracking-tight text-navy ${size === "lg" ? "text-[2.4rem] leading-tight" : "text-3xl"}`}>{won(amount.expected)}</p>
+          <p className="num mt-1.5 text-base text-muted">
+            {amount.min === amount.max ? "최소·최대가 같습니다" : `최소 ${won(amount.min)} ~ 최대 ${won(amount.max)}`}
           </p>
+          <p className="mt-0.5 text-sm text-muted">계산된 담보 {counted}개를 더했습니다</p>
         </>
       )}
     </div>
@@ -150,7 +151,7 @@ function CoverageCard({ cell, label, caseId, result, canExplain }: { cell: Matri
               <li key={index} className="px-4 py-2.5">
                 <div className="flex items-baseline justify-between gap-3">
                   <span className="font-semibold">{line.label}</span>
-                  <span className="shrink-0 font-bold">{line.amount ? won(line.amount.expected) : "–"}</span>
+                  <span className="num shrink-0 font-bold">{line.amount ? won(line.amount.expected) : "–"}</span>
                 </div>
                 <p className="break-words text-sm text-muted">{line.formula}</p>
                 {line.flags.map((flag) => (
@@ -261,13 +262,75 @@ function ResultView({ draft, result }: { draft: CaseDraft; result: Result }) {
         {others.countedCells > 0 && (
           <div className="border-t border-line pt-4">
             <p className="font-semibold text-muted">상대방에게 지급될 예상 금액</p>
-            <p className="mt-1 break-all text-xl font-bold">{won(others.total.expected)}</p>
+            <p className="num mt-1 break-all text-xl font-bold">{won(others.total.expected)}</p>
             <p className="text-sm text-muted">
               최소 {won(others.total.min)} ~ 최대 {won(others.total.max)} · 내가 받을 금액과 더하지 않습니다
             </p>
           </div>
         )}
       </Card>
+
+      {matrix.rows.length === 0 ? (
+        <Card>
+          <p>정보 부족: 앞 단계에서 다친 사람이나 차량 피해를 입력하면 결과가 표시됩니다.</p>
+          <Link href={`/cases/${draft.id}/people`} className={outlineButton}>
+            다친 사람·피해 입력하러 가기
+          </Link>
+        </Card>
+      ) : (
+        <>
+          <div role="tablist" aria-label="사람 선택" className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1">
+            {matrix.rows.map((candidate) => {
+              const on = candidate.id === row?.id;
+              return (
+                <button
+                  key={candidate.id}
+                  role="tab"
+                  type="button"
+                  aria-selected={on}
+                  onClick={() => setSelected(candidate.id)}
+                  className={`min-h-12 shrink-0 rounded-full border px-5 font-bold ${on ? "border-navy bg-navy text-white shadow-[0_4px_14px_rgb(27_47_107/0.2)]" : "border-line bg-white text-ink"}`}
+                >
+                  {candidate.label}
+                </button>
+              );
+            })}
+          </div>
+          {row && (
+            <>
+              {(() => {
+                const group = row.group === "mine" ? mine : others;
+                // 사람별 합계와 더한 칸 수는 합산 함수의 값만 쓴다. 여기서 칸을 다시 세거나 다른 합계로 대신하지 않는다.
+                const total = group.byRow.find((entry) => entry.rowId === row.id);
+                return (
+                  <Card>
+                    <Total size="md" title={`${row.label} · ${row.group === "mine" ? "받을 예상 금액" : "지급될 예상 금액"}`} amount={total?.amount ?? null} counted={total?.countedCells ?? 0} />
+                  </Card>
+                );
+              })()}
+              {matrix.cells
+                .filter((cell) => cell.rowId === row.id && cell.status !== "not_applicable")
+                .map((cell) => (
+                  <CoverageCard key={`${cell.rowId}:${cell.columnId}`} cell={cell} label={columnLabel(cell.columnId)} caseId={draft.id} result={result} canExplain={health} />
+                ))}
+              {matrix.cells.some((cell) => cell.rowId === row.id && cell.status === "not_applicable") && (
+                <Card title="해당 없는 담보">
+                  <ul className="flex flex-col gap-2">
+                    {matrix.cells
+                      .filter((cell) => cell.rowId === row.id && cell.status === "not_applicable")
+                      .map((cell) => (
+                        <li key={cell.columnId}>
+                          <span className="font-semibold">{columnLabel(cell.columnId)}</span>
+                          <span className="block text-sm text-muted">{cell.reason}</span>
+                        </li>
+                      ))}
+                  </ul>
+                </Card>
+              )}
+            </>
+          )}
+        </>
+      )}
 
       <Card title="읽어주기">
         {guest ? (
@@ -295,68 +358,6 @@ function ResultView({ draft, result }: { draft: CaseDraft; result: Result }) {
         <p className="text-sm text-muted">결과는 이 브라우저에만 남습니다. 보관하려면 엑셀이나 PDF로 받아 두세요.</p>
         <p className="break-all text-sm text-muted">계산에 쓴 규칙 버전: {result.rulesVersion.slice(0, 19)}… · 엔진 {result.engineVersion}</p>
       </Card>
-
-      {matrix.rows.length === 0 ? (
-        <Card>
-          <p>정보 부족: 앞 단계에서 다친 사람이나 차량 피해를 입력하면 결과가 표시됩니다.</p>
-          <Link href={`/cases/${draft.id}/people`} className={outlineButton}>
-            다친 사람·피해 입력하러 가기
-          </Link>
-        </Card>
-      ) : (
-        <>
-          <div role="tablist" aria-label="사람 선택" className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1">
-            {matrix.rows.map((candidate) => {
-              const on = candidate.id === row?.id;
-              return (
-                <button
-                  key={candidate.id}
-                  role="tab"
-                  type="button"
-                  aria-selected={on}
-                  onClick={() => setSelected(candidate.id)}
-                  className={`min-h-12 shrink-0 rounded-full border px-5 font-bold ${on ? "border-navy bg-navy text-white" : "border-line text-ink"}`}
-                >
-                  {candidate.label}
-                </button>
-              );
-            })}
-          </div>
-          {row && (
-            <>
-              {(() => {
-                const group = row.group === "mine" ? mine : others;
-                // 사람별 합계와 더한 칸 수는 합산 함수의 값만 쓴다. 여기서 칸을 다시 세거나 다른 합계로 대신하지 않는다.
-                const total = group.byRow.find((entry) => entry.rowId === row.id);
-                return (
-                  <Card>
-                    <Total title={`${row.label} · ${row.group === "mine" ? "받을 예상 금액" : "지급될 예상 금액"}`} amount={total?.amount ?? null} counted={total?.countedCells ?? 0} />
-                  </Card>
-                );
-              })()}
-              {matrix.cells
-                .filter((cell) => cell.rowId === row.id && cell.status !== "not_applicable")
-                .map((cell) => (
-                  <CoverageCard key={`${cell.rowId}:${cell.columnId}`} cell={cell} label={columnLabel(cell.columnId)} caseId={draft.id} result={result} canExplain={health} />
-                ))}
-              {matrix.cells.some((cell) => cell.rowId === row.id && cell.status === "not_applicable") && (
-                <Card title="해당 없는 담보">
-                  <ul className="flex flex-col gap-2">
-                    {matrix.cells
-                      .filter((cell) => cell.rowId === row.id && cell.status === "not_applicable")
-                      .map((cell) => (
-                        <li key={cell.columnId}>
-                          <span className="font-semibold">{columnLabel(cell.columnId)}</span>
-                          <span className="block text-sm text-muted">{cell.reason}</span>
-                        </li>
-                      ))}
-                  </ul>
-                </Card>
-              )}
-            </>
-          )}
-        </>
-      )}
 
       {disputed && (
         <Card title="과실비율 참고 판례">

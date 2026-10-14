@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
 import { useCaseDraft } from "@/lib/draft/use-draft";
 import type { CaseDraft } from "@/lib/draft/types";
-import { primaryButton } from "./ui";
+import { Skeleton, primaryButton } from "./ui";
 
 type Step = { path: string; title: string };
 export const STEPS: readonly Step[] = [
@@ -42,28 +42,28 @@ export function StepShell(props: {
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-xl flex-col">
-      <header className="sticky top-0 z-10 border-b border-line bg-white px-5 pb-3 pt-4">
+      <header className="sticky top-0 z-10 border-b border-line/70 bg-surface/85 px-5 pb-3 pt-[max(1rem,env(safe-area-inset-top))] backdrop-blur-md">
         <div className="flex items-center justify-between">
           <Link href={prev} className="-ml-2 flex min-h-11 items-center px-2 font-semibold text-navy">
             ← 이전
           </Link>
-          <span className="font-bold text-navy" aria-label={`4단계 중 ${props.step}단계`}>
-            {props.step}/4
+          <span className="text-sm font-semibold text-muted" aria-label={`4단계 중 ${props.step}단계`}>
+            <span className="text-navy">{props.step}</span> / 4 · {current.title}
           </span>
         </div>
         <div className="mt-2 flex gap-1.5" aria-hidden>
           {STEPS.map((s, i) => (
-            <span key={s.path} className={`h-1.5 flex-1 rounded-full ${i < props.step ? "bg-navy" : "bg-line"}`} />
+            <span key={s.path} className={`h-1 flex-1 rounded-full ${i < props.step ? "bg-navy" : "bg-line"}`} />
           ))}
         </div>
       </header>
 
-      <main className="flex flex-1 flex-col gap-5 px-5 pb-32 pt-6">
+      <main className="rise flex flex-1 flex-col gap-4 px-5 pb-36 pt-6">
         <div>
-          <h1 className="text-2xl font-bold">{current.title}</h1>
+          <h1 className="text-[1.65rem] font-bold leading-tight">{current.title}</h1>
           <p className="mt-1 text-muted">{props.lead}</p>
         </div>
-        {draft === undefined && <p className="text-muted">불러오는 중…</p>}
+        {draft === undefined && <Skeleton />}
         {draft === null && (
           <div className="flex flex-col gap-4">
             <p>이 기기에서 이 사고 기록을 찾지 못했습니다.</p>
@@ -76,7 +76,7 @@ export function StepShell(props: {
       </main>
 
       {draft && (
-        <footer className="fixed inset-x-0 bottom-0 z-10 border-t border-line bg-white">
+        <footer className="fixed inset-x-0 bottom-0 z-10 border-t border-line/70 bg-white/90 backdrop-blur-md">
           <div className="mx-auto w-full max-w-xl px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
             <Link href={next} className={primaryButton}>
               {props.nextLabel ?? "다음"}

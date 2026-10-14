@@ -8,12 +8,24 @@ export function Disclaimer() {
   return <p className="mt-8 border-t border-line pt-4 text-center text-sm text-muted">{DISCLAIMER}</p>;
 }
 
+/** 불러오는 동안 보여 주는 자리 */
+export function Skeleton({ lines = 3 }: { lines?: number }) {
+  return (
+    <div className="flex flex-col gap-3" role="status" aria-label="불러오는 중">
+      <div className="skeleton h-28 w-full" />
+      {Array.from({ length: lines }, (_, i) => (
+        <div key={i} className="skeleton h-16 w-full" />
+      ))}
+    </div>
+  );
+}
+
 export function Card({ title, action, children }: { title?: string; action?: ReactNode; children: ReactNode }) {
   return (
-    <section className="rounded-2xl border border-line bg-white p-5 shadow-sm">
+    <section className="rounded-[var(--radius-card)] border border-line/70 bg-white p-5 shadow-[var(--shadow-card)]">
       {(title || action) && (
         <div className="mb-4 flex items-center justify-between gap-3">
-          {title && <h2 className="text-lg font-bold">{title}</h2>}
+          {title && <h2 className="text-lg font-bold tracking-tight">{title}</h2>}
           {action}
         </div>
       )}
@@ -40,7 +52,7 @@ export function GuessBadge({ onConfirm }: { onConfirm: () => void }) {
 export const ANCHOR_CLASS = "scroll-mt-28 rounded-xl target:outline target:outline-3 target:outline-offset-4 target:outline-navy";
 
 const inputClass =
-  "w-full min-h-13 rounded-xl border border-line bg-white px-4 text-lg placeholder:text-muted/70 focus:border-navy";
+  "w-full min-h-13 rounded-[14px] border border-line bg-white px-4 text-lg placeholder:text-muted/70 focus:border-navy focus:ring-4 focus:ring-navy/10 focus:outline-none";
 
 export function TextField(props: {
   label: string;
@@ -162,9 +174,9 @@ export function Pending({ children }: { children: ReactNode }) {
 }
 
 export const primaryButton =
-  "flex min-h-14 w-full items-center justify-center rounded-2xl bg-navy px-6 text-xl font-bold text-white active:bg-navy-dark disabled:opacity-40";
+  "flex min-h-14 w-full items-center justify-center rounded-2xl bg-navy px-6 text-xl font-bold text-white shadow-[0_6px_18px_rgb(27_47_107/0.22)] hover:bg-navy-dark active:bg-navy-dark disabled:opacity-40 disabled:shadow-none";
 export const outlineButton =
-  "flex min-h-13 w-full items-center justify-center rounded-2xl border-2 border-navy bg-white px-5 text-lg font-bold text-navy disabled:opacity-40";
+  "flex min-h-13 w-full items-center justify-center rounded-2xl border border-navy/30 bg-white px-5 text-lg font-bold text-navy hover:border-navy hover:bg-navy-soft disabled:opacity-40";
 
 // lib/guard/paid.ts의 PAID_UNAVAILABLE_MESSAGE와 같은 문구다.
 export const PAID_UNAVAILABLE_MESSAGE = "지금은 자동 기능을 쓸 수 없습니다. 직접 입력해 계산할 수 있어요.";

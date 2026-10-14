@@ -1,34 +1,126 @@
 @import "tailwindcss";
 
-/* 흰 배경에 남색 포인트 한 가지 색만 쓴다. */
+/*
+  디자인 기준: 흰색·옅은 회색 바탕에 깊은 남색 한 가지 색을 포인트로 쓴다. 남색은 금액과 주요 버튼에만 쓴다.
+  글자 대비는 4.5:1 이상(muted #5b6474는 흰 바탕 6.0:1, surface 바탕 5.6:1), 버튼 높이는 48px 이상.
+  그림자는 약하게, 둥근 모서리는 카드 20px · 버튼 16px · 입력 14px로 맞춘다.
+*/
 @theme inline {
-  --color-navy: #1e3a8a;
-  --color-navy-dark: #172b66;
-  --color-navy-soft: #eef2fb;
-  --color-ink: #111827;
+  --color-navy: #1b2f6b;
+  --color-navy-dark: #12214d;
+  --color-navy-soft: #eef1f8;
+  --color-ink: #0f172a;
   --color-muted: #5b6474;
-  --color-line: #d9dee8;
-  /* 자동 읽기가 읽지 못한 칸("확인 필요") 표시 */
-  --color-warn: #fef08a;
-  --color-warn-soft: #fefce8;
-  --color-warn-ink: #713f12;
-  --font-sans: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+  --color-line: #e3e7ee;
+  --color-surface: #f5f6f8;
+  /* 자동 읽기가 읽지 못한 칸("확인 필요")과 주의 표시 */
+  --color-warn: #fde68a;
+  --color-warn-soft: #fffbeb;
+  --color-warn-ink: #78350f;
+  --font-sans: var(--font-pretendard), "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+  --radius-card: 20px;
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.04), 0 6px 24px rgb(15 23 42 / 0.05);
 }
 
 html {
   font-size: 18px;
   -webkit-text-size-adjust: 100%;
+  background: var(--color-surface);
 }
 
 body {
-  background: #ffffff;
+  background: var(--color-surface);
   color: var(--color-ink);
   font-family: var(--font-sans);
   line-height: 1.6;
   word-break: keep-all;
+  overflow-wrap: anywhere;
+  font-feature-settings: "tnum" 0;
+}
+
+/* 금액은 자릿수가 흔들리지 않게 고정폭 숫자로 */
+.num {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+h1,
+h2 {
+  letter-spacing: -0.02em;
 }
 
 :focus-visible {
   outline: 3px solid var(--color-navy);
   outline-offset: 2px;
+}
+
+/* 불러오는 중 자리(스켈레톤). 움직임을 줄이도록 설정한 기기에서는 반짝이지 않는다. */
+.skeleton {
+  border-radius: 14px;
+  background: linear-gradient(90deg, #eceff3 0%, #f6f7f9 50%, #eceff3 100%);
+  background-size: 200% 100%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .skeleton {
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
+  .rise {
+    animation: rise 0.35s ease-out both;
+  }
+  details > summary ~ * {
+    animation: rise 0.2s ease-out both;
+  }
+  a,
+  button {
+    transition:
+      background-color 0.15s ease,
+      border-color 0.15s ease,
+      color 0.15s ease,
+      transform 0.1s ease;
+  }
+  button:active:not(:disabled),
+  a:active {
+    transform: scale(0.99);
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+summary {
+  list-style: none;
+}
+summary::-webkit-details-marker {
+  display: none;
+}
+summary::after {
+  content: "";
+  margin-left: auto;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg) translateY(-2px);
+  flex-shrink: 0;
+}
+details[open] > summary::after {
+  transform: rotate(-135deg) translateY(-2px);
 }
