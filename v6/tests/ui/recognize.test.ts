@@ -26,7 +26,7 @@ const receipt: ClaimReading = {
     { code: "treatment", amount: 500_000, basis: "입원" },
     { code: "future_treatment", amount: 300_000, basis: "소견서" },
   ],
-  facts: { hospitalDays: 5, outpatientDays: 4, daysOffWork: null, hospitalPeriods: null, outpatientDates: null, daysOffWorkPeriods: null, incomeMonth: null, monthlyIncome: null },
+  facts: { hospitalDays: 5, outpatientDays: 4, daysOffWork: null, hospitalPeriods: null, outpatientDates: null, daysOffWorkPeriods: null, incomeMonth: null, monthlyIncome: null, incomeTax: null, localIncomeTax: null },
   note: "",
 };
 
@@ -74,14 +74,14 @@ describe("보상 서류 인식값", () => {
 
   it("같은 금액 칸을 다시 읽으면 바꾸지 않고 서류별 줄로 쌓는다(라운드 8b, 자세한 것은 tests/ui/multi-document.test.ts)", () => {
     const first = claimRecognitions(base(), "driver-1", receipt, makeId).recognitions;
-    const again = claimRecognitions(base(), "driver-1", { ...receipt, amounts: [{ code: "treatment", amount: 100, basis: "" }], facts: { hospitalDays: null, outpatientDays: null, daysOffWork: null, hospitalPeriods: null, outpatientDates: null, daysOffWorkPeriods: null, incomeMonth: null, monthlyIncome: null } }, makeId).recognitions;
+    const again = claimRecognitions(base(), "driver-1", { ...receipt, amounts: [{ code: "treatment", amount: 100, basis: "" }], facts: { hospitalDays: null, outpatientDays: null, daysOffWork: null, hospitalPeriods: null, outpatientDates: null, daysOffWorkPeriods: null, incomeMonth: null, monthlyIncome: null, incomeTax: null, localIncomeTax: null } }, makeId).recognitions;
     const c = addRecognitions(addRecognitions(base(), first), again);
     expect(c.recognized.filter((r) => r.kind === "loss" && r.code === "treatment").map((r) => r.value)).toEqual([2_000_000, 100]);
     expect(c.recognized).toHaveLength(5);
   });
 
   it("물건 카드: 수리비·견인비", () => {
-    const reading: ClaimReading = { documentType: "수리비 견적서", issuer: null, documentDate: null, amounts: [{ code: "repair", amount: 1_980_000, basis: "" }, { code: "towing", amount: 100_000, basis: "" }], facts: { hospitalDays: null, outpatientDays: null, daysOffWork: null, hospitalPeriods: null, outpatientDates: null, daysOffWorkPeriods: null, incomeMonth: null, monthlyIncome: null }, note: "" };
+    const reading: ClaimReading = { documentType: "수리비 견적서", issuer: null, documentDate: null, amounts: [{ code: "repair", amount: 1_980_000, basis: "" }, { code: "towing", amount: 100_000, basis: "" }], facts: { hospitalDays: null, outpatientDays: null, daysOffWork: null, hospitalPeriods: null, outpatientDates: null, daysOffWorkPeriods: null, incomeMonth: null, monthlyIncome: null, incomeTax: null, localIncomeTax: null }, note: "" };
     const { recognitions } = claimRecognitions(base(), "my_vehicle-1", reading, makeId);
     const c = confirmAll(addRecognitions(base(), recognitions), recognitions.map((r) => r.id));
     expect(c.properties[0].losses.map((i) => [i.code, i.confirmed])).toEqual([

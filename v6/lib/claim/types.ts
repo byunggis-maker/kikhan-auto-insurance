@@ -245,6 +245,8 @@ const factReadingSchema = z.object({
   value: moneySchema,
   periods: z.array(periodSchema).nullable().optional(),
   month: z.string().regex(/^\d{4}-\d{2}$/).nullable().optional(),
+  // 라운드 8d: 월 소득에서 뺀 세금(세전 − 소득세 − 지방소득세 = value). 세금 줄을 읽지 못했으면 null(세전 금액)
+  tax: z.object({ gross: moneySchema, incomeTax: moneySchema, localIncomeTax: moneySchema }).nullable().optional(),
 });
 export type FactReading = z.infer<typeof factReadingSchema>;
 export const FACT_FIELDS = ["hospitalDays", "outpatientDays", "daysOffWork", "monthlyIncome"] as const;

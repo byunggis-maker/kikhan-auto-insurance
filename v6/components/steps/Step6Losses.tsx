@@ -53,7 +53,13 @@ export function Step6Losses({ screen, claim, update }: ScreenProps) {
         </div>
         {(victim.occupation === "employed" || victim.occupation === null) && (
           <>
-            <MoneyInput label="월 소득(세금 뗀 금액)" value={victim.monthlyIncome} onChange={(monthlyIncome) => setVictim({ monthlyIncome })} />
+            <div>
+              <MoneyInput label="월 소득(세금 뗀 금액)" value={victim.monthlyIncome} onChange={(monthlyIncome) => setVictim({ monthlyIncome })} />
+              {/* 라운드 8d: 상여금 등은 약관상 과거 1년 기준이다(별표1 가. 3. 나.(1)(가)①, 인쇄 72쪽). 자동 계산하지 않고 안내만 한다 */}
+              <p className="mt-1 text-sm font-semibold text-ink-soft" data-bonus-note>
+                상여금이 있으면 약관상 1년 기준이라 금액이 달라질 수 있어요.
+              </p>
+            </div>
             <div>
               <p className="mb-2 font-bold">월 소득 금액을 세금 서류로 증명할 수 있나요?</p>
               <p className="mb-2 text-sm font-semibold text-ink-soft">

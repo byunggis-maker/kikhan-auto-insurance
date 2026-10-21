@@ -2,13 +2,14 @@
 
 import { useRef, useState } from "react";
 import type { ClaimReading, PolicyReading, Usage } from "@/lib/ai/documents";
-import { checkPicked, fetchRemaining, pdfPlan, pdfUseNotice, postForm, prepareUploads, UPLOAD_LIMIT, type UploadPart } from "@/lib/ui/upload";
+import { checkPicked, pdfPlan, pdfUseNotice, postForm, prepareUploads, UPLOAD_LIMIT, type UploadPart } from "@/lib/ui/upload";
 
 // MASTER.md 9장 서류 인식 버튼. 파일은 서버로 한 번 보내 읽기만 하고, 이 기기에도 서버에도 저장하지 않는다.
 // 읽은 값은 바로 입력칸에 들어가지 않고 "인식된 값 – 확인해 주세요"로 남는다(onRead가 확인 대기 값으로 바꾼다).
 // 라운드 8: 한 번에 5건, 한 건 10MB까지 고를 수 있다. 서버로는 한 건씩 차례로 보낸다.
 // 라운드 8b: 4MB가 넘는 PDF는 앞 5쪽을 쪽마다 사진으로 바꿔 한 쪽씩 보낸다.
-// 라운드 8c: 큰 PDF는 보내기 전에 "이 PDF는 ○회를 씁니다(오늘 남은 횟수 ○회)"를 보여 주고 "읽기"를 눌러야 보낸다.
+// 라운드 8c: 큰 PDF는 보내기 전에 "이 PDF는 ○회를 씁니다"를 보여 주고 "읽기"를 눌러야 보낸다.
+// 라운드 8d: "오늘 남은 횟수"는 정확하지 않아 지웠다(서버의 하루 30회 제한은 그대로).
 
 type Reading = { kind: "policy"; reading: PolicyReading; usage: Usage } | { kind: "claim"; reading: ClaimReading; usage: Usage };
 
@@ -57,7 +58,7 @@ export function DocumentUpload({ kind, target, label, onRead }: Props) {
       let parts: UploadPart[];
       try {
         const plan = await pdfPlan(file);
-        if (plan && !(await ask(`${name ? `${name}: ` : ""}${pdfUseNotice(plan, await fetchRemaining())}`))) {
+        if (plan && !(await ask(`${name ? `${name}: ` : ""}${pdfUseNotice(plan)}`))) {
           messages.push(`${name ? `${name}: ` : ""}PDF를 읽지 않았습니다.`);
           continue;
         }

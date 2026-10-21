@@ -55,22 +55,10 @@ export async function pdfPlan(file: File, countPages: (file: Blob) => Promise<nu
   return { pages, uses: Math.min(pages, MAX_PDF_PAGES) };
 }
 
-/** 큰 PDF를 올리기 전 안내(라운드 8c). 남은 횟수를 모르면(서버가 답하지 않으면) 쓸 횟수만 */
-export function pdfUseNotice(plan: { pages: number; uses: number }, remaining: number | null): string {
-  const left = remaining === null ? "" : `(오늘 남은 횟수 ${remaining}회)`;
+/** 큰 PDF를 올리기 전 안내(라운드 8c). 라운드 8d: 서버마다 따로 세어 정확하지 않은 "오늘 남은 횟수"는 보여 주지 않는다 */
+export function pdfUseNotice(plan: { pages: number; uses: number }): string {
   const pages = plan.pages > plan.uses ? ` 전체 ${plan.pages}쪽 중 앞 ${plan.uses}쪽을 한 쪽씩 사진으로 바꿔 읽습니다.` : ` ${plan.pages}쪽을 한 쪽씩 사진으로 바꿔 읽습니다.`;
-  const short = remaining !== null && remaining < plan.uses ? ` 남은 횟수가 모자라 앞 ${remaining}쪽까지만 읽습니다.` : "";
-  return `이 PDF는 ${plan.uses}회를 씁니다${left}.${pages}${short}`;
-}
-
-/** 오늘 남은 횟수. 알 수 없으면 null */
-export async function fetchRemaining(): Promise<number | null> {
-  try {
-    const data = (await (await fetch("/api/usage", { cache: "no-store" })).json()) as { remaining?: unknown };
-    return typeof data.remaining === "number" ? data.remaining : null;
-  } catch {
-    return null;
-  }
+  return `이 PDF는 ${plan.uses}회를 씁니다.${pages}`;
 }
 
 async function loadPdf(file: Blob) {

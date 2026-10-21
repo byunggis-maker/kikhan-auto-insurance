@@ -16,7 +16,7 @@ const base = (occurredAt = "2026-09-01"): Claim => {
   const c = setVictimCount({ ...emptyClaim(), accident: { ...emptyClaim().accident, occurredAt, type: "car_car" } }, "driver", 1);
   return { ...c, victims: c.victims.map((v) => ({ ...v, injuryGrade: 9 })) };
 };
-const facts: ClaimReading["facts"] = { hospitalDays: null, outpatientDays: null, daysOffWork: null, hospitalPeriods: null, outpatientDates: null, daysOffWorkPeriods: null, incomeMonth: null, monthlyIncome: null };
+const facts: ClaimReading["facts"] = { hospitalDays: null, outpatientDays: null, daysOffWork: null, hospitalPeriods: null, outpatientDates: null, daysOffWorkPeriods: null, incomeMonth: null, monthlyIncome: null, incomeTax: null, localIncomeTax: null };
 const doc = (documentType: string, f: Partial<ClaimReading["facts"]>): ClaimReading => ({ documentType, issuer: null, documentDate: null, amounts: [], facts: { ...facts, ...f }, note: "" });
 const read = (claim: Claim, ...docs: ClaimReading[]) => docs.reduce((c, d) => addRecognitions(c, claimRecognitions(c, "driver-1", d, makeId).recognitions), claim);
 const fact = (c: Claim, field: string) => c.recognized.find((r): r is Extract<Recognition, { kind: "fact" }> => r.kind === "fact" && r.field === field)!;
@@ -134,9 +134,8 @@ describe("하루 한도 30회와 큰 PDF 사전 안내", () => {
     expect(await pdfPlan(big(5 * 1024 * 1024), async () => 3)).toEqual({ pages: 3, uses: 3 });
     expect(await pdfPlan(big(5 * 1024 * 1024), async () => 7)).toEqual({ pages: 7, uses: MAX_PDF_PAGES });
     expect(await pdfPlan(big(UPLOAD_LIMIT), async () => 3)).toBeNull();
-    expect(pdfUseNotice({ pages: 3, uses: 3 }, 26)).toBe("이 PDF는 3회를 씁니다(오늘 남은 횟수 26회). 3쪽을 한 쪽씩 사진으로 바꿔 읽습니다.");
-    expect(pdfUseNotice({ pages: 7, uses: 5 }, 30)).toBe("이 PDF는 5회를 씁니다(오늘 남은 횟수 30회). 전체 7쪽 중 앞 5쪽을 한 쪽씩 사진으로 바꿔 읽습니다.");
-    expect(pdfUseNotice({ pages: 3, uses: 3 }, 2)).toBe("이 PDF는 3회를 씁니다(오늘 남은 횟수 2회). 3쪽을 한 쪽씩 사진으로 바꿔 읽습니다. 남은 횟수가 모자라 앞 2쪽까지만 읽습니다.");
-    expect(pdfUseNotice({ pages: 3, uses: 3 }, null)).toBe("이 PDF는 3회를 씁니다. 3쪽을 한 쪽씩 사진으로 바꿔 읽습니다.");
+    // 라운드 8d: 남은 횟수는 보여 주지 않는다
+    expect(pdfUseNotice({ pages: 3, uses: 3 })).toBe("이 PDF는 3회를 씁니다. 3쪽을 한 쪽씩 사진으로 바꿔 읽습니다.");
+    expect(pdfUseNotice({ pages: 7, uses: 5 })).toBe("이 PDF는 5회를 씁니다. 전체 7쪽 중 앞 5쪽을 한 쪽씩 사진으로 바꿔 읽습니다.");
   });
 });

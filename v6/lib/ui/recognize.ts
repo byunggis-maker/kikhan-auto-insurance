@@ -77,10 +77,13 @@ export function claimRecognitions(claim: Claim, cardId: string, reading: ClaimRe
   const recognitions: Recognition[] = [...sums].map(([code, sum]) => ({ id: makeId(), kind: "loss", cardId, code, value: sum.amount, source, note: sum.basis.join(" · "), issuer, docDate }));
   if (claim.victims.some((v) => v.id === cardId))
     for (const field of FACT_FIELDS) {
-      const value = reading.facts[field];
-      if (value === null) continue;
-      // 서류별 값에 기간·급여 월을 함께 둔다. 여러 서류를 합칠 때 쓴다(mergeFact)
-      const one: FactReading = { source, value, periods: readingPeriods(reading, field), month: field === "monthlyIncome" ? monthOf(reading.facts.incomeMonth) : null };
+      const read = reading.facts[field];
+      if (read === null) continue;
+      // 월 소득은 세금 줄을 읽었으면 뺀 값(세후)을 넣는다(라운드 8d)
+      const tax = field === "monthlyIncome" ? incomeTax(read, reading.facts.incomeTax, reading.facts.localIncomeTax) : null;
+      const value = tax ? read - tax.incomeTax - tax.localIncomeTax : read;
+      // 서류별 값에 기간·급여 월·세금을 함께 둔다. 여러 서류를 합칠 때 쓴다(mergeFact)
+      const one: FactReading = { source, value, periods: readingPeriods(reading, field), month: field === "monthlyIncome" ? monthOf(reading.facts.incomeMonth) : null, tax };
       recognitions.push({ id: makeId(), kind: "fact", cardId, field, value, source, note: "", readings: [one] });
     }
   return { recognitions, dropped };
@@ -140,6 +143,28 @@ export function factReadings(r: FactRecognition): FactReading[] {
 /** 서류마다 값이 다른지("서류마다 다르게 적혀 있어요"). 날짜로 합쳤거나 평균을 냈으면(formula) 계산식을 대신 보여 준다 */
 export function factDiffers(r: FactRecognition): boolean {
   return !r.formula && new Set(factReadings(r).map((x) => x.value)).size > 1;
+}
+
+// ── 월 소득의 세금(라운드 8d) ──
+// 약관 급여소득자 소득은 "보수액 − 제세액"(별표1 가. 3. 나.(1)(나) 1) 가), 인쇄 73쪽). 급여명세서의 소득세·지방소득세 줄을 뺀다.
+
+/** 세전 월 소득과 읽은 세금 줄. 세금 줄이 하나도 없거나 세금이 세전 금액 이상이면 null(세전 금액으로 둔다) */
+function incomeTax(gross: number, tax: number | null | undefined, local: number | null | undefined): FactReading["tax"] {
+  if (tax == null && local == null) return null;
+  const incomeTax = tax ?? 0;
+  const localIncomeTax = local ?? 0;
+  return incomeTax + localIncomeTax < gross ? { gross, incomeTax, localIncomeTax } : null;
+}
+
+/** 서류별 세금 계산식. 예: "세전 3,000,000원 − 소득세 84,850원 − 지방소득세 8,480원 = 2,906,670원" */
+export function taxFormula(r: FactReading): string | null {
+  if (!r.tax) return null;
+  return `세전 ${won(r.tax.gross)} − 소득세 ${won(r.tax.incomeTax)} − 지방소득세 ${won(r.tax.localIncomeTax)} = ${won(r.value)}`;
+}
+
+/** 세금 줄을 읽지 못한(세전 금액 그대로인) 서류가 있는지. 화면이 "세전 금액이에요, 확인해 주세요"를 붙인다 */
+export function hasPretax(r: FactRecognition): boolean {
+  return r.field === "monthlyIncome" && factReadings(r).some((x) => !x.tax);
 }
 
 // ── 여러 서류의 날수·소득 합치기(라운드 8c) ──

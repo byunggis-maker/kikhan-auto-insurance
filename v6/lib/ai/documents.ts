@@ -80,7 +80,10 @@ export function claimReadingSchema(target: keyof typeof CLAIM_CODES) {
       outpatientDates: z.array(z.string()).nullable().describe("통원(외래 진료) 받은 날짜 YYYY-MM-DD 목록. 날짜별로 적혀 있지 않으면 null"),
       daysOffWorkPeriods: z.array(period).nullable().describe("휴업(일을 하지 못한) 기간들. 날짜가 적혀 있지 않으면 null"),
       incomeMonth: z.string().nullable().describe("월 소득이 어느 달 급여인지 YYYY-MM(급여명세서의 귀속 월). 연 소득을 12로 나눈 값이거나 모르면 null"),
-      monthlyIncome: won.nullable().describe("소득 증빙의 월 소득(연 소득이면 12로 나눈 값). 없으면 null"),
+      monthlyIncome: won.nullable().describe("소득 증빙의 세금 떼기 전 월 소득(급여명세서의 지급 총액, 연 소득이면 12로 나눈 값). 없으면 null"),
+      // 라운드 8d: 약관 소득은 보수액 − 제세액(별표1 가. 3. 나.(1)(나), 인쇄 73쪽). 세금 줄을 함께 읽어 화면에서 뺀다
+      incomeTax: won.nullable().describe("월 소득에서 뗀 소득세(급여명세서의 소득세 줄, 연 서류면 12로 나눈 값). 줄이 없으면 null"),
+      localIncomeTax: won.nullable().describe("월 소득에서 뗀 지방소득세(급여명세서의 지방소득세·주민세 줄, 연 서류면 12로 나눈 값). 줄이 없으면 null"),
     }),
     note: z.string().describe("읽지 못했거나 확인이 필요한 점. 없으면 빈 글자"),
   });

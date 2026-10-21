@@ -1,13 +1,14 @@
 "use client";
 
 import type { Claim, Recognition } from "@/lib/claim/types";
-import { confirmAll, confirmLossGroup, confirmRecognition, dismissRecognition, duplicateIds, editRecognition, factDiffers, factReadings, groupTotal, recognitionLabel, setExcluded } from "@/lib/ui/recognize";
+import { confirmAll, confirmLossGroup, confirmRecognition, dismissRecognition, duplicateIds, editRecognition, factDiffers, factReadings, groupTotal, hasPretax, recognitionLabel, setExcluded, taxFormula } from "@/lib/ui/recognize";
 import { IntInput, MoneyInput } from "../fields";
 
 // "인식된 값 – 확인해 주세요". 금액·날수는 확인 전에 고칠 수 있다. 확인을 눌러야 입력칸에 들어가고 계산에 쓰인다.
 // 인식된 값은 연한 청색으로 구별한다(MASTER.md 2장).
 // 라운드 8b: 한 항목에 서류가 여러 장이면 서류별 줄과 합계(RecognizedLossGroup), 날수가 서류마다 다르면 각 값을 보여 준다.
 // 라운드 8c: 날수를 기간으로 합쳤거나 월 소득 평균을 냈으면 계산식(formula)을 보여 준다.
+// 라운드 8d: 월 소득은 서류마다 세금을 뺀 계산식을 보여 주고, 세금 줄이 없는 서류는 "세전 금액이에요"를 붙인다.
 
 type Update = (change: (claim: Claim) => Claim) => void;
 
@@ -31,6 +32,22 @@ export function RecognizedRow({ recognition: r, update }: { recognition: Recogni
         읽은 서류: {r.source}
         {r.note ? ` · ${r.note}` : ""}
       </p>
+      {r.kind === "fact" &&
+        factReadings(r).map((x, i) => {
+          const tax = taxFormula(x);
+          return (
+            tax && (
+              <p key={i} className="mt-1 text-sm font-bold" data-tax>
+                세금 뺌{factReadings(r).length > 1 ? `(${x.month ? `${Number(x.month.slice(5))}월 ` : ""}${x.source})` : ""}: {tax}
+              </p>
+            )
+          );
+        })}
+      {r.kind === "fact" && hasPretax(r) && (
+        <p className="mt-1 text-sm font-bold" data-pretax>
+          세전 금액이에요, 확인해 주세요{factReadings(r).length > 1 ? `(${factReadings(r).filter((x) => !x.tax).map((x) => x.source).join(" · ")})` : ""}.
+        </p>
+      )}
       {r.kind === "fact" && r.formula && (
         <p className="mt-1 text-sm font-bold" data-formula>
           계산: {r.formula}

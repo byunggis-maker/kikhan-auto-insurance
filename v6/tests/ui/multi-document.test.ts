@@ -18,7 +18,7 @@ const base = (): Claim => {
   c = setVictimCount(c, "driver", 1);
   return { ...c, victims: c.victims.map((v) => ({ ...v, injuryGrade: 9 })) };
 };
-const noFacts = { hospitalDays: null, outpatientDays: null, daysOffWork: null, hospitalPeriods: null, outpatientDates: null, daysOffWorkPeriods: null, incomeMonth: null, monthlyIncome: null };
+const noFacts = { hospitalDays: null, outpatientDays: null, daysOffWork: null, hospitalPeriods: null, outpatientDates: null, daysOffWorkPeriods: null, incomeMonth: null, monthlyIncome: null, incomeTax: null, localIncomeTax: null };
 const doc = (documentType: string, issuer: string | null, documentDate: string | null, treatment: number | null, facts: Partial<ClaimReading["facts"]> = {}): ClaimReading => ({
   documentType,
   issuer,
