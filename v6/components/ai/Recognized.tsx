@@ -1,11 +1,12 @@
 "use client";
 
 import type { Claim, Recognition } from "@/lib/claim/types";
-import { confirmAll, confirmRecognition, dismissRecognition, editRecognition, recognitionLabel } from "@/lib/ui/recognize";
+import { confirmAll, confirmLossGroup, confirmRecognition, dismissRecognition, duplicateIds, editRecognition, factDiffers, factReadings, groupTotal, recognitionLabel, setExcluded } from "@/lib/ui/recognize";
 import { IntInput, MoneyInput } from "../fields";
 
 // "인식된 값 – 확인해 주세요". 금액·날수는 확인 전에 고칠 수 있다. 확인을 눌러야 입력칸에 들어가고 계산에 쓰인다.
 // 인식된 값은 연한 청색으로 구별한다(MASTER.md 2장).
+// 라운드 8b: 한 항목에 서류가 여러 장이면 서류별 줄과 합계(RecognizedLossGroup), 날수가 서류마다 다르면 각 값을 보여 준다.
 
 type Update = (change: (claim: Claim) => Claim) => void;
 
@@ -29,6 +30,11 @@ export function RecognizedRow({ recognition: r, update }: { recognition: Recogni
         읽은 서류: {r.source}
         {r.note ? ` · ${r.note}` : ""}
       </p>
+      {r.kind === "fact" && factDiffers(r) && (
+        <p className="mt-1 text-sm font-bold" data-differs>
+          서류마다 다르게 적혀 있어요: {factReadings(r).map((x) => `${x.source} ${r.field === "monthlyIncome" ? `${x.value.toLocaleString("ko-KR")}원` : `${x.value}일`}`).join(" · ")}. 큰 값을 넣었습니다.
+        </p>
+      )}
       <div className="mt-2 grid grid-cols-2 gap-2">
         <button type="button" className="min-h-11 rounded-lg bg-estimate-ink font-bold text-white" onClick={() => update((c) => confirmRecognition(c, r.id))}>
           확인
@@ -57,5 +63,52 @@ export function RecognizedList({ items, update, title }: { items: Recognition[];
         <RecognizedRow key={r.id} recognition={r} update={update} />
       ))}
     </section>
+  );
+}
+
+type LossRow = Extract<Recognition, { kind: "loss" }>;
+
+/** 한 항목에 서류가 여러 장일 때: 서류별 줄(체크 해제로 빼기)과 합계. 확인하면 합계가 확정 칸에 들어간다 */
+export function RecognizedLossGroup({ rows, update }: { rows: LossRow[]; update: Update }) {
+  const duplicates = duplicateIds(rows);
+  const total = groupTotal(rows);
+  const kept = rows.filter((r) => !r.excluded).length;
+  const first = rows[0];
+  return (
+    <div className="rounded-xl border-2 border-estimate-line bg-estimate p-3 text-estimate-ink" data-recognition="loss-group">
+      <p className="text-sm font-bold">인식된 값 – 확인해 주세요 (서류 {rows.length}장)</p>
+      <ul className="mt-2 space-y-2">
+        {rows.map((r) => (
+          <li key={r.id} className={`rounded-lg border-2 bg-white p-2 ${r.excluded ? "border-line opacity-60" : "border-estimate-line"}`} data-row>
+            <label className="flex items-center gap-2 text-sm font-bold">
+              <input type="checkbox" className="size-5 accent-[#1d4ed8]" checked={!r.excluded} onChange={(e) => update((c) => setExcluded(c, r.id, !e.target.checked))} />
+              {r.source}
+              {r.issuer ? ` · ${r.issuer}` : ""}
+              {r.docDate ? ` · ${r.docDate}` : ""}
+            </label>
+            <div className="mt-1">
+              <MoneyInput label="이 서류의 금액" tone="estimate" value={r.value} onChange={(value) => value !== null && update((c) => editRecognition(c, r.id, value))} />
+            </div>
+            {duplicates.has(r.id) && (
+              <p className="mt-1 text-sm font-bold text-ink" data-duplicate>
+                ⚠ 같은 서류로 보여요(날짜·금액·기관명이 같음). 두 번 올렸다면 하나는 체크를 풀어 주세요.
+              </p>
+            )}
+            {r.note && <p className="mt-1 text-xs font-semibold">{r.note}</p>}
+          </li>
+        ))}
+      </ul>
+      <p className="mt-2 font-bold" data-total>
+        합계 {total.toLocaleString("ko-KR")}원 (체크한 서류 {kept}장)
+      </p>
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <button type="button" disabled={!kept} className="min-h-11 rounded-lg bg-estimate-ink font-bold text-white disabled:opacity-50" onClick={() => update((c) => confirmLossGroup(c, first.cardId, first.code))}>
+          합계로 확인
+        </button>
+        <button type="button" className="min-h-11 rounded-lg border-2 border-estimate-line bg-white font-bold" onClick={() => update((c) => rows.reduce((acc, r) => dismissRecognition(acc, r.id), c))}>
+          모두 지우기
+        </button>
+      </div>
+    </div>
   );
 }

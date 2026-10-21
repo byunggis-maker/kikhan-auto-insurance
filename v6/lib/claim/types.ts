@@ -234,11 +234,29 @@ export const faultSchema = z.union([z.object({ mode: z.literal("known"), myPerce
 // ── 서류·증권 인식값(라운드 7, MASTER.md 9장) ──
 // 인식값은 바로 입력칸에 들어가지 않는다. "인식된 값 – 확인해 주세요"로 보여 주고, 사용자가 고치거나 확인을 눌러야 들어간다.
 // 개인정보는 서버에서 가린 뒤에만 여기에 온다. 원본 파일은 어디에도 저장하지 않는다.
-export const FACT_FIELDS = ["hospitalDays", "outpatientDays", "monthlyIncome"] as const;
+// 라운드 8b: 금액은 서류마다 한 줄씩 쌓아 합계를 내고(issuer·docDate로 같은 서류를 가리고, excluded로 뺀다),
+// 날수·소득은 더하지 않고 한 줄에 서류별 값(readings)을 모아 큰 값을 쓴다. 새 칸은 모두 선택이라 예전 저장값도 그대로 읽힌다.
+export const FACT_FIELDS = ["hospitalDays", "outpatientDays", "daysOffWork", "monthlyIncome"] as const;
 const recognitionBase = { id: z.string(), source: z.string(), note: z.string() };
 export const recognitionSchema = z.discriminatedUnion("kind", [
-  z.object({ ...recognitionBase, kind: z.literal("loss"), cardId: z.string(), code: z.string(), value: moneySchema }),
-  z.object({ ...recognitionBase, kind: z.literal("fact"), cardId: z.string(), field: z.enum(FACT_FIELDS), value: moneySchema }),
+  z.object({
+    ...recognitionBase,
+    kind: z.literal("loss"),
+    cardId: z.string(),
+    code: z.string(),
+    value: moneySchema,
+    issuer: z.string().nullable().optional(),
+    docDate: z.string().nullable().optional(),
+    excluded: z.boolean().optional(),
+  }),
+  z.object({
+    ...recognitionBase,
+    kind: z.literal("fact"),
+    cardId: z.string(),
+    field: z.enum(FACT_FIELDS),
+    value: moneySchema,
+    readings: z.array(z.object({ source: z.string(), value: moneySchema })).optional(),
+  }),
   z.object({ ...recognitionBase, kind: z.literal("insurer"), value: z.string() }),
   z.object({ ...recognitionBase, kind: z.literal("productLine"), value: productLineSchema }),
   z.object({ ...recognitionBase, kind: z.literal("driverScope"), value: z.enum(DRIVER_SCOPES) }),

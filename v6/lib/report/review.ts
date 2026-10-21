@@ -100,7 +100,7 @@ function nextSteps(claim: Claim, result: Result, missingCount: number): string[]
 function missingList(claim: Claim, result: Result, skippedLabels: string[]): string[] {
   return [
     // 서류에서 인식했지만 아직 확인하지 않은 값은 계산에 쓰지 않는다
-    ...claim.recognized.map((r) => `확인 필요(서류 인식): ${recognitionLabel(r)}`),
+    ...claim.recognized.map((r) => `확인 필요(서류 인식): ${recognitionLabel(r)}${r.kind === "loss" && r.excluded ? " (뺀 서류)" : ""}`),
     ...(claim.pendingNarrative ? ["확인 필요: 음성으로 옮긴 사고 경위"] : []),
     ...skippedLabels.map((label) => `건너뜀: ${label}`),
     ...result.cards.flatMap((card) => card.missing.map((code) => `${card.label}: ${lossItemDef(code)?.label ?? code} 금액(서류)`)),

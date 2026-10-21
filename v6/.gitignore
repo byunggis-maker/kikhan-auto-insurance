@@ -34,6 +34,7 @@ next-env.d.ts
 
 # PDF용 글꼴. dev·build 전에 node_modules에서 복사한다(scripts/copy-fonts.mjs)
 /public/fonts/
+/public/pdfjs/
 
 # 테스트 임시 파일(tests/setup.ts). v6 밖에는 어떤 파일도 만들지 않는다(D-10)
 /tmp-test/

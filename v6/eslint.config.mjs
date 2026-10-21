@@ -12,6 +12,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // 빌드 전에 node_modules에서 복사하는 pdf.js 작업 파일(scripts/copy-pdf-worker.mjs)
+    "public/pdfjs/**",
+    // 확인용 임시 폴더(배포용 복사본의 빌드 결과 등)
+    ".tmp/**",
+    "tmp-test/**",
   ]),
 ]);
 

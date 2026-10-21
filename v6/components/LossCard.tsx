@@ -3,7 +3,7 @@
 import { DOCUMENTS, type LossItemDef } from "@/lib/claim/lossItems";
 import { emptyLossItem, type Claim, type LossItem, type Recognition, type Victim } from "@/lib/claim/types";
 import { pickValue } from "@/lib/engine/losses";
-import { RecognizedRow } from "./ai/Recognized";
+import { RecognizedLossGroup, RecognizedRow } from "./ai/Recognized";
 import { MoneyInput } from "./fields";
 
 // MASTER.md 7장: 손해 항목 하나 = 카드 하나. 이름·한 줄 설명·확정 칸·추정 칸·작은 글씨의 필요 서류.
@@ -16,8 +16,8 @@ type Props = {
   def: LossItemDef;
   item: LossItem | undefined;
   victim?: Victim;
-  /** 서류에서 읽고 아직 확인하지 않은 금액 */
-  pending?: Recognition;
+  /** 서류에서 읽고 아직 확인하지 않은 금액(서류마다 한 줄, 라운드 8b) */
+  pending: Extract<Recognition, { kind: "loss" }>[];
   update: (change: (claim: Claim) => Claim) => void;
   onChange: (change: { confirmed?: number | null; estimated?: number | null; standard?: boolean }) => void;
 };
@@ -31,11 +31,7 @@ export function LossCard({ date, def, item, victim, pending, update, onChange }:
     <article id={`loss-${def.code}`} className="scroll-mt-4 rounded-2xl border-2 border-line bg-white p-4">
       <h3 className="text-lg font-bold">{def.label}</h3>
       <p className="text-sm font-semibold text-ink-soft">{def.description}</p>
-      {pending && (
-        <div className="mt-3">
-          <RecognizedRow recognition={pending} update={update} />
-        </div>
-      )}
+      {pending.length > 0 && <div className="mt-3">{pending.length === 1 ? <RecognizedRow recognition={pending[0]} update={update} /> : <RecognizedLossGroup rows={pending} update={update} />}</div>}
       <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <MoneyInput label="서류로 확인한 금액(확정)" value={item?.confirmed ?? null} onChange={(confirmed) => onChange({ confirmed })} />
         <MoneyInput label="대략 생각하는 금액(추정)" tone="estimate" value={item?.estimated ?? null} onChange={(estimated) => onChange({ estimated })} />

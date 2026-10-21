@@ -2,11 +2,12 @@
 
 import { useRef, useState } from "react";
 import type { ClaimReading, PolicyReading, Usage } from "@/lib/ai/documents";
-import { checkPicked, postForm, prepareUpload, UPLOAD_LIMIT } from "@/lib/ui/upload";
+import { checkPicked, postForm, prepareUploads, UPLOAD_LIMIT, type UploadPart } from "@/lib/ui/upload";
 
 // MASTER.md 9장 서류 인식 버튼. 파일은 서버로 한 번 보내 읽기만 하고, 이 기기에도 서버에도 저장하지 않는다.
 // 읽은 값은 바로 입력칸에 들어가지 않고 "인식된 값 – 확인해 주세요"로 남는다(onRead가 확인 대기 값으로 바꾼다).
 // 라운드 8: 한 번에 5건, 한 건 10MB까지 고를 수 있다. 서버로는 한 건씩 차례로 보낸다.
+// 라운드 8b: 4MB가 넘는 PDF는 앞 5쪽을 쪽마다 사진으로 바꿔 한 쪽씩 보낸다.
 
 type Reading = { kind: "policy"; reading: PolicyReading; usage: Usage } | { kind: "claim"; reading: ClaimReading; usage: Usage };
 
@@ -22,8 +23,7 @@ export function DocumentUpload({ kind, target, label, onRead }: Props) {
   const input = useRef<HTMLInputElement>(null);
   const [state, setState] = useState<{ status: "idle" | "working" | "done" | "error"; message?: string }>({ status: "idle" });
 
-  const readOne = async (file: File): Promise<{ ok: boolean; message: string; stop?: boolean }> => {
-    const blob = await prepareUpload(file);
+  const sendPart = async ({ blob }: UploadPart): Promise<{ ok: boolean; message: string; stop?: boolean }> => {
     if (blob.size > UPLOAD_LIMIT) return { ok: false, message: "이 파일은 4MB가 넘어 보낼 수 없습니다. 필요한 쪽을 사진으로 찍거나 화면을 캡처해 올려 주세요." };
     const form = new FormData();
     form.set("file", blob);
@@ -39,13 +39,28 @@ export function DocumentUpload({ kind, target, label, onRead }: Props) {
     if (problem) return setState({ status: "error", message: problem });
     const messages: string[] = [];
     let failed = false;
-    for (const [i, file] of files.entries()) {
+    files: for (const [i, file] of files.entries()) {
+      const name = files.length > 1 ? `${i + 1}번째` : "";
       setState({ status: "working", message: files.length > 1 ? `${i + 1}/${files.length}번째 서류를 읽는 중입니다.` : undefined });
-      const one = await readOne(file);
-      failed ||= !one.ok;
-      messages.push(files.length > 1 ? `${i + 1}번째: ${one.message}` : one.message);
-      // 준비 중·횟수 초과면 남은 서류도 같으므로 멈춘다
-      if (one.stop) break;
+      let parts: UploadPart[];
+      try {
+        parts = await prepareUploads(file);
+      } catch {
+        failed = true;
+        messages.push(`${name ? `${name}: ` : ""}PDF를 열지 못했습니다. 필요한 쪽을 사진으로 찍어 올려 주세요.`);
+        continue;
+      }
+      const pages = parts[0]?.pages;
+      if (pages && pages > parts.length) messages.push(`${name ? `${name}: ` : ""}큰 PDF라 앞 ${parts.length}쪽만 사진으로 바꿔 읽습니다(전체 ${pages}쪽).`);
+      for (const part of parts) {
+        const label = [name, part.page ? `${part.page}쪽` : ""].filter(Boolean).join(" ");
+        if (part.page) setState({ status: "working", message: `${label}을 읽는 중입니다.` });
+        const one = await sendPart(part);
+        failed ||= !one.ok;
+        messages.push(label ? `${label}: ${one.message}` : one.message);
+        // 준비 중·횟수 초과면 남은 서류도 같으므로 멈춘다
+        if (one.stop) break files;
+      }
     }
     setState({ status: failed ? "error" : "done", message: messages.join(" ") });
   };

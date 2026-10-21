@@ -58,6 +58,9 @@ export const CLAIM_CODES = { person: ["treatment", "future_treatment", "nursing"
 export function claimReadingSchema(target: keyof typeof CLAIM_CODES) {
   return z.object({
     documentType: z.string().describe("문서 종류. 예: 진료비 영수증, 진료비 세부내역서, 진단서, 수리비 견적서, 렌트 영수증, 견인 영수증, 원천징수영수증. 보상 서류가 아니면 '보상 서류 아님'"),
+    // 라운드 8b: 여러 서류가 같은 칸을 읽을 때 같은 서류인지 가리는 데 쓴다(날짜·금액·기관명)
+    issuer: z.string().nullable().describe("서류를 발행한 기관(병원·약국·정비소·렌트 회사 등) 이름. 사람 이름이거나 없으면 null"),
+    documentDate: z.string().nullable().describe("서류 날짜 YYYY-MM-DD(발행일, 없으면 진료·작업 기간의 마지막 날). 없으면 null"),
     amounts: z
       .array(
         z.object({
@@ -70,6 +73,7 @@ export function claimReadingSchema(target: keyof typeof CLAIM_CODES) {
     facts: z.object({
       hospitalDays: z.number().int().min(0).nullable().describe("입원일수. 문서에 없으면 null"),
       outpatientDays: z.number().int().min(0).nullable().describe("통원일수(진료 받은 날 수). 문서에 없으면 null"),
+      daysOffWork: z.number().int().min(0).nullable().describe("휴업일수(일을 하지 못한 날 수). 문서에 휴업·근무 불능 기간이 적혀 있을 때만. 치료 기간만 있으면 null"),
       monthlyIncome: won.nullable().describe("소득 증빙의 월 소득(연 소득이면 12로 나눈 값). 없으면 null"),
     }),
     note: z.string().describe("읽지 못했거나 확인이 필요한 점. 없으면 빈 글자"),

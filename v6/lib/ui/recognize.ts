@@ -1,18 +1,18 @@
 import type { ClaimReading, PolicyReading } from "@/lib/ai/documents";
 import { lossItemDef } from "@/lib/claim/lossItems";
-import { COVERAGE_LABELS, PRODUCT_LINE_LABELS, type Claim, type Limit, type Recognition } from "@/lib/claim/types";
+import { COVERAGE_LABELS, FACT_FIELDS, PRODUCT_LINE_LABELS, type Claim, type Limit, type Recognition } from "@/lib/claim/types";
 import { setCoverage, setItem, toggleCoverage, visibleItems } from "./flow";
 
 // 서류·증권 인식값을 "확인을 기다리는 값"으로 만들고, 사용자가 고치거나 확인·지우는 상태 변경(라운드 7, MASTER.md 9장).
 // React와 분리해 테스트한다(tests/ui/recognize.test.ts). 확인하기 전의 값은 계산에 쓰지 않는다.
 
 const DRIVER_SCOPE_LABELS = { anyone: "누구나", named_only: "기명피보험자 1인", couple: "부부", family: "가족", named_plus_one: "기명 1인 + 지정 1인", employees: "임직원", other: "그 밖" } as const;
-const FACT_LABELS = { hospitalDays: "입원일수", outpatientDays: "통원일수", monthlyIncome: "월 소득" } as const;
+const FACT_LABELS = { hospitalDays: "입원일수", outpatientDays: "통원일수", daysOffWork: "휴업일수", monthlyIncome: "월 소득" } as const;
 
 const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
 const limitText = (limit: Limit | null) => (limit === null ? "모름" : limit === "unlimited" ? "무한" : won(limit));
 
-/** 같은 칸을 가리키는 인식값은 하나만 둔다(새로 읽으면 바꾼다) */
+/** 인식값이 가리키는 칸. 금액(loss)은 서류마다 줄을 쌓고, 나머지는 칸마다 한 줄이다(addRecognitions) */
 export function targetKey(r: Recognition): string {
   switch (r.kind) {
     case "loss":
@@ -71,9 +71,11 @@ export function claimRecognitions(claim: Claim, cardId: string, reading: ClaimRe
     const sum = sums.get(a.code) ?? { amount: 0, basis: [] };
     sums.set(a.code, { amount: sum.amount + a.amount, basis: [...sum.basis, a.basis].filter(Boolean) });
   }
-  const recognitions: Recognition[] = [...sums].map(([code, sum]) => ({ id: makeId(), kind: "loss", cardId, code, value: sum.amount, source, note: sum.basis.join(" · ") }));
+  const issuer = reading.issuer || null;
+  const docDate = reading.documentDate || null;
+  const recognitions: Recognition[] = [...sums].map(([code, sum]) => ({ id: makeId(), kind: "loss", cardId, code, value: sum.amount, source, note: sum.basis.join(" · "), issuer, docDate }));
   if (claim.victims.some((v) => v.id === cardId))
-    for (const field of ["hospitalDays", "outpatientDays", "monthlyIncome"] as const) {
+    for (const field of FACT_FIELDS) {
       const value = reading.facts[field];
       if (value !== null) recognitions.push({ id: makeId(), kind: "fact", cardId, field, value, source, note: "" });
     }
@@ -96,10 +98,76 @@ export function policyRecognitions(reading: PolicyReading, makeId: MakeId): Reco
   return out;
 }
 
-/** 확인 대기 값을 더한다. 같은 칸의 예전 대기 값은 새 값으로 바꾼다 */
+/**
+ * 확인 대기 값을 더한다(라운드 8b).
+ * - 금액: 덮어쓰지 않고 서류마다 한 줄씩 쌓는다. 화면은 같은 칸의 줄을 묶어 합계를 낸다(lossGroup).
+ * - 날수·소득: 더하지 않는다. 한 줄에 서류별 값을 모으고 가장 큰 값을 넣는다(값이 다르면 화면이 각 값을 보여 준다).
+ * - 증권 값: 같은 칸의 예전 대기 값을 새 값으로 바꾼다.
+ */
 export function addRecognitions(claim: Claim, recognitions: Recognition[]): Claim {
-  const keys = new Set(recognitions.map(targetKey));
-  return { ...claim, recognized: [...claim.recognized.filter((r) => !keys.has(targetKey(r))), ...recognitions] };
+  let recognized = claim.recognized;
+  for (const r of recognitions) {
+    if (r.kind === "loss") {
+      recognized = [...recognized, r];
+      continue;
+    }
+    const key = targetKey(r);
+    const old = recognized.find((x) => targetKey(x) === key);
+    if (r.kind === "fact" && old?.kind === "fact") {
+      const readings = [...factReadings(old), { source: r.source, value: r.value }];
+      const merged: Recognition = { ...old, value: Math.max(...readings.map((x) => x.value)), readings, source: [...new Set(readings.map((x) => x.source))].join(" · ") };
+      recognized = recognized.map((x) => (x === old ? merged : x));
+      continue;
+    }
+    recognized = [...recognized.filter((x) => targetKey(x) !== key), r];
+  }
+  return { ...claim, recognized };
+}
+
+type LossRecognition = Extract<Recognition, { kind: "loss" }>;
+type FactRecognition = Extract<Recognition, { kind: "fact" }>;
+
+/** 날수·소득 한 줄에 모인 서류별 값 */
+export function factReadings(r: FactRecognition): { source: string; value: number }[] {
+  return r.readings ?? [{ source: r.source, value: r.value }];
+}
+
+/** 서류마다 값이 다른지("서류마다 다르게 적혀 있어요") */
+export function factDiffers(r: FactRecognition): boolean {
+  return new Set(factReadings(r).map((x) => x.value)).size > 1;
+}
+
+/** 한 카드·한 항목에 쌓인 금액 줄 */
+export function lossGroup(claim: Claim, cardId: string, code: string): LossRecognition[] {
+  return claim.recognized.filter((r): r is LossRecognition => r.kind === "loss" && r.cardId === cardId && r.code === code);
+}
+
+/** 뺀 줄을 빼고 더한 합계 */
+export function groupTotal(rows: LossRecognition[]): number {
+  return rows.reduce((sum, r) => sum + (r.excluded ? 0 : r.value), 0);
+}
+
+/** 날짜·금액·기관명이 같은 줄("같은 서류로 보여요"). 날짜나 기관명을 못 읽은 줄은 둘 다 못 읽었을 때 같다고 본다 */
+export function duplicateIds(rows: LossRecognition[]): Set<string> {
+  const key = (r: LossRecognition) => JSON.stringify([r.value, r.docDate ?? null, r.issuer ?? null]);
+  const counts = new Map<string, number>();
+  for (const r of rows) counts.set(key(r), (counts.get(key(r)) ?? 0) + 1);
+  return new Set(rows.filter((r) => counts.get(key(r))! > 1).map((r) => r.id));
+}
+
+/** 줄 빼기(체크 해제)·되돌리기 */
+export function setExcluded(claim: Claim, id: string, excluded: boolean): Claim {
+  return { ...claim, recognized: claim.recognized.map((r) => (r.id === id && r.kind === "loss" ? { ...r, excluded } : r)) };
+}
+
+/** 묶음 확인: 빼지 않은 줄의 합계를 확정 칸에 넣고, 이 항목의 줄을 모두 대기 목록에서 뺀다 */
+export function confirmLossGroup(claim: Claim, cardId: string, code: string): Claim {
+  const rows = lossGroup(claim, cardId, code);
+  const kept = rows.filter((r) => !r.excluded);
+  const ids = new Set(rows.map((r) => r.id));
+  const rest = { ...claim, recognized: claim.recognized.filter((r) => !ids.has(r.id)) };
+  if (!kept.length) return rest;
+  return setItem(rest, cardId, code, { confirmed: groupTotal(rows), evidence: `서류 인식 확인: ${kept.map((r) => r.source).join(" + ")}` });
 }
 
 /** 확인 전에 숫자를 고친다(금액·날수 칸만) */

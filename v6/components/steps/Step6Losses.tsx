@@ -5,7 +5,7 @@ import { COVERAGE_DOCUMENTS, DOCUMENTS, type DocumentId } from "@/lib/claim/loss
 import { dailyWageFor } from "@/lib/claim/standards";
 import { OCCUPATIONS, OCCUPATION_LABELS, type Property, type Victim } from "@/lib/claim/types";
 import { claimDate, setItem, visibleItems } from "@/lib/ui/flow";
-import { addRecognitions, claimRecognitions, randomId } from "@/lib/ui/recognize";
+import { addRecognitions, claimRecognitions, lossGroup, randomId } from "@/lib/ui/recognize";
 import { DocumentUpload } from "../ai/DocumentUpload";
 import { RecognizedList } from "../ai/Recognized";
 import { Check, Choice, IntInput, MoneyInput, manwon } from "../fields";
@@ -98,7 +98,7 @@ export function Step6Losses({ screen, claim, update }: ScreenProps) {
       <RecognizedList title="서류에서 읽은 치료·소득 정보" items={pendingFacts} update={update} />
       {property?.role === "my_vehicle" && <Check label="사업용 차(택시·화물 등)" hint="렌트비 대신 휴차료로 계산합니다" checked={property.commercialUse === true} onChange={(commercialUse) => setProperty({ commercialUse })} />}
       {items.map((def) => (
-        <LossCard key={def.code} date={claimDate(claim)} pending={pending.find((r) => r.kind === "loss" && r.code === def.code)} update={update} def={def} item={card.losses.find((i) => i.code === def.code)} victim={victim} onChange={(change) => update((c) => setItem(c, card.id, def.code, change))} />
+        <LossCard key={def.code} date={claimDate(claim)} pending={lossGroup(claim, card.id, def.code)} update={update} def={def} item={card.losses.find((i) => i.code === def.code)} victim={victim} onChange={(change) => update((c) => setItem(c, card.id, def.code, change))} />
       ))}
       {hidden > 0 && (
         <button type="button" className="min-h-12 w-full rounded-xl border-2 border-line bg-white font-bold" onClick={() => setMore(true)}>
