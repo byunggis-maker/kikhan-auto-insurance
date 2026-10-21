@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import type { Claim } from "@/lib/claim/types";
 import { calculateScenarios } from "@/lib/engine/fault-scenarios";
 import { buildReview, type Review } from "@/lib/report/review";
+import { clearChecked, loadChecked, saveChecked } from "@/lib/state/checklist";
 import { skippedLabels, standardFillable } from "@/lib/ui/flow";
 import { manwon } from "../fields";
 
@@ -112,7 +113,15 @@ async function saveReview(review: Review, kind: "xlsx" | "pdf") {
 export function Step7Review({ claim, goTo }: { claim: Claim; goTo: (screenId: string, anchor?: string) => void }) {
   const results = useMemo(() => calculateScenarios(claim), [claim]);
   const [index, setIndex] = useState(0);
-  const review = useMemo(() => buildReview(claim, results, index, skippedLabels(claim)), [claim, results, index]);
+  // 이 화면은 브라우저에서만 그려진다(Wizard가 localStorage를 읽은 뒤). 그래서 처음 값으로 바로 읽어도 된다
+  const [checked, setChecked] = useState<string[]>(() => loadChecked());
+  const [checkSaved, setCheckSaved] = useState(true);
+  const review = useMemo(() => buildReview(claim, results, index, skippedLabels(claim), checked), [claim, results, index, checked]);
+  const toggle = (key: string, on: boolean) => {
+    const next = on ? [...checked.filter((k) => k !== key), key] : checked.filter((k) => k !== key);
+    setChecked(next);
+    setCheckSaved(saveChecked(next));
+  };
   const fillable = useMemo(() => standardFillable(claim), [claim]);
   const [saving, setSaving] = useState<SaveState>(null);
 
@@ -155,7 +164,7 @@ export function Step7Review({ claim, goTo }: { claim: Claim; goTo: (screenId: st
         </div>
       )}
 
-      {/* 라운드 5 보완 B: 약관 기준으로 채울 수 있는 칸 */}
+      {/* 약관 기준으로 채울 수 있는 칸(라운드 5 보완 B) */}
       {fillable.length > 0 && (
         <div className="rounded-2xl border-2 border-estimate-line bg-estimate p-4 text-estimate-ink">
           <p className="font-bold">약관 기준으로 채울 수 있는 칸이 {fillable.length}개 있어요</p>
@@ -280,14 +289,28 @@ export function Step7Review({ claim, goTo }: { claim: Claim; goTo: (screenId: st
       {review.checklist.length > 0 && (
         <Section title="필요 서류 체크리스트">
           <div className="space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs font-semibold text-ink-soft">{checkSaved ? "체크한 서류는 이 기기에 저장됩니다." : "이 기기에 저장하지 못했습니다. 체크는 이 화면에서만 유지됩니다."}</p>
+              <button
+                type="button"
+                className="min-h-11 shrink-0 rounded-xl border-2 border-line bg-white px-3 text-sm font-bold disabled:opacity-40"
+                disabled={checked.length === 0}
+                onClick={() => {
+                  setChecked([]);
+                  setCheckSaved(clearChecked());
+                }}
+              >
+                체크 초기화
+              </button>
+            </div>
             {review.checklist.map((group) => (
               <fieldset key={`${group.payer}:${group.coverage}`} className={`${box} p-4`}>
                 <legend className="px-1 font-bold">
                   {group.payer} · {group.coverage}
                 </legend>
                 {group.docs.map((d) => (
-                  <label key={d.label} className="flex min-h-11 items-start gap-3 py-1 text-sm font-semibold">
-                    <input type="checkbox" className="mt-0.5 size-5 shrink-0 accent-ink" />
+                  <label key={d.key} className="flex min-h-11 items-start gap-3 py-1 text-sm font-semibold">
+                    <input type="checkbox" className="mt-0.5 size-5 shrink-0 accent-ink" checked={d.checked} onChange={(e) => toggle(d.key, e.target.checked)} />
                     <span>
                       {d.label} <span className="text-ink-soft">(약관 제27조 {d.clause27}호)</span>
                     </span>

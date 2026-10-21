@@ -266,6 +266,11 @@ export async function reviewToPdf(review: Review, fonts: PdfFonts): Promise<Uint
         const lines = wrap(`${d.label} (약관 제27조 ${d.clause27}호)`, regular, 9, WIDTH - 24);
         ensure(lines.length * 13.5);
         page.drawRectangle({ x: MARGIN + 6, y: y - 10.5, width: 8, height: 8, borderColor: INK, borderWidth: 0.8 });
+        // 체크한 서류는 네모 안에 ✓ 모양 선을 긋는다
+        if (d.checked) {
+          page.drawLine({ start: { x: MARGIN + 7.5, y: y - 6.5 }, end: { x: MARGIN + 9.5, y: y - 9 }, thickness: 1.2, color: INK });
+          page.drawLine({ start: { x: MARGIN + 9.5, y: y - 9 }, end: { x: MARGIN + 13, y: y - 3.5 }, thickness: 1.2, color: INK });
+        }
         lines.forEach((line, n) => page.drawText(line, { x: MARGIN + 20, y: y - 9 - n * 13.5, size: 9, font: regular, color: INK }));
         y -= lines.length * 13.5;
       }

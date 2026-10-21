@@ -63,10 +63,25 @@ describe("보상 검토서 모델", () => {
     const homemaker = { ...base, victims: base.victims.map((v) => ({ ...v, occupation: "homemaker" as const })) };
     const review = reviewOf(homemaker);
     expect(review.standards[0]).toContain("2026-10-25 개정판");
-    expect(review.standards[0]).toContain("대조가 필요");
-    expect(review.standards[1]).toContain("1일 172,698원(2026-09-01 적용");
+    expect(review.standards[0]).toContain("보험사에 확인하세요");
+    expect(review.standards[1]).toContain("1일 (보통인부 172,698원 + 단순노무 95,767원) ÷ 2 = 134,232원, 약관 별표1(인쇄 74쪽)");
+    expect(review.standards[1]).toContain("월 25일 기준 3,355,800원");
+    expect(review.standards.join()).not.toContain("검토 필요");
     // 같은 안내가 반복되지 않는다
     expect(new Set(review.notices).size).toBe(review.notices.length);
+  });
+
+  it("필요 서류 체크 상태가 검토서·엑셀에 같이 나온다", async () => {
+    const plain = reviewOf(caseClaim(1));
+    const first = plain.checklist[0].docs[0];
+    const review = buildReview(caseClaim(1), calculateScenarios(caseClaim(1)), 0, [], [first.key]);
+    expect(review.checklist[0].docs[0].checked).toBe(true);
+    expect(review.checklist[0].docs.slice(1).every((d) => !d.checked)).toBe(true);
+    const book = new ExcelJS.Workbook();
+    await book.xlsx.load((await reviewToXlsx(review)).buffer as ArrayBuffer);
+    const marks = book.getWorksheet("필요 서류")!.getColumn(5).values.slice(2);
+    expect(marks[0]).toBe("■");
+    expect(marks.slice(1).every((m) => m === "□")).toBe(true);
   });
 
   it("과실을 모르면 0·30·50·70% 시나리오 표, 화면 탭과 같은 순서", () => {

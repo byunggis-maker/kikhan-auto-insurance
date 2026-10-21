@@ -65,28 +65,48 @@ export const FUNERAL = { value: 5_000_000, basis: { source: "별표1 가. 사망
 export const LOST_INCOME = { ratePercent: 85, basis: { source: "별표1 나. 부상 3. 휴업손해", page: 76 } satisfies Basis };
 /**
  * 휴업손해 직업 구분(별표1 나. 3. 다., 인쇄 77쪽): 가사종사자는 일용근로자 임금, 무직자·유아·학생·연금생활자 등은 수입 감소 없음.
- * 일용근로자 임금은 약관에 금액이 없다(통계작성지정기관이 공표한 노임 — 별표1 가. 3. 용어풀이 ②, 인쇄 73쪽). 값과 출처를 사람이 넣기 전까지 null.
+ * 일용근로자 임금의 정의(별표1 가. 3. 용어풀이 ②, 인쇄 73–74쪽): 통계작성지정기관(대한건설협회, 중소기업중앙회)이 공표한 노임 중
+ * 공사부문 보통인부, 제조부문 단순노무종사원의 임금으로 "(공사부문 보통인부임금 + 제조부문 단순노무종사원임금)/2", 월 임금은 25일 기준.
  */
 export const DAILY_WAGE = {
-  basis: { source: "별표1 가. 사망 3. 상실수익액 용어풀이 ②(일용근로자 임금의 정의)", page: 73 } satisfies Basis,
-  /** 약관 산식(인쇄 74쪽): (공사부문 보통인부임금 + 제조부문 단순노무종사원임금) / 2, 월 임금 산출 시 25일 기준 */
-  definition: "(공사부문 보통인부임금 + 제조부문 단순노무종사원임금) / 2",
+  basis: { source: "별표1 가. 사망 3. 상실수익액 용어풀이 ②(일용근로자 임금)", page: 74 } satisfies Basis,
   daysPerMonth: 25,
 };
 
-/**
- * 일용근로자 임금(1일)의 적용일별 값(라운드 5 Q1, 결정 기록 D-31). 사고일에 적용 중인 값을 고른다.
- * 값은 칸이 준 2차 자료 확인값이다. 대한건설협회·중소기업중앙회 공표 원문과 아직 대조하지 못했고,
- * 약관 정의(두 임금의 평균)와 같은 값인지 확인이 필요해 결과에 '검토 필요'를 붙인다.
- */
-export const DAILY_WAGES: { effectiveFrom: string; value: number; source: string }[] = [
-  { effectiveFrom: "2025-09-01", value: 171_037, source: "칸 제공(2차 자료)" },
-  { effectiveFrom: "2026-01-01", value: 172_068, source: "칸 제공(2차 자료)" },
-  { effectiveFrom: "2026-09-01", value: 172_698, source: "칸 제공(2차 자료 확인값)" },
+type WageEntry = { effectiveFrom: string; value: number; source: string };
+
+/** 공사부문 보통인부 일급(대한건설협회 건설업 임금실태조사). 적용 시작일별, 값은 칸 제공(결정 기록 D-31·D-35) */
+export const CONSTRUCTION_WAGES: WageEntry[] = [
+  { effectiveFrom: "2025-09-01", value: 171_037, source: "대한건설협회" },
+  { effectiveFrom: "2026-01-01", value: 172_068, source: "대한건설협회" },
+  { effectiveFrom: "2026-09-01", value: 172_698, source: "대한건설협회" },
 ];
 
-export function dailyWageFor(date: string): { effectiveFrom: string; value: number; source: string } | null {
-  return [...DAILY_WAGES].filter((entry) => entry.effectiveFrom <= date).sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom))[0] ?? null;
+/**
+ * 제조부문 단순노무종사원 일급(중소기업중앙회 중소제조업 직종별 임금조사). 적용 시작일별, 값은 칸 제공(D-35).
+ * 95,767원은 2026년 상반기 조사값이며, 2차 자료(언론 보도·노임단가 정리 글) 기준 2026-07-01부터 적용한다.
+ * 그 전 적용분(2025-07-01)은 값을 받지 못해 비워 둔다 → 그 기간 사고는 '입력 필요'.
+ */
+export const MANUFACTURING_WAGES: WageEntry[] = [{ effectiveFrom: "2026-07-01", value: 95_767, source: "중소기업중앙회" }];
+
+const entryFor = (table: WageEntry[], date: string) => [...table].filter((e) => e.effectiveFrom <= date).sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom))[0] ?? null;
+
+export type DailyWage = { value: number; monthly: number; construction: WageEntry; manufacturing: WageEntry; formula: string };
+
+/** 사고일에 적용 중인 두 단가로 일용근로자 임금(1일, 원 미만 버림)과 월 임금(× 25일)을 낸다. 한쪽 단가라도 없으면 null */
+export function dailyWageFor(date: string): DailyWage | null {
+  const construction = entryFor(CONSTRUCTION_WAGES, date);
+  const manufacturing = entryFor(MANUFACTURING_WAGES, date);
+  if (!construction || !manufacturing) return null;
+  const value = Math.floor((construction.value + manufacturing.value) / 2);
+  const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
+  return {
+    value,
+    monthly: value * DAILY_WAGE.daysPerMonth,
+    construction,
+    manufacturing,
+    formula: `(보통인부 ${won(construction.value)} + 단순노무 ${won(manufacturing.value)}) ÷ 2 = ${won(value)}, 약관 별표1(인쇄 ${DAILY_WAGE.basis.page}쪽)`,
+  };
 }
 
 /** 유직자가 현실소득액을 증명하기 곤란하면 일용근로자 임금(별표1 가. 3. 나.(1) 2), 인쇄 74쪽 — 휴업손해 다.(1)(가)가 준용) */

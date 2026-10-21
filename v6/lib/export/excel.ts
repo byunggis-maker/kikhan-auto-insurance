@@ -105,7 +105,7 @@ export async function reviewToXlsx(review: Review): Promise<Uint8Array> {
     { header: "확인", width: 8 },
   ];
   docs.getRow(1).font = { bold: true };
-  for (const group of review.checklist) for (const doc of group.docs) docs.addRow([group.payer, group.coverage, doc.label, `약관 제27조 ${doc.clause27}호`, "□"]);
+  for (const group of review.checklist) for (const doc of group.docs) docs.addRow([group.payer, group.coverage, doc.label, `약관 제27조 ${doc.clause27}호`, doc.checked ? "■" : "□"]);
   docs.getColumn(3).alignment = { wrapText: true, vertical: "top" };
   docs.views = [{ state: "frozen", ySplit: 1 }];
 

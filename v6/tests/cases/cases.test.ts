@@ -116,7 +116,7 @@ describe("사례별 추가 자기검사", () => {
     const card = results.get(20)!.cards[0];
     const detail = (code: string) => card.details.find((d) => d.code === code)!;
     expect([detail("lost_income").confirmed, detail("lost_income").withEstimates]).toEqual([0, 850_000]);
-    expect(detail("lost_income").formula).toBe("월소득 3,000,000원 ÷ 30일 × 휴업 10일 × 85% = 850,000원 (별표1 나. 부상 3. 휴업손해, 인쇄 76쪽; 월 30일은 앱 가정, 원 미만 버림)");
+    expect(detail("lost_income").formula).toBe("월소득 3,000,000원 ÷ 30일 × 휴업 10일 × 85% = 850,000원 (별표1 나. 부상 3. 휴업손해, 인쇄 76쪽; 한 달을 30일로 보고 계산, 원 미만 버림)");
     expect(detail("other_injury").withEstimates).toBe(80_000);
     expect(detail("other_injury").formula).toContain("인쇄 78쪽");
     expect(detail("solatium_injury").formula).toContain("인쇄 76쪽");
@@ -134,11 +134,12 @@ describe("사례별 추가 자기검사", () => {
   it("사고일에 시행 중인 판의 PDF가 없으면 최신 판으로 계산하고 알린다(사고일 2026-09-01, 등록된 판 2026-10-25)", () => {
     const r = results.get(1)!;
     expect(r.edition).toEqual({ id: "2026-10-25", matched: false });
-    expect(r.notices.join()).toContain("사고일(2026-09-01)에 시행 중인 약관 판의 PDF가 없습니다. 2026-10-25 개정판 기준으로 계산했습니다");
+    expect(r.notices.join()).toContain("2026-10-25 개정 약관 기준으로 계산했습니다. 사고일(2026-09-01)에 시행되던 약관과 내용이 다를 수 있으니 보험사에 확인하세요.");
+    expect(r.notices.join()).not.toContain("data/raw");
     const base = CASES.find((c) => c.no === 1)!.claim;
     const after = calculate({ ...base, accident: { ...base.accident, occurredAt: "2026-11-01" } }, 30);
     expect(after.edition).toEqual({ id: "2026-10-25", matched: true });
-    expect(after.notices.join()).not.toContain("PDF가 없습니다");
+    expect(after.notices.join()).not.toContain("다를 수 있으니");
   });
 
   it("휴업손해: '소득 증명 가능'이 아니면 0원이고 증명했을 때의 금액은 참고로 남긴다(결정 기록 D-24)", () => {
@@ -206,29 +207,34 @@ describe("휴업손해 직업 구분(별표1 나. 3. 다., 인쇄 77쪽, 결정 
     expect(withJob("employed").details.find((x) => x.code === "lost_income")?.withEstimates).toBe(850_000);
   });
 
-  it("가사종사자는 일용근로자 임금 × 휴업일수 × 85%: 사고일 2026-09-01 → 172,698원 × 10일 × 85% = 1,467,933원", () => {
+  it("가사종사자는 일용근로자 임금 × 휴업일수 × 85%: 사고일 2026-09-01 → (172,698 + 95,767) ÷ 2 = 134,232원 × 10일 × 85% = 1,140,972원", () => {
     const d = withJob("homemaker").details.find((x) => x.code === "lost_income")!;
-    expect(d.withEstimates).toBe(1_467_933);
-    expect(d.formula).toContain("172,698원(2026-09-01 적용");
-    expect(d.formula).toContain("검토 필요");
+    expect(d.withEstimates).toBe(1_140_972);
+    expect(d.formula).toContain("(보통인부 172,698원 + 단순노무 95,767원) ÷ 2 = 134,232원, 약관 별표1(인쇄 74쪽)");
+    expect(d.formula).not.toContain("검토 필요");
   });
 
-  it("일용근로자 임금은 사고일에 적용 중인 값을 고른다(2025-09-01 / 2026-01-01 / 2026-09-01), 없으면 입력 필요", () => {
+  it("일용근로자 임금은 사고일에 적용 중인 두 단가의 평균(2026-08 → 보통인부 172,068원), 단순노무 단가가 없는 날은 입력 필요", () => {
     const at = (occurredAt: string) => calculate({ ...base, accident: { ...base.accident, occurredAt }, victims: base.victims.map((v) => ({ ...v, occupation: "homemaker" as const })) }, 30).cards[0];
-    expect(at("2025-12-31").details.find((x) => x.code === "lost_income")?.withEstimates).toBe(Math.floor(171_037 * 10 * 0.85));
-    expect(at("2026-01-01").details.find((x) => x.code === "lost_income")?.withEstimates).toBe(Math.floor(172_068 * 10 * 0.85));
-    const before = at("2025-08-31");
-    expect(before.missing).toContain("lost_income");
-    expect(before.notes.join()).toContain("적용할 일용근로자 임금 값이 없습니다");
+    const august = at("2026-08-15").details.find((x) => x.code === "lost_income")!;
+    // (172,068 + 95,767) ÷ 2 = 133,917.5 → 133,917(원 미만 버림) × 10 × 85%
+    expect(august.withEstimates).toBe(Math.floor(133_917 * 10 * 0.85));
+    expect(august.formula).toContain("보통인부 172,068원 + 단순노무 95,767원");
+    // 단순노무종사원 95,767원은 2026-07-01부터 적용. 그 전 사고는 값이 없어 입력 필요
+    for (const date of ["2026-06-30", "2025-12-31"]) {
+      const before = at(date);
+      expect(before.missing).toContain("lost_income");
+      expect(before.notes.join()).toContain("적용할 일용근로자 임금 값이 아직 없습니다");
+    }
   });
 
   it("유직자가 월소득 금액을 증명하지 못하면(incomeAmountProven = false) 일용근로자 임금으로 계산(결정 기록 D-32)", () => {
     const r = calculate({ ...base, victims: base.victims.map((v) => ({ ...v, occupation: "employed" as const, incomeAmountProven: false })) }, 30);
     const d = r.cards[0].details.find((x) => x.code === "lost_income")!;
-    expect(d.withEstimates).toBe(1_467_933);
+    expect(d.withEstimates).toBe(1_140_972);
     expect(d.formula).toContain("소득 금액 증명 곤란(유직자)");
     expect(d.formula).toContain("인쇄 74쪽");
-    expect(r.notices.join()).toContain("일용근로자 임금 172,698원(2026-09-01 적용");
+    expect(r.notices.join()).toContain("일용근로자 임금 134,232원으로 계산했습니다");
     // 수입 감소(휴업) 사실도 증명하지 못하면 0원(D-24)
     const none = calculate({ ...base, victims: base.victims.map((v) => ({ ...v, occupation: "employed" as const, incomeAmountProven: false, incomeProven: false })) }, 30);
     expect(none.cards[0].details.find((x) => x.code === "lost_income")?.withEstimates).toBe(0);

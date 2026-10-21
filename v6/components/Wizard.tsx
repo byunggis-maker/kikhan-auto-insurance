@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { loadClaim, saveClaim } from "@/lib/claim/persist";
 import { emptyClaim, type Claim } from "@/lib/claim/types";
+import { clearChecked } from "@/lib/state/checklist";
 import { loadProgress, saveProgress } from "@/lib/state/progress";
 import { STEP_TITLES, screensFor, skip, unskip, type Screen } from "@/lib/ui/flow";
 import { SkipButton } from "./SkipButton";
@@ -102,6 +103,7 @@ export function Wizard() {
             onClick={() => {
               if (window.confirm("입력한 내용을 모두 지우고 처음부터 할까요?")) {
                 setClaim(emptyClaim());
+                clearChecked();
                 setScreenId("narrative");
               }
             }}

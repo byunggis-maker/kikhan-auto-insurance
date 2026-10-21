@@ -3,6 +3,7 @@ import { STANDARDS_AS_OF, dailyWageFor } from "@/lib/claim/standards";
 import { ACCIDENT_TYPE_LABELS, COVERAGE_LABELS, PAYERS, PAYER_LABELS, type Claim, type Coverage, type Payer } from "@/lib/claim/types";
 import type { Amounts, Result } from "@/lib/engine/types";
 import { maskText } from "@/lib/privacy/mask";
+import { checklistKey } from "@/lib/state/checklist";
 
 // MASTER.md 8장 보상 검토서의 내용. 화면(7단계)·엑셀·PDF가 모두 이 모델 하나를 쓴다(숫자가 서로 어긋나지 않게).
 // 위에서 결론(세 숫자·받을 곳별), 아래로 근거(카드별 담보·과실 시나리오·입력 필요·필요 서류·다음 할 일).
@@ -25,7 +26,7 @@ export type ReviewLine = {
 };
 
 export type ReviewCard = { label: string; actualLoss: Amounts; paid: Amounts; uncovered: Amounts; lines: ReviewLine[]; notes: string[] };
-export type ReviewChecklist = { payer: string; coverage: string; docs: { label: string; clause27: number }[] };
+export type ReviewChecklist = { payer: string; coverage: string; docs: { key: string; label: string; clause27: number; checked: boolean }[] };
 
 export type Review = {
   notice: string;
@@ -51,7 +52,7 @@ const STATUS = { paid: "지급", excluded: "보상 안 됨", needs_input: "입�
 const PAYER_ORDER: Payer[] = ["counterparty_insurer", "government", "own_insurer"];
 
 /** 필요 서류 체크리스트: 받을 곳 × 담보마다 제27조 공통 서류 + 그 카드에 넣은 손해 항목의 서류 */
-function checklist(claim: Claim, result: Result): ReviewChecklist[] {
+function checklist(claim: Claim, result: Result, checked: string[]): ReviewChecklist[] {
   const groups = new Map<string, { payer: Payer; coverage: Coverage; docs: Set<DocumentId> }>();
   for (const line of result.lines) {
     if (line.status === "excluded") continue;
@@ -66,11 +67,15 @@ function checklist(claim: Claim, result: Result): ReviewChecklist[] {
   }
   return [...groups.values()]
     .sort((a, b) => PAYER_ORDER.indexOf(a.payer) - PAYER_ORDER.indexOf(b.payer) || a.coverage.localeCompare(b.coverage))
-    .map((g) => ({
-      payer: PAYER_LABELS[g.payer],
-      coverage: g.payer === "government" ? "대인Ⅰ 상당액(정부보장사업)" : COVERAGE_LABELS[g.coverage],
-      docs: [...g.docs].map((id) => ({ label: DOCUMENTS[id].label, clause27: DOCUMENTS[id].clause27 })).sort((a, b) => a.clause27 - b.clause27),
-    }));
+    .map((g) => {
+      const payer = PAYER_LABELS[g.payer];
+      const coverage = g.payer === "government" ? "대인Ⅰ 상당액(정부보장사업)" : COVERAGE_LABELS[g.coverage];
+      const docs = [...g.docs].map((id) => {
+        const key = checklistKey(payer, coverage, DOCUMENTS[id].label);
+        return { key, label: DOCUMENTS[id].label, clause27: DOCUMENTS[id].clause27, checked: checked.includes(key) };
+      });
+      return { payer, coverage, docs: docs.sort((a, b) => a.clause27 - b.clause27) };
+    });
 }
 
 function nextSteps(claim: Claim, result: Result, missingCount: number): string[] {
@@ -86,7 +91,7 @@ function nextSteps(claim: Claim, result: Result, missingCount: number): string[]
   if (burden.some((b) => !b.key.startsWith("burden:"))) steps.push("보험으로 보상되지 않는 배상책임은 내가 직접 갚아야 합니다. 합의 전 보험사·법률 상담을 받으세요.");
   if (!claim.fault.mode || claim.fault.mode === "unknown") steps.push("과실비율이 정해지면 5단계에서 넣고 다시 계산하세요. 지금은 0·30·50·70% 네 경우를 보여 줍니다.");
   if (missingCount > 0) steps.push(`'입력 필요' ${missingCount}개를 채우면 금액이 더 정확해집니다.`);
-  if (!result.edition.matched) steps.push("사고 당시 약관 판과 대조가 필요합니다(아래 안내).");
+  if (!result.edition.matched) steps.push("사고 당시 약관 내용은 보험사에 확인하세요(아래 안내).");
   steps.push("서류를 모으면 '서류로 확인한 금액(확정)' 칸에 넣어 확정 기준 금액을 늘려 가세요.");
   return steps;
 }
@@ -106,11 +111,13 @@ function standardsLines(claim: Claim, result: Result): string[] {
   const lines = [
     result.edition.matched
       ? `약관: ${result.edition.id} 개정판(사고일에 시행 중인 판)`
-      : `약관: ${result.edition.id} 개정판으로 계산했습니다. 사고일(${claim.accident.occurredAt ?? "모름"})에 시행 중이던 판의 PDF가 없어 대조가 필요합니다.`,
+      : `약관: ${result.edition.id} 개정판으로 계산했습니다. 사고일(${claim.accident.occurredAt ?? "모름"})에 시행되던 약관과 다를 수 있으니 보험사에 확인하세요.`,
   ];
   const wage = dailyWageFor(date);
   if (wage && result.cards.some((card) => card.details.some((d) => d.formula.includes(WAGE_USED))))
-    lines.push(`일용근로자 임금: 1일 ${wage.value.toLocaleString("ko-KR")}원(${wage.effectiveFrom} 적용, ${wage.source}). 대한건설협회·중소기업중앙회 공표 원문과 대조가 필요합니다.`);
+    lines.push(
+      `일용근로자 임금: 1일 ${wage.formula} (월 25일 기준 ${wage.monthly.toLocaleString("ko-KR")}원). 보통인부 ${wage.construction.effectiveFrom} 적용(${wage.construction.source}), 단순노무 ${wage.manufacturing.effectiveFrom} 적용(${wage.manufacturing.source}).`,
+    );
   return lines;
 }
 
@@ -132,7 +139,8 @@ function deepMask<T>(value: T): T {
   return value;
 }
 
-export function buildReview(claim: Claim, results: Result[], index: number, skippedLabels: string[] = []): Review {
+/** checked: 사용자가 체크한 서류 키(lib/state/checklist.ts). 화면·엑셀·PDF에 같은 체크 상태가 나온다 */
+export function buildReview(claim: Claim, results: Result[], index: number, skippedLabels: string[] = [], checked: string[] = []): Review {
   const result = results[Math.min(index, results.length - 1)];
   const missing = missingList(claim, result, skippedLabels);
   const review: Review = {
@@ -145,7 +153,7 @@ export function buildReview(claim: Claim, results: Result[], index: number, skip
     },
     faultPercent: result.faultPercent,
     faultKnown: claim.fault.mode === "known",
-    edition: `${result.edition.id} 개정판${result.edition.matched ? "" : "(사고일에 시행 중인 판 PDF 없음 — 대조 필요)"}`,
+    edition: `${result.edition.id} 개정판${result.edition.matched ? "" : "(사고 당시 약관과 다를 수 있음 — 보험사 확인)"}`,
     standards: standardsLines(claim, result),
     top: {
       receiveConfirmed: result.totals.receive.confirmed,
@@ -180,7 +188,7 @@ export function buildReview(claim: Claim, results: Result[], index: number, skip
     burdens: result.burdens.map((b) => ({ label: b.label, confirmed: b.confirmed, withEstimates: b.withEstimates, formula: b.formula, basis: b.basis })),
     scenarios: scenarioRows(results),
     missing,
-    checklist: checklist(claim, result),
+    checklist: checklist(claim, result, checked),
     nextSteps: nextSteps(claim, result, missing.length),
     // 같은 안내가 사람마다 반복되지 않게 한 번씩만. 일용근로자 임금 안내는 위 standards에 있다
     notices: [...new Set(result.notices)].filter((n) => !n.startsWith(WAGE_USED)),

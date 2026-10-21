@@ -18,6 +18,8 @@ import { personLoss, propertyLoss } from "./losses";
 import { withVerifiedProductLines } from "./rule-verification";
 import type { Run, RunBurden, RunCard, RunLine, RunNote, Side, ValueMode } from "./types";
 
+const VERIFICATION_TEXT = "이 보험 종류의 약관과 대조하지 않은 계산 기준이 들어 있습니다. 보험사에 확인하세요.";
+
 // MASTER.md 6장 계산 엔진. 사람 한 명·물건 한 개 단위로, 보상담당자의 순서대로 계산한다.
 //   (1) 면책·제한(exclusions.ts) → (2) 담보 매칭(아래 각 카드 함수) → (3) 손해액 정리(losses.ts)
 //   → (4) 지급액 조정(adjust.ts, legacy 이식 로직) → (5) 중복 차감(뒤 순위 = min(한도, 실제손해 − 앞 순위), dedupe.ts)
@@ -62,8 +64,8 @@ export function runOnce(claim: Claim, faultPercent: number, mode: ValueMode): Ru
   const notices: string[] = [];
   if (accidentDate === null) notices.push(`사고일을 몰라 최신 약관 판(${edition.id} 개정) 기준으로 계산했습니다.`);
   else if (!matched)
-    notices.push(`사고일(${accidentDate})에 시행 중인 약관 판의 PDF가 없습니다. ${edition.id} 개정판 기준으로 계산했습니다. 사고 당시 판의 PDF를 data/raw/policies/<개정일>/에 넣으면 그 판으로 계산합니다.`);
-  if (edition.id !== STANDARDS_EDITION) notices.push(`${edition.id} 판의 금액 기준이 아직 옮겨지지 않아 ${STANDARDS_EDITION} 판 금액으로 계산했습니다.`);
+    notices.push(`${edition.id} 개정 약관 기준으로 계산했습니다. 사고일(${accidentDate})에 시행되던 약관과 내용이 다를 수 있으니 보험사에 확인하세요.`);
+  if (edition.id !== STANDARDS_EDITION) notices.push(`금액 기준은 ${STANDARDS_EDITION} 개정 약관의 금액으로 계산했습니다. 보험사에 확인하세요.`);
   if (my.productLine === null) notices.push("내 보험 종류를 몰라 개인용 약관 기준으로 계산했습니다.");
 
   // 내가 낸 사고부담금·배상책임의 합계를 위해 내 보험 지급액을 모은다.
@@ -84,7 +86,8 @@ export function runOnce(claim: Claim, faultPercent: number, mode: ValueMode): Ru
       amount: status === "paid" ? amount : 0,
       formula,
       basis: label.basis ? `${basis} / ${label.basis}` : basis,
-      flags: notice ? [...flags, `${notice.notice}(${notice.ruleIds.join(", ")})`] : flags,
+      // 사용자에게는 규칙 id 대신 일반 안내를 보인다(legacy/verification.ts의 표시 문구는 개발용)
+      flags: notice ? [...flags, VERIFICATION_TEXT] : flags,
     };
   }
   function fromPaid(cardId: string, coverage: Coverage, whose: Side, paid: Paid, basis: string, flags: string[] = []): RunLine {
@@ -117,7 +120,7 @@ export function runOnce(claim: Claim, faultPercent: number, mode: ValueMode): Ru
     const loss = personLoss(victim, mode, date);
     if (loss.details.some((d) => d.formula.includes("일용근로자 임금 "))) {
       const wage = dailyWageFor(date);
-      if (wage) notices.push(`일용근로자 임금 ${wage.value.toLocaleString("ko-KR")}원(${wage.effectiveFrom} 적용, ${wage.source})으로 계산했습니다. 약관 정의는 (공사부문 보통인부임금 + 제조부문 단순노무종사원임금)/2입니다. 공표 원문과 대조가 필요합니다.`);
+      if (wage) notices.push(`일용근로자 임금 ${wage.value.toLocaleString("ko-KR")}원으로 계산했습니다: ${wage.formula}.`);
     }
     const side: Side = victim.role === "counterparty" ? "counterparty" : "mine";
     cards.push({ cardId: victim.id, label: victim.label, kind: "person", side, actualLoss: loss.actualLoss, missing: loss.missing, notes: loss.notes, details: loss.details });

@@ -48,7 +48,7 @@ export function screensFor(claim: Claim): Screen[] {
   const add = (screen: Omit<Screen, "skippable"> & { skippable?: boolean }) => s.push({ skippable: true, ...screen });
 
   // 1 사고 접수
-  add({ id: "narrative", step: 1, kind: "narrative", title: "어떤 사고였나요?", hint: "기억나는 대로 적어 주세요. 음성 입력은 다음 버전에 넣습니다." });
+  add({ id: "narrative", step: 1, kind: "narrative", title: "어떤 사고였나요?", hint: "기억나는 대로 적어 주세요. 음성 입력은 준비 중입니다." });
   add({ id: "type", step: 1, kind: "type", title: "어떤 사고였나요?", hint: "가장 가까운 것을 고르세요." });
   add({ id: "date", step: 1, kind: "date", title: "언제 일어났나요?", hint: "날짜에 따라 적용되는 약관 판이 달라집니다." });
   add({ id: "place", step: 1, kind: "place", title: "어디서 일어났나요?" });
