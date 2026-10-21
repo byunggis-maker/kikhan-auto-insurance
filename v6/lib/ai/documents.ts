@@ -51,6 +51,7 @@ async function heicToJpeg(bytes: Uint8Array): Promise<Uint8Array> {
 
 // ── 읽을 칸(구조화 출력 스키마) ──
 const won = z.number().int().min(0);
+const period = z.object({ start: z.string().describe("시작일 YYYY-MM-DD"), end: z.string().describe("종료일 YYYY-MM-DD(시작일 포함, 종료일 포함)") });
 
 /** 보상 서류에서 옮길 수 있는 손해 항목. 사람 카드와 물건 카드에 따라 다르다 */
 export const CLAIM_CODES = { person: ["treatment", "future_treatment", "nursing", "rescue_cost"], property: ["repair", "rental", "idle", "towing"] } as const;
@@ -74,6 +75,11 @@ export function claimReadingSchema(target: keyof typeof CLAIM_CODES) {
       hospitalDays: z.number().int().min(0).nullable().describe("입원일수. 문서에 없으면 null"),
       outpatientDays: z.number().int().min(0).nullable().describe("통원일수(진료 받은 날 수). 문서에 없으면 null"),
       daysOffWork: z.number().int().min(0).nullable().describe("휴업일수(일을 하지 못한 날 수). 문서에 휴업·근무 불능 기간이 적혀 있을 때만. 치료 기간만 있으면 null"),
+      // 라운드 8c: 여러 서류의 날수를 날짜로 합치고(겹치는 날 한 번), 월 소득은 사고 직전 3개월 평균을 내는 데 쓴다
+      hospitalPeriods: z.array(period).nullable().describe("입원 기간들(입원일~퇴원일). 날짜가 적혀 있지 않으면 null"),
+      outpatientDates: z.array(z.string()).nullable().describe("통원(외래 진료) 받은 날짜 YYYY-MM-DD 목록. 날짜별로 적혀 있지 않으면 null"),
+      daysOffWorkPeriods: z.array(period).nullable().describe("휴업(일을 하지 못한) 기간들. 날짜가 적혀 있지 않으면 null"),
+      incomeMonth: z.string().nullable().describe("월 소득이 어느 달 급여인지 YYYY-MM(급여명세서의 귀속 월). 연 소득을 12로 나눈 값이거나 모르면 null"),
       monthlyIncome: won.nullable().describe("소득 증빙의 월 소득(연 소득이면 12로 나눈 값). 없으면 null"),
     }),
     note: z.string().describe("읽지 못했거나 확인이 필요한 점. 없으면 빈 글자"),

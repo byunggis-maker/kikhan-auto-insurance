@@ -116,6 +116,18 @@ export function dailyWageFor(date: string): DailyWage | null {
 
 /** 유직자가 현실소득액을 증명하기 곤란하면 일용근로자 임금(별표1 가. 3. 나.(1) 2), 인쇄 74쪽 — 휴업손해 다.(1)(가)가 준용) */
 export const UNPROVEN_EARNER = { basis: { source: "별표1 나. 3. 다.(1)(가) → 가. 3. 나.(1) 2) 현실소득액을 증명하기 곤란한 자", page: 74 } satisfies Basis };
+/**
+ * 급여소득자 현실소득액의 산정대상기간: 사고발생 직전 과거 3개월(월평균). 다만 계절적 요인 등으로 급여 차등이 있는 경우와
+ * 상여금·체력단련비·연월차휴가보상금 등 매월 받지 않는 금액은 과거 1년간. 급여소득자 이외의 자는 사고 직전 과거 1년간.
+ * 별표1 가. 사망 3. 상실수익액 나.(1)(가)①②(인쇄 72쪽). 휴업손해 다.(1)(가)가 이 산정방법을 준용(인쇄 77쪽),
+ * 후유장애 2. 상실수익액 나.(1)(가)①도 같다(인쇄 78쪽). 서류 여러 장의 월 소득 평균(라운드 8c, lib/ui/recognize.ts)에 쓴다.
+ */
+export const SALARY_INCOME_PERIOD = {
+  months: 3,
+  basis: { source: "별표1 가. 사망 3. 나.(1)(가)① 급여소득자 산정대상기간(휴업손해 다.(1)(가)·후유장애 2. 나.(1)(가)① 준용·같음)", page: 72 } satisfies Basis,
+  lostIncomeBasis: { source: "별표1 나. 부상 3. 휴업손해 다.(1)(가)", page: 77 } satisfies Basis,
+  disabilityBasis: { source: "별표1 다. 후유장애 2. 상실수익액 나.(1)(가)①", page: 78 } satisfies Basis,
+};
 export const NO_LOSS_OCCUPATIONS = { basis: { source: "별표1 나. 부상 3. 휴업손해 다.(3)", page: 77 } satisfies Basis };
 export const HOMEMAKER = { basis: { source: "별표1 나. 부상 3. 휴업손해 다.(2)", page: 77 } satisfies Basis };
 

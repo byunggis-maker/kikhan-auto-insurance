@@ -1,4 +1,5 @@
-// 라운드 8 비용 보호(로그인 없는 공개 앱). 서류 인식·음성 API는 IP당 하루 20회까지만 제공자를 부른다.
+// 라운드 8 비용 보호(로그인 없는 공개 앱). 서류 인식·음성 API는 IP당 하루 30회까지만 제공자를 부른다(라운드 8c에서 20→30).
+// 큰 PDF는 쪽마다 1회를 쓴다(라운드 8b). 화면은 올리기 전에 /api/usage로 남은 횟수를 묻는다.
 // - 횟수는 두 API를 합쳐 센다. 하루는 한국 시간 0시에 바뀐다.
 // - 서버 메모리에만 센다(인스턴스마다 따로, 다시 시작하면 처음부터). 남은 위험은 docs/reports/round-8.md에 적었다.
 // - IP는 횟수를 세는 데만 쓰고 로그·응답에 남기지 않는다.
@@ -6,7 +7,7 @@
 
 import { NO_STORE } from "./anthropic";
 
-export const DAILY_AI_LIMIT = 20;
+export const DAILY_AI_LIMIT = 30;
 export const DAILY_LIMIT_MESSAGE = "오늘 사용 횟수를 다 쓰셨어요. 직접 입력해 주세요";
 
 const counts = new Map<string, number>();
@@ -34,6 +35,12 @@ export function takeDailyUse(ip: string, now = new Date()): boolean {
   if (used >= DAILY_AI_LIMIT) return false;
   counts.set(ip, used + 1);
   return true;
+}
+
+/** 오늘 남은 횟수(세지 않고 보기만 한다) */
+export function remainingDailyUses(ip: string, now = new Date()): number {
+  if (seoulDay(now) !== countsDay) return DAILY_AI_LIMIT;
+  return Math.max(0, DAILY_AI_LIMIT - (counts.get(ip) ?? 0));
 }
 
 /** 오늘 한도를 다 썼다. 라우트가 limitedResponse로 바꾼다 */

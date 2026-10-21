@@ -64,7 +64,7 @@ describe("보상 서류 읽기", () => {
     const { call, seen } = fakeCall({ documentType: "견적서", amounts: [], facts: { hospitalDays: null, outpatientDays: null, monthlyIncome: null }, note: "" });
     await readClaimDocument(fixture("estimate.heic"), "property", call);
     expect(seen[0].schema.safeParse({ documentType: "x", amounts: [{ code: "treatment", amount: 1, basis: "" }], facts: { hospitalDays: null, outpatientDays: null, monthlyIncome: null }, note: "" }).success).toBe(false);
-    expect(seen[0].schema.safeParse({ documentType: "x", issuer: null, documentDate: null, amounts: [{ code: "repair", amount: 1, basis: "" }], facts: { hospitalDays: null, outpatientDays: null, daysOffWork: null, monthlyIncome: null }, note: "" }).success).toBe(true);
+    expect(seen[0].schema.safeParse({ documentType: "x", issuer: null, documentDate: null, amounts: [{ code: "repair", amount: 1, basis: "" }], facts: { hospitalDays: null, outpatientDays: null, daysOffWork: null, hospitalPeriods: null, outpatientDates: null, daysOffWorkPeriods: null, incomeMonth: null, monthlyIncome: null }, note: "" }).success).toBe(true);
   });
 
   it("증권: 보험사 이름 안의 증권번호도 가린다", async () => {

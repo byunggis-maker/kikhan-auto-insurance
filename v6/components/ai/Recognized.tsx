@@ -7,6 +7,7 @@ import { IntInput, MoneyInput } from "../fields";
 // "인식된 값 – 확인해 주세요". 금액·날수는 확인 전에 고칠 수 있다. 확인을 눌러야 입력칸에 들어가고 계산에 쓰인다.
 // 인식된 값은 연한 청색으로 구별한다(MASTER.md 2장).
 // 라운드 8b: 한 항목에 서류가 여러 장이면 서류별 줄과 합계(RecognizedLossGroup), 날수가 서류마다 다르면 각 값을 보여 준다.
+// 라운드 8c: 날수를 기간으로 합쳤거나 월 소득 평균을 냈으면 계산식(formula)을 보여 준다.
 
 type Update = (change: (claim: Claim) => Claim) => void;
 
@@ -30,6 +31,11 @@ export function RecognizedRow({ recognition: r, update }: { recognition: Recogni
         읽은 서류: {r.source}
         {r.note ? ` · ${r.note}` : ""}
       </p>
+      {r.kind === "fact" && r.formula && (
+        <p className="mt-1 text-sm font-bold" data-formula>
+          계산: {r.formula}
+        </p>
+      )}
       {r.kind === "fact" && factDiffers(r) && (
         <p className="mt-1 text-sm font-bold" data-differs>
           서류마다 다르게 적혀 있어요: {factReadings(r).map((x) => `${x.source} ${r.field === "monthlyIncome" ? `${x.value.toLocaleString("ko-KR")}원` : `${x.value}일`}`).join(" · ")}. 큰 값을 넣었습니다.

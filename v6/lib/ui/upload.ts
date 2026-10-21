@@ -48,11 +48,47 @@ export async function prepareUploads(file: File, renderPdf: RenderPdf = renderPd
   return images.map((blob, i) => ({ blob, page: i + 1, pages: pageCount }));
 }
 
-/** pdf.js(legacy 빌드)로 앞 maxPages쪽을 긴 변 2000px 이하 JPEG로 그린다. 열지 못하면 예외 */
-export async function renderPdfPages(file: Blob, maxPages: number): Promise<{ images: Blob[]; pageCount: number }> {
+/** 큰 PDF면 쪽 수와 쓸 횟수(쪽마다 1회, 최대 5회). 큰 PDF가 아니면 null. 열지 못하면 예외 */
+export async function pdfPlan(file: File, countPages: (file: Blob) => Promise<number> = countPdfPages): Promise<{ pages: number; uses: number } | null> {
+  if (!isPdf(file) || file.size <= UPLOAD_LIMIT) return null;
+  const pages = await countPages(file);
+  return { pages, uses: Math.min(pages, MAX_PDF_PAGES) };
+}
+
+/** 큰 PDF를 올리기 전 안내(라운드 8c). 남은 횟수를 모르면(서버가 답하지 않으면) 쓸 횟수만 */
+export function pdfUseNotice(plan: { pages: number; uses: number }, remaining: number | null): string {
+  const left = remaining === null ? "" : `(오늘 남은 횟수 ${remaining}회)`;
+  const pages = plan.pages > plan.uses ? ` 전체 ${plan.pages}쪽 중 앞 ${plan.uses}쪽을 한 쪽씩 사진으로 바꿔 읽습니다.` : ` ${plan.pages}쪽을 한 쪽씩 사진으로 바꿔 읽습니다.`;
+  const short = remaining !== null && remaining < plan.uses ? ` 남은 횟수가 모자라 앞 ${remaining}쪽까지만 읽습니다.` : "";
+  return `이 PDF는 ${plan.uses}회를 씁니다${left}.${pages}${short}`;
+}
+
+/** 오늘 남은 횟수. 알 수 없으면 null */
+export async function fetchRemaining(): Promise<number | null> {
+  try {
+    const data = (await (await fetch("/api/usage", { cache: "no-store" })).json()) as { remaining?: unknown };
+    return typeof data.remaining === "number" ? data.remaining : null;
+  } catch {
+    return null;
+  }
+}
+
+async function loadPdf(file: Blob) {
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
   pdfjs.GlobalWorkerOptions.workerSrc = "/pdfjs/pdf.worker.min.mjs";
-  const doc = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+  return pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+}
+
+export async function countPdfPages(file: Blob): Promise<number> {
+  const doc = await loadPdf(file);
+  const pages = doc.numPages;
+  void doc.destroy();
+  return pages;
+}
+
+/** pdf.js(legacy 빌드)로 앞 maxPages쪽을 긴 변 2000px 이하 JPEG로 그린다. 열지 못하면 예외 */
+export async function renderPdfPages(file: Blob, maxPages: number): Promise<{ images: Blob[]; pageCount: number }> {
+  const doc = await loadPdf(file);
   try {
     const images: Blob[] = [];
     for (let n = 1; n <= Math.min(doc.numPages, maxPages); n++) {

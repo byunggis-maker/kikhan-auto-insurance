@@ -18,7 +18,7 @@ const base = (): Claim => {
   c = setVictimCount(c, "driver", 1);
   return { ...c, victims: c.victims.map((v) => ({ ...v, injuryGrade: 9 })) };
 };
-const noFacts = { hospitalDays: null, outpatientDays: null, daysOffWork: null, monthlyIncome: null };
+const noFacts = { hospitalDays: null, outpatientDays: null, daysOffWork: null, hospitalPeriods: null, outpatientDates: null, daysOffWorkPeriods: null, incomeMonth: null, monthlyIncome: null };
 const doc = (documentType: string, issuer: string | null, documentDate: string | null, treatment: number | null, facts: Partial<ClaimReading["facts"]> = {}): ClaimReading => ({
   documentType,
   issuer,
@@ -110,7 +110,7 @@ describe("일수 칸: 더하지 않고 큰 값", () => {
       const r = fact(c, field);
       expect(r.value).toBe(value);
       expect(factDiffers(r)).toBe(true);
-      expect(factReadings(r)).toEqual([
+      expect(factReadings(r)).toMatchObject([
         { source: "진단서", value: readings[0] },
         { source: "진료비 영수증", value: readings[1] },
       ]);

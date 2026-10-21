@@ -1,6 +1,7 @@
 import type { ClaimReading, PolicyReading } from "@/lib/ai/documents";
 import { lossItemDef } from "@/lib/claim/lossItems";
-import { COVERAGE_LABELS, FACT_FIELDS, PRODUCT_LINE_LABELS, type Claim, type Limit, type Recognition } from "@/lib/claim/types";
+import { SALARY_INCOME_PERIOD } from "@/lib/claim/standards";
+import { COVERAGE_LABELS, FACT_FIELDS, PRODUCT_LINE_LABELS, type Claim, type FactReading, type Limit, type Period, type Recognition } from "@/lib/claim/types";
 import { setCoverage, setItem, toggleCoverage, visibleItems } from "./flow";
 
 // 서류·증권 인식값을 "확인을 기다리는 값"으로 만들고, 사용자가 고치거나 확인·지우는 상태 변경(라운드 7, MASTER.md 9장).
@@ -77,7 +78,10 @@ export function claimRecognitions(claim: Claim, cardId: string, reading: ClaimRe
   if (claim.victims.some((v) => v.id === cardId))
     for (const field of FACT_FIELDS) {
       const value = reading.facts[field];
-      if (value !== null) recognitions.push({ id: makeId(), kind: "fact", cardId, field, value, source, note: "" });
+      if (value === null) continue;
+      // 서류별 값에 기간·급여 월을 함께 둔다. 여러 서류를 합칠 때 쓴다(mergeFact)
+      const one: FactReading = { source, value, periods: readingPeriods(reading, field), month: field === "monthlyIncome" ? monthOf(reading.facts.incomeMonth) : null };
+      recognitions.push({ id: makeId(), kind: "fact", cardId, field, value, source, note: "", readings: [one] });
     }
   return { recognitions, dropped };
 }
@@ -114,8 +118,9 @@ export function addRecognitions(claim: Claim, recognitions: Recognition[]): Clai
     const key = targetKey(r);
     const old = recognized.find((x) => targetKey(x) === key);
     if (r.kind === "fact" && old?.kind === "fact") {
-      const readings = [...factReadings(old), { source: r.source, value: r.value }];
-      const merged: Recognition = { ...old, value: Math.max(...readings.map((x) => x.value)), readings, source: [...new Set(readings.map((x) => x.source))].join(" · ") };
+      const readings = [...factReadings(old), ...factReadings(r)];
+      const { value, formula } = mergeFact(r.field, readings, claim.accident.occurredAt);
+      const merged: Recognition = { ...old, value, formula: formula ?? undefined, readings, source: [...new Set(readings.map((x) => x.source))].join(" · ") };
       recognized = recognized.map((x) => (x === old ? merged : x));
       continue;
     }
@@ -128,13 +133,66 @@ type LossRecognition = Extract<Recognition, { kind: "loss" }>;
 type FactRecognition = Extract<Recognition, { kind: "fact" }>;
 
 /** 날수·소득 한 줄에 모인 서류별 값 */
-export function factReadings(r: FactRecognition): { source: string; value: number }[] {
+export function factReadings(r: FactRecognition): FactReading[] {
   return r.readings ?? [{ source: r.source, value: r.value }];
 }
 
-/** 서류마다 값이 다른지("서류마다 다르게 적혀 있어요") */
+/** 서류마다 값이 다른지("서류마다 다르게 적혀 있어요"). 날짜로 합쳤거나 평균을 냈으면(formula) 계산식을 대신 보여 준다 */
 export function factDiffers(r: FactRecognition): boolean {
-  return new Set(factReadings(r).map((x) => x.value)).size > 1;
+  return !r.formula && new Set(factReadings(r).map((x) => x.value)).size > 1;
+}
+
+// ── 여러 서류의 날수·소득 합치기(라운드 8c) ──
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const isDate = (s: string | null | undefined): s is string => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s));
+const monthOf = (s: string | null | undefined) => (typeof s === "string" && /^\d{4}-\d{2}$/.test(s) ? s : null);
+const mmdd = (d: string) => `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`;
+
+/** 서류에서 읽은 기간(날수 칸별). 날짜가 하나라도 이상하면 null(기간을 읽지 못한 서류로 본다) */
+function readingPeriods(reading: ClaimReading, field: (typeof FACT_FIELDS)[number]): Period[] | null {
+  const f = reading.facts;
+  const list = field === "hospitalDays" ? f.hospitalPeriods : field === "daysOffWork" ? f.daysOffWorkPeriods : field === "outpatientDays" ? f.outpatientDates?.map((d) => ({ start: d, end: d })) : null;
+  if (!list?.length) return null;
+  return list.every((p) => isDate(p.start) && isDate(p.end) && p.start <= p.end) ? list : null;
+}
+
+/** 기간들을 날짜로 합쳐 센 날수(시작·종료일 포함, 겹치는 날은 한 번) */
+export function countPeriodDays(periods: Period[]): number {
+  const days = new Set<number>();
+  for (const p of periods) for (let t = Date.parse(p.start); t <= Date.parse(p.end); t += DAY_MS) days.add(t);
+  return days.size;
+}
+
+/**
+ * 같은 칸을 읽은 여러 서류의 값을 하나로 합친다.
+ * - 날수: 모든 서류에 기간이 있으면 날짜로 합친다(겹치지 않으면 더하고, 겹치는 날은 한 번). 하나라도 없으면 큰 값(화면은 "서류마다 다르게").
+ * - 월 소득: 급여 월을 아는 서류 중 사고일 직전 최근 3개월치(사고 달 이전, 같은 달은 한 번)의 월평균(원 미만 버림).
+ *   급여소득자 산정대상기간: 별표1 가. 사망 3. 나.(1)(가)①, 인쇄 72쪽(휴업손해 다.(1)(가) 인쇄 77쪽 준용). 급여 월을 아는 서류가 없으면 전체 평균.
+ */
+export function mergeFact(field: (typeof FACT_FIELDS)[number], readings: FactReading[], accidentDate: string | null): { value: number; formula: string | null } {
+  const max = Math.max(...readings.map((x) => x.value));
+  if (readings.length < 2) return { value: readings[0]?.value ?? 0, formula: null };
+  if (field === "monthlyIncome") {
+    const before = accidentDate && isDate(accidentDate) ? accidentDate.slice(0, 7) : null;
+    const byMonth = new Map<string, number>();
+    for (const r of readings) if (r.month && (!before || r.month < before) && !byMonth.has(r.month)) byMonth.set(r.month, r.value);
+    const months = [...byMonth.keys()].sort().slice(-SALARY_INCOME_PERIOD.months);
+    const used = months.length ? months.map((m) => byMonth.get(m)!) : readings.map((r) => r.value);
+    const value = Math.floor(used.reduce((a, b) => a + b, 0) / used.length);
+    const sum = `(${used.map((v) => v.toLocaleString("ko-KR")).join(" + ")}) ÷ ${used.length}`;
+    const label = months.length ? `${months.map((m) => `${Number(m.slice(5))}월`).join("·")} 평균` : "서류 평균(급여 월을 몰라 모두 평균)";
+    return { value, formula: `${label} ${sum} = ${value.toLocaleString("ko-KR")}원 — 사고 직전 3개월 평균(별표1 가. 3. 나.(1)(가)①, 인쇄 ${SALARY_INCOME_PERIOD.basis.page}쪽)` };
+  }
+  const periods = readings.map((r) => r.periods);
+  if (periods.every((p): p is Period[] => !!p?.length)) {
+    const all = periods.flat();
+    const value = countPeriodDays(all);
+    const total = all.reduce((sum, p) => sum + countPeriodDays([p]), 0);
+    const ranges = all.map((p) => (p.start === p.end ? mmdd(p.start) : `${mmdd(p.start)}~${mmdd(p.end)}`)).join(" + ");
+    return { value, formula: `${ranges} = ${value}일${total > value ? `(겹치는 ${total - value}일은 한 번만)` : ""}` };
+  }
+  return { value: max, formula: null };
 }
 
 /** 한 카드·한 항목에 쌓인 금액 줄 */

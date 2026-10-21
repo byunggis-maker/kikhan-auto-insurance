@@ -236,6 +236,17 @@ export const faultSchema = z.union([z.object({ mode: z.literal("known"), myPerce
 // 개인정보는 서버에서 가린 뒤에만 여기에 온다. 원본 파일은 어디에도 저장하지 않는다.
 // 라운드 8b: 금액은 서류마다 한 줄씩 쌓아 합계를 내고(issuer·docDate로 같은 서류를 가리고, excluded로 뺀다),
 // 날수·소득은 더하지 않고 한 줄에 서류별 값(readings)을 모아 큰 값을 쓴다. 새 칸은 모두 선택이라 예전 저장값도 그대로 읽힌다.
+// 라운드 8c: 서류별 값에 기간(periods, 날수)·급여 월(month, 월 소득)을 함께 두고, 모두 기간이 있으면 날짜로 합치고(겹치는 날 한 번),
+// 월 소득은 사고일 직전 최근 3개월치 평균을 쓴다(lib/ui/recognize.ts mergeFact). formula는 화면에 보일 계산식.
+const periodSchema = z.object({ start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) });
+export type Period = z.infer<typeof periodSchema>;
+const factReadingSchema = z.object({
+  source: z.string(),
+  value: moneySchema,
+  periods: z.array(periodSchema).nullable().optional(),
+  month: z.string().regex(/^\d{4}-\d{2}$/).nullable().optional(),
+});
+export type FactReading = z.infer<typeof factReadingSchema>;
 export const FACT_FIELDS = ["hospitalDays", "outpatientDays", "daysOffWork", "monthlyIncome"] as const;
 const recognitionBase = { id: z.string(), source: z.string(), note: z.string() };
 export const recognitionSchema = z.discriminatedUnion("kind", [
@@ -255,7 +266,8 @@ export const recognitionSchema = z.discriminatedUnion("kind", [
     cardId: z.string(),
     field: z.enum(FACT_FIELDS),
     value: moneySchema,
-    readings: z.array(z.object({ source: z.string(), value: moneySchema })).optional(),
+    readings: z.array(factReadingSchema).optional(),
+    formula: z.string().optional(),
   }),
   z.object({ ...recognitionBase, kind: z.literal("insurer"), value: z.string() }),
   z.object({ ...recognitionBase, kind: z.literal("productLine"), value: productLineSchema }),
