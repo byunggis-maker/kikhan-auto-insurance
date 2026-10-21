@@ -6,7 +6,8 @@ import { mkdirSync, rmSync } from "node:fs";
 import { chromium } from "playwright";
 
 const OUT = "tests/fixtures/ai";
-const TMP = ".tmp/r7";
+// 중간 파일은 테스트 임시 폴더(v6/tmp-test, .gitignore)에만
+const TMP = "tmp-test/fixtures";
 mkdirSync(OUT, { recursive: true });
 mkdirSync(TMP, { recursive: true });
 

@@ -8,7 +8,7 @@ import { policySchema } from "@/lib/claim/types";
 import { claim, item, myPolicy, selfInjuryPolicy, victim } from "./fixtures";
 import { reportMarkdown } from "./report";
 
-// 라운드 2 사례 (1)~(15)와 자기검사. REPORT=1이면 .tmp/round2-cases.md에 입력값 표와 결과 표를 쓴다.
+// 라운드 2 사례 (1)~(15)와 자기검사. REPORT=1이면 tmp-test/round2-cases.md에 입력값 표와 결과 표를 쓴다.
 
 const results = new Map<number, Result>(CASES.map((c) => [c.no, calculate(c.claim, c.claim.fault.mode === "known" ? c.claim.fault.myPercent : 0)]));
 
@@ -311,6 +311,6 @@ describe("과실 시나리오", () => {
 });
 
 if (process.env.REPORT === "1") {
-  mkdirSync(".tmp", { recursive: true });
-  writeFileSync(".tmp/round2-cases.md", reportMarkdown(CASES, results));
+  mkdirSync("tmp-test", { recursive: true });
+  writeFileSync("tmp-test/round2-cases.md", reportMarkdown(CASES, results));
 }

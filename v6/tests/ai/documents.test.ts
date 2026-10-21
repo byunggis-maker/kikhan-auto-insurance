@@ -4,7 +4,7 @@ import { InputError, ProviderError } from "@/lib/ai/anthropic";
 import { CLAIM_INSTRUCTIONS, detectKind, readClaimDocument, readPolicyDocument, toContentBlock, type ReadCall } from "@/lib/ai/documents";
 import { findSensitive } from "@/lib/privacy/mask";
 
-// 라운드 7 서류 인식(제공자 호출은 가짜). 실제 호출 시험은 .tmp/r7/live.mjs(키가 있을 때)와 round-7.md 표.
+// 라운드 7 서류 인식(제공자 호출은 가짜). 실제 호출 시험은 scripts/live-ai-check.mjs(키가 있을 때)와 round-7.md 표.
 
 const fixture = (name: string) => new Uint8Array(readFileSync(`tests/fixtures/ai/${name}`));
 
