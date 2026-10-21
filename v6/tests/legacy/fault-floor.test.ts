@@ -37,7 +37,8 @@ describe("대인배상Ⅰ·Ⅱ 치료관계비 하한", () => {
     expect(expectOk(bodily2(claim)).total.expected).toBe(0);
   });
 
-  it("사망, 과실 95%: 268,518,400 × 5% = 13,425,920 < 2,000만원 → 대인Ⅰ 20,000,000, 대인Ⅱ 0", () => {
+  // 사망 최저 2,000만원의 근거: 자동차손해배상보장법 시행령 제3조①1호 단서 + 약관 별표4 1. 과실상계 가.(2)
+  it("사망, 과실 95%: 268,518,400 × 5% = 13,425,920 < 2,000만원(시행령 제3조①1호 단서 + 별표4) → 대인Ⅰ 20,000,000, 대인Ⅱ 0", () => {
     const claim: Claim = {
       person: person({ faultPercent: 95, death: { date: "2026-04-01" } }),
       accidentDate: ACCIDENT_DATE,
@@ -82,6 +83,8 @@ describe("공제와 한도", () => {
     expect(b2.total.expected).toBe(300_000);
   });
 
+  // 원본 사례는 상대가 책임보험만 가입(mandatory_only)이라 대인Ⅰ 지급처가 상대 보험이다.
+  // 상대가 무보험·뺑소니면 같은 금액이 "대인Ⅰ 상당액(정부보장사업)"이 된다(tests/claim/payer.test.ts).
   it("무보험자동차상해(상대 책임보험만), 5급 과실 0%: 12,388,360 − 대인Ⅰ 9,000,000 = 3,388,360", () => {
     const claim = injuryClaim({ grade: 5, faultPercent: 0, medical: 9_000_000, other: 3_388_360 });
     expect(expectOk(liabilityBodily1(claim)).total.expected).toBe(9_000_000);

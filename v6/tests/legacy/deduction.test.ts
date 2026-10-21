@@ -43,8 +43,9 @@ describe("자동차상해 공제액", () => {
     expect(deductionFor("expected").amounts.injury).toBe(12_388_360);
   });
 
-  it("상대 대인Ⅱ 가입금액을 모르면 최소에서만 무한으로 가정해 크게 공제하고, 예상은 확인된 대인Ⅰ만 뺀다", () => {
+  it("상대 대인Ⅱ 가입금액을 모르면: 내 보험 지급 최소 0원(대인Ⅱ 무한 가정) / 내 보험 지급 예상 530,000원(대인Ⅰ만 공제)", () => {
     const claim = injuryClaim({ grade: 14, faultPercent: 0, medical: 800_000, other: 230_000 });
+    const loss = 1_030_000;
     const bodily1 = liabilityBodily1(claim);
     const { deductionFor, deductionUnknown } = makeDeduction({
       claim,
@@ -58,6 +59,9 @@ describe("자동차상해 공제액", () => {
     });
     expect(deductionFor("min").amounts.injury).toBe(1_030_000);
     expect(deductionFor("expected").amounts.injury).toBe(500_000);
+    // 받을 돈 기준(자동차상해 = 실제손해 − 공제액, 부상 가입금액 이내)
+    expect(loss - deductionFor("min").amounts.injury).toBe(0);
+    expect(loss - deductionFor("expected").amounts.injury).toBe(530_000);
     expect(deductionUnknown).toBe(true);
   });
 
