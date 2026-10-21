@@ -1,5 +1,6 @@
+import { STANDARDS_EDITION, editionFor, latestEdition } from "@/lib/claim/editions";
 import { paymentLabel } from "@/lib/claim/payer";
-import { ACCIDENT_BURDEN, BASIS_TEXT, COMPULSORY, POLICY_EDITION, STANDARDS_AS_OF, compulsoryRuleItems } from "@/lib/claim/standards";
+import { ACCIDENT_BURDEN, BASIS_TEXT, COMPULSORY, STANDARDS_AS_OF, compulsoryRuleItems } from "@/lib/claim/standards";
 import type { Claim, Coverage, InsuranceStatus, Limit, Policy, PolicyCoverage, Property, Victim } from "@/lib/claim/types";
 import { allocate, autoInjury, compulsoryBodily, excess, minorInjuryShare, ownDamagePay, propertyLiability, selfInjury, won, type Paid } from "./adjust";
 import { capToLoss } from "./dedupe";
@@ -38,7 +39,11 @@ function toLegacyStatus(status: InsuranceStatus): LiableInsurance["status"] {
 
 export function runOnce(claim: Claim, faultPercent: number, mode: ValueMode): Run {
   const ex: Exclusions = checkExclusions(claim.accident);
-  const empty: Run = { lines: [], notes: [], burdens: [], cards: [], notices: [], blocked: ex.blocked };
+  // 사고일에 시행 중인 약관 판을 고른다(결정 기록 D-21). 등록된 판이 없으면 최신 판으로 계산하고 알린다.
+  const accidentDate = claim.accident.occurredAt?.slice(0, 10) ?? null;
+  const matched = accidentDate === null ? null : editionFor(accidentDate);
+  const edition = { id: (matched ?? latestEdition()).id, matched: matched !== null };
+  const empty: Run = { lines: [], notes: [], burdens: [], cards: [], notices: [], blocked: ex.blocked, edition };
   if (ex.blocked) return empty;
 
   const f = faultPercent;
@@ -55,10 +60,11 @@ export function runOnce(claim: Claim, faultPercent: number, mode: ValueMode): Ru
   const burdens: RunBurden[] = [];
   const cards: RunCard[] = [];
   const notices: string[] = [];
-  if (claim.accident.occurredAt === null) notices.push(`사고일을 몰라 약관 ${STANDARDS_AS_OF} 개정 기준으로 계산했습니다.`);
+  if (accidentDate === null) notices.push(`사고일을 몰라 최신 약관 판(${edition.id} 개정) 기준으로 계산했습니다.`);
+  else if (!matched)
+    notices.push(`사고일(${accidentDate})에 시행 중인 약관 판의 PDF가 없습니다. ${edition.id} 개정판 기준으로 계산했습니다. 사고 당시 판의 PDF를 data/raw/policies/<개정일>/에 넣으면 그 판으로 계산합니다.`);
+  if (edition.id !== STANDARDS_EDITION) notices.push(`${edition.id} 판의 금액 기준이 아직 옮겨지지 않아 ${STANDARDS_EDITION} 판 금액으로 계산했습니다.`);
   if (my.productLine === null) notices.push("내 보험 종류를 몰라 개인용 약관 기준으로 계산했습니다.");
-  if (claim.accident.occurredAt !== null && date < POLICY_EDITION)
-    notices.push(`사고일(${date})이 이 앱의 약관 판(${POLICY_EDITION} 개정) 이전입니다. 사고 당시 약관 판과 대조가 필요합니다(금액은 ${POLICY_EDITION} 판 기준).`);
 
   // 내가 낸 사고부담금·배상책임의 합계를 위해 내 보험 지급액을 모은다.
   let myBodily1Total = 0;
@@ -153,6 +159,11 @@ export function runOnce(claim: Claim, faultPercent: number, mode: ValueMode): Ru
     // ① 상대 차량의 대인배상(내 차 쪽 사람). 피해자 측 과실 = 내 과실
     //    가족 동승자는 피해자 측 과실로, 남 동승자는 공동불법행위 분담으로 상대 과실분만 상대 보험에 둔다(ASSUMPTIONS.passengerSplitByFault).
     const isDriver = victim.role === "driver";
+    // 가족 동승자: 운전자 과실을 피해자 측 과실로 빼므로 상대 보험은 상대 과실분만 준다(결정 기록 D-22)
+    const familyNotice = () => {
+      const rest = coverageOf(my, "auto_injury") ? "자동차상해" : coverageOf(my, "self_injury") ? "자기신체사고" : null;
+      return `상대 보험은 상대 과실분(${100 - f}%)만 지급합니다(운전자 과실을 피해자 측 과실로 뺌). 나머지는 내 대인Ⅰ${rest ? `·${rest}` : ""}에서 받습니다`;
+    };
     const c = legacy(f, isDriver ? victim.vehicleDriver : false);
     let counterpartyPaid = 0;
     let bodily1Raw: ReturnType<typeof compulsoryBodily> | null = null;
@@ -163,7 +174,7 @@ export function runOnce(claim: Claim, faultPercent: number, mode: ValueMode): Ru
       else if (cpStatus === "unknown") out.push(makeLine(id, "liability_bodily_1", "counterparty", "needs_input", 0, "상대 차량의 보험 가입 여부를 입력하면 계산됩니다", BASIS_TEXT.bodily1Fault));
       else {
         bodily1Raw = compulsoryBodily(c);
-        out.push(fromPaid(id, "liability_bodily_1", "counterparty", bodily1Raw.paid, BASIS_TEXT.bodily1Fault, victim.role === "other_passenger" ? ["어느 한쪽 보험사에 전액 청구할 수 있습니다(공동 배상)"] : victim.role === "family_passenger" ? ["상대 보험에 전액 청구할 수 있습니다(이 경우 내 보험 대인 지급 기록 없음)"] : []));
+        out.push(fromPaid(id, "liability_bodily_1", "counterparty", bodily1Raw.paid, BASIS_TEXT.bodily1Fault, victim.role === "other_passenger" ? ["어느 한쪽 보험사에 전액 청구할 수 있습니다(공동 배상)"] : victim.role === "family_passenger" ? [familyNotice()] : []));
         if (cpStatus === "full") {
           const b2Limit: Limit = coverageOf(cp, "liability_bodily_2")?.limit ?? "unlimited";
           bodily2Raw = excess(c, bodily1Raw.at, b2Limit, 0, "상대 대인배상Ⅱ 가입금액");
@@ -368,5 +379,5 @@ export function runOnce(claim: Claim, faultPercent: number, mode: ValueMode): Ru
     }
   }
 
-  return { lines, notes, burdens, cards, notices, blocked: null };
+  return { lines, notes, burdens, cards, notices, blocked: null, edition };
 }

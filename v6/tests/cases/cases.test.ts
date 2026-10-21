@@ -102,9 +102,12 @@ describe("사례별 추가 자기검사", () => {
     expect([note.confirmed, note.withEstimates, note.estimatePart]).toEqual([540_000, 333_000, null]);
   });
 
-  it("가족 동승자에게도 '상대 보험에 전액 청구할 수 있습니다(이 경우 내 보험 대인 지급 기록 없음)'을 남 동승자와 같은 형식으로", () => {
+  it("가족 동승자: '상대 보험은 상대 과실분만 지급, 나머지는 내 대인Ⅰ·자동차상해'(피해자 측 과실, 결정 기록 D-22)", () => {
     const family = results.get(10)!.lines.find((l) => l.key === "자녀:liability_bodily_1:counterparty_insurer")!;
-    expect(family.flags).toContain("상대 보험에 전액 청구할 수 있습니다(이 경우 내 보험 대인 지급 기록 없음)");
+    expect(family.flags).toContain("상대 보험은 상대 과실분(70%)만 지급합니다(운전자 과실을 피해자 측 과실로 뺌). 나머지는 내 대인Ⅰ·자동차상해에서 받습니다");
+    const spouse = results.get(2)!.lines.find((l) => l.key === "배우자:liability_bodily_1:counterparty_insurer")!;
+    expect(spouse.flags.join()).toContain("상대 과실분(60%)");
+    expect(spouse.flags.join()).not.toContain("전액 청구");
     const other = results.get(11)!.lines.find((l) => l.key === "동료:liability_bodily_1:counterparty_insurer")!;
     expect(other.flags).toContain("어느 한쪽 보험사에 전액 청구할 수 있습니다(공동 배상)");
   });
@@ -128,8 +131,30 @@ describe("사례별 추가 자기검사", () => {
     expect(calculate(daysOnly, 30).cards[0].notes.join()).toContain("병원 식사를 받지 않은 끼니 수를 넣으면 계산합니다");
   });
 
-  it("사고일이 약관 판(2026-10-25 개정)보다 앞이면 대조 필요 안내를 붙인다", () => {
-    expect(results.get(1)!.notices.join()).toContain("사고일(2026-09-01)이 이 앱의 약관 판(2026-10-25 개정) 이전입니다");
+  it("사고일에 시행 중인 판의 PDF가 없으면 최신 판으로 계산하고 알린다(사고일 2026-09-01, 등록된 판 2026-10-25)", () => {
+    const r = results.get(1)!;
+    expect(r.edition).toEqual({ id: "2026-10-25", matched: false });
+    expect(r.notices.join()).toContain("사고일(2026-09-01)에 시행 중인 약관 판의 PDF가 없습니다. 2026-10-25 개정판 기준으로 계산했습니다");
+    const base = CASES.find((c) => c.no === 1)!.claim;
+    const after = calculate({ ...base, accident: { ...base.accident, occurredAt: "2026-11-01" } }, 30);
+    expect(after.edition).toEqual({ id: "2026-10-25", matched: true });
+    expect(after.notices.join()).not.toContain("PDF가 없습니다");
+  });
+
+  it("휴업손해: '소득 증명 가능'이 아니면 0원이고 증명했을 때의 금액은 참고로 남긴다(결정 기록 D-24)", () => {
+    const base = CASES.find((c) => c.no === 20)!.claim;
+    for (const incomeProven of [false, null]) {
+      const r = calculate({ ...base, victims: base.victims.map((v) => ({ ...v, incomeProven })) }, 30);
+      const d = r.cards[0].details.find((x) => x.code === "lost_income")!;
+      expect(d.withEstimates).toBe(0);
+      expect(d.formula).toContain("참고: 증명하면 월소득 3,000,000원 ÷ 30일 × 휴업 10일 × 85% = 850,000원");
+    }
+    // 사용자가 넣은 휴업손해 추정액도 같은 요건. 서류 금액(확정)은 증명된 것으로 본다
+    const c2 = CASES.find((c) => c.no === 2)!.claim;
+    const unproven = calculate({ ...c2, victims: c2.victims.map((v) => ({ ...v, incomeProven: false })) }, 40);
+    expect(unproven.cards[0].actualLoss.withEstimates).toBe(2_230_000);
+    const c1 = CASES.find((c) => c.no === 1)!.claim;
+    expect(calculate(c1, 30).cards[0].actualLoss.confirmed).toBe(3_180_000);
   });
 
   it("사례 7: 미분류 합계에는 치료관계비 하한을 쓰지 않고 '항목을 나누면 더 정확해집니다'를 안내", () => {

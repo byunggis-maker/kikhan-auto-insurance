@@ -48,7 +48,10 @@ export type RunCard = {
   details: LossDetail[];
 };
 
-export type Run = { lines: RunLine[]; notes: RunNote[]; burdens: RunBurden[]; cards: RunCard[]; notices: string[]; blocked: string | null };
+/** 계산에 쓴 약관 판. matched: 사고일에 시행 중인 판인지(아니면 최신 판으로 대신 계산) */
+export type EditionUsed = { id: string; matched: boolean };
+
+export type Run = { lines: RunLine[]; notes: RunNote[]; burdens: RunBurden[]; cards: RunCard[]; notices: string[]; blocked: string | null; edition: EditionUsed };
 
 /** 확정액, 추정 포함액, 추정분(= 추정 포함액 − 확정액) */
 export type Amounts = { confirmed: number; withEstimates: number; estimatePart: number };
@@ -62,6 +65,7 @@ export type ResultCard = Omit<RunCard, "actualLoss" | "details"> & { actualLoss:
 
 export type Result = {
   faultPercent: number;
+  edition: EditionUsed;
   blocked: string | null;
   lines: ResultLine[];
   notes: ResultNote[];

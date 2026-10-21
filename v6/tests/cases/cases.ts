@@ -31,7 +31,7 @@ export const CASES: Case[] = [
     claim: claim({
       myFault: 40,
       victims: [
-        victim({ id: "배우자", role: "family_passenger", relationToNamedInsured: "spouse", vehicleDriver: false, injuryGrade: 12, losses: [item("treatment", { c: 2_000_000 }), item("solatium_injury", { c: 150_000 }), item("other_injury", { c: 80_000 }), item("lost_income", { e: 1_500_000 })] }),
+        victim({ id: "배우자", role: "family_passenger", relationToNamedInsured: "spouse", vehicleDriver: false, injuryGrade: 12, incomeProven: true, losses: [item("treatment", { c: 2_000_000 }), item("solatium_injury", { c: 150_000 }), item("other_injury", { c: 80_000 }), item("lost_income", { e: 1_500_000 })] }),
       ],
     }),
     expected: {
@@ -52,7 +52,7 @@ export const CASES: Case[] = [
     title: "상대방 부상: 상대 운전자 12급, 내 과실 70%",
     claim: claim({
       myFault: 70,
-      victims: [victim({ id: "상대운전자", role: "counterparty", vehicleDriver: true, injuryGrade: 12, losses: [item("treatment", { c: 3_000_000 }), item("solatium_injury", { c: 150_000 }), item("other_injury", { c: 160_000 }), item("lost_income", { e: 500_000 })] })],
+      victims: [victim({ id: "상대운전자", role: "counterparty", vehicleDriver: true, injuryGrade: 12, incomeProven: true, losses: [item("treatment", { c: 3_000_000 }), item("solatium_injury", { c: 150_000 }), item("other_injury", { c: 160_000 }), item("lost_income", { e: 500_000 })] })],
     }),
     expected: {
       // 상대 과실 30%: 확정 3,310,000 × 70% = 2,317,000 < 3,000,000 → 3,000,000 → 12급 한도 1,200,000
@@ -69,7 +69,7 @@ export const CASES: Case[] = [
       accident: { type: "hit_and_run_or_uninsured" },
       myPolicy: myPolicy({ without: ["uninsured", "auto_injury"] }),
       counterpartyPolicy: counterpartyPolicy("hit_and_run"),
-      victims: [victim({ id: "나", role: "driver", relationToNamedInsured: "self", vehicleDriver: true, injuryGrade: 5, losses: [item("treatment", { c: 9_000_000 }), item("solatium_injury", { c: 750_000 }), item("lost_income", { e: 2_638_360 })] })],
+      victims: [victim({ id: "나", role: "driver", relationToNamedInsured: "self", vehicleDriver: true, injuryGrade: 5, incomeProven: true, losses: [item("treatment", { c: 9_000_000 }), item("solatium_injury", { c: 750_000 }), item("lost_income", { e: 2_638_360 })] })],
     }),
     expected: {
       // 확정 9,750,000 / 추정 12,388,360 → 5급 한도 9,000,000 (대인Ⅰ 상당액, 정부보장사업)
@@ -315,6 +315,7 @@ export const CASES: Case[] = [
           outpatientDays: 10,
           daysOffWork: 10,
           monthlyIncome: 3_000_000,
+          incomeProven: true,
           losses: [item("treatment", { c: 2_000_000 }), item("solatium_injury", {}), item("lost_income", {}), item("other_injury", {})],
         }),
       ],

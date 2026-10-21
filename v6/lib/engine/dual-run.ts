@@ -56,6 +56,7 @@ function merge(claim: Claim, faultPercent: number): Result {
 
   return {
     faultPercent,
+    edition: estimated.edition,
     blocked: estimated.blocked,
     lines,
     notes,

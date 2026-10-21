@@ -1,4 +1,5 @@
 import type { RuleItem } from "@/lib/engine/legacy/schemas/rules";
+import { STANDARDS_EDITION } from "./editions";
 
 // 계산에 쓰는 금액 기준과 그 근거를 모으는 유일한 파일(MASTER.md 3장).
 // 쪽 번호는 data/raw/policies/ 약관 PDF에 인쇄된 쪽이다(개인용 기준, 다른 종류는 따로 적는다).
@@ -12,7 +13,7 @@ export type Basis = { source: string; page: number | null };
  * - 업무용 cbb1da8d…, 영업용 f313c520…, 이륜차 4b40b1fc…: compass와 같은 파일(compass는 개정일을 "표지 1025"로만 적었다).
  * 시행일은 PDF에 따로 적혀 있지 않아 개정일과 같다고 본다. 사고일이 이 날짜보다 앞이면 사고 당시 판과 대조가 필요하다(엔진이 안내를 붙인다).
  */
-export const POLICY_EDITION = "2026-10-25";
+export const POLICY_EDITION = STANDARDS_EDITION;
 /** 사고일을 모르거나 판보다 앞이면 이 날짜의 규칙으로 계산한다 */
 export const STANDARDS_AS_OF = POLICY_EDITION;
 

@@ -19,7 +19,6 @@ type Value = { amount: number; source: string; formula: string };
 
 /** 약관 기준으로 계산할 수 있는 항목의 값. 계산에 필요한 입력이 없으면 null */
 function standardValue(code: string, victim: Victim): Value | null {
-  const cite = (basis: { source: string; page: number }) => `${basis.source}, 인쇄 ${basis.page}쪽`;
   if (code === "solatium_injury" && victim.injuryGrade !== null) {
     const amount = INJURY_SOLATIUM.value[victim.injuryGrade];
     return { amount, source: "약관 기준", formula: `${victim.injuryGrade}급 ${won(amount)} (${cite(INJURY_SOLATIUM.basis)})` };
@@ -29,11 +28,8 @@ function standardValue(code: string, victim: Victim): Value | null {
     const days = ASSUMPTIONS.daysPerMonth.value;
     // 월소득 × 휴업일수 × 85 / (30 × 100), 원 미만 버림
     const amount = Math.floor((victim.monthlyIncome * victim.daysOffWork * LOST_INCOME.ratePercent) / (days * 100));
-    return {
-      amount,
-      source: "약관 기준",
-      formula: `월소득 ${won(victim.monthlyIncome)} ÷ ${days}일 × 휴업 ${victim.daysOffWork}일 × ${LOST_INCOME.ratePercent}% = ${won(amount)} (${cite(LOST_INCOME.basis)}; 월 ${days}일은 앱 가정, 원 미만 버림)`,
-    };
+    const formula = `월소득 ${won(victim.monthlyIncome)} ÷ ${days}일 × 휴업 ${victim.daysOffWork}일 × ${LOST_INCOME.ratePercent}% = ${won(amount)} (${cite(LOST_INCOME.basis)}; 월 ${days}일은 앱 가정, 원 미만 버림)`;
+    return unprovenLostIncome(victim, { amount, source: "약관 기준", formula });
   }
   if (code === "other_injury" && (victim.outpatientDays !== null || victim.mealsNotProvided !== null)) {
     const outpatient = (victim.outpatientDays ?? 0) * OTHER_INJURY.perOutpatientDay;
@@ -47,13 +43,32 @@ function standardValue(code: string, victim: Victim): Value | null {
   return null;
 }
 
+/**
+ * 휴업손해는 소득·수입 감소를 관계 서류로 증명할 수 있을 때만 준다(별표1 나. 3. 가., 인쇄 76쪽).
+ * "소득 증명 가능"이 아니면 추정 0원으로 두고, 증명했을 때의 금액은 계산식에 참고로 남긴다(결정 기록 D-24).
+ */
+function unprovenLostIncome(victim: Victim, value: Value): Value {
+  if (victim.incomeProven === true) return value;
+  return {
+    amount: 0,
+    source: value.source,
+    formula: `소득 증명 ${victim.incomeProven === false ? "불가" : "여부 모름"}: 0원 (휴업손해는 관계 서류로 증명할 수 있는 경우에만, ${cite(LOST_INCOME.basis)}). 참고: 증명하면 ${value.formula}`,
+  };
+}
+
+function cite(basis: { source: string; page: number }) {
+  return `${basis.source}, 인쇄 ${basis.page}쪽`;
+}
+
 /** 항목 하나에 쓸 값. null이면 "입력 필요" */
 export function pickValue(item: LossItem, mode: ValueMode, victim?: Victim): Value | null {
   if (item.confirmed !== null) return { amount: item.confirmed, source: "서류", formula: `서류 금액 ${won(item.confirmed)}${item.evidence ? ` (${item.evidence})` : ""}` };
   if (mode === "confirmed") return null;
   if (item.estimated !== null) {
     const source = item.source.estimated === "policy_standard" ? "약관 기준" : item.source.estimated === "app_default" ? "앱 기본값" : "사용자 추정";
-    return { amount: item.estimated, source, formula: `${source} ${won(item.estimated)}` };
+    const value = { amount: item.estimated, source, formula: `${source} ${won(item.estimated)}` };
+    // 사용자가 넣은 휴업손해 추정액에도 같은 증명 요건을 적용한다. 서류 금액(confirmed)은 증명된 것으로 본다.
+    return item.code === "lost_income" && victim ? unprovenLostIncome(victim, value) : value;
   }
   return victim ? standardValue(item.code, victim) : null;
 }

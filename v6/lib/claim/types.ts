@@ -174,8 +174,13 @@ export const victimSchema = z.object({
   /** 입원 중 병원 식사를 받지 않은 끼니 수(1끼 4,030원) */
   mealsNotProvided: z.number().int().min(0).max(109_500).nullable(),
   daysOffWork: daysSchema.nullable(),
-  /** 월 현실소득액(세법상 관계 서류로 증명할 수 있는 금액) */
+  /** 월 현실소득액 */
   monthlyIncome: moneySchema.nullable(),
+  /**
+   * 소득과 수입 감소를 관계 서류(세법상 관계 서류 등)로 증명할 수 있는지. 휴업손해는 증명할 수 있을 때만 준다(별표1 나. 3. 가., 인쇄 76쪽).
+   * true가 아니면(아니오·모름) 휴업손해 추정은 0원이고 증명했을 때의 금액은 참고로만 보여 준다(결정 기록 D-24)
+   */
+  incomeProven: z.boolean().nullable(),
   losses: z.array(lossItemSchema),
   /** 사용자가 직접 넣는 이 사람 손해 합계 추정 */
   userTotal: moneySchema.nullable(),
