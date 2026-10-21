@@ -2,10 +2,11 @@
 
 import { useRef, useState } from "react";
 import type { ClaimReading, PolicyReading, Usage } from "@/lib/ai/documents";
-import { postForm, prepareUpload } from "@/lib/ui/upload";
+import { checkPicked, postForm, prepareUpload, UPLOAD_LIMIT } from "@/lib/ui/upload";
 
 // MASTER.md 9장 서류 인식 버튼. 파일은 서버로 한 번 보내 읽기만 하고, 이 기기에도 서버에도 저장하지 않는다.
 // 읽은 값은 바로 입력칸에 들어가지 않고 "인식된 값 – 확인해 주세요"로 남는다(onRead가 확인 대기 값으로 바꾼다).
+// 라운드 8: 한 번에 5건, 한 건 10MB까지 고를 수 있다. 서버로는 한 건씩 차례로 보낸다.
 
 type Reading = { kind: "policy"; reading: PolicyReading; usage: Usage } | { kind: "claim"; reading: ClaimReading; usage: Usage };
 
@@ -21,15 +22,32 @@ export function DocumentUpload({ kind, target, label, onRead }: Props) {
   const input = useRef<HTMLInputElement>(null);
   const [state, setState] = useState<{ status: "idle" | "working" | "done" | "error"; message?: string }>({ status: "idle" });
 
-  const read = async (file: File) => {
-    setState({ status: "working" });
+  const readOne = async (file: File): Promise<{ ok: boolean; message: string; stop?: boolean }> => {
+    const blob = await prepareUpload(file);
+    if (blob.size > UPLOAD_LIMIT) return { ok: false, message: "이 파일은 4MB가 넘어 보낼 수 없습니다. 필요한 쪽을 사진으로 찍거나 화면을 캡처해 올려 주세요." };
     const form = new FormData();
-    form.set("file", await prepareUpload(file));
+    form.set("file", blob);
     form.set("kind", kind);
     if (target) form.set("target", target);
     const result = await postForm<Reading>("/api/documents/read", form);
-    if (!result.ok) return setState({ status: "error", message: result.message });
-    setState({ status: "done", message: onRead(result) });
+    if (!result.ok) return { ok: false, message: result.message, stop: result.reason !== "invalid" };
+    return { ok: true, message: onRead(result) };
+  };
+
+  const read = async (files: File[]) => {
+    const problem = checkPicked(files);
+    if (problem) return setState({ status: "error", message: problem });
+    const messages: string[] = [];
+    let failed = false;
+    for (const [i, file] of files.entries()) {
+      setState({ status: "working", message: files.length > 1 ? `${i + 1}/${files.length}번째 서류를 읽는 중입니다.` : undefined });
+      const one = await readOne(file);
+      failed ||= !one.ok;
+      messages.push(files.length > 1 ? `${i + 1}번째: ${one.message}` : one.message);
+      // 준비 중·횟수 초과면 남은 서류도 같으므로 멈춘다
+      if (one.stop) break;
+    }
+    setState({ status: failed ? "error" : "done", message: messages.join(" ") });
   };
 
   return (
@@ -38,17 +56,18 @@ export function DocumentUpload({ kind, target, label, onRead }: Props) {
         ref={input}
         type="file"
         accept="application/pdf,image/jpeg,image/png,image/heic,image/heif,.heic,.heif,.pdf"
+        multiple
         className="hidden"
         onChange={(e) => {
-          const file = e.target.files?.[0];
+          const files = Array.from(e.target.files ?? []);
           e.target.value = "";
-          if (file) void read(file);
+          if (files.length) void read(files);
         }}
       />
       <button type="button" disabled={state.status === "working"} className="min-h-12 w-full rounded-xl border-2 border-estimate-ink bg-estimate font-bold text-estimate-ink disabled:opacity-60" onClick={() => input.current?.click()}>
         {state.status === "working" ? "읽는 중… (10~30초)" : label}
       </button>
-      <p className="mt-2 text-xs font-semibold text-ink-soft">PDF·사진(JPG·PNG·아이폰 HEIC). 파일은 읽기만 하고 저장하지 않습니다. 주민번호·증권번호·차량번호·전화번호는 가립니다.</p>
+      <p className="mt-2 text-xs font-semibold text-ink-soft">PDF·사진(JPG·PNG·아이폰 HEIC), 한 번에 5건·한 건 10MB까지. 파일은 읽기만 하고 저장하지 않습니다. 주민번호·증권번호·차량번호·전화번호는 가립니다.</p>
       {state.message && <p className={`mt-2 text-sm font-bold ${state.status === "error" ? "text-ink" : "text-estimate-ink"}`} role="status">{state.message}</p>}
     </div>
   );

@@ -1,11 +1,13 @@
 import { InputError, NO_STORE, hasApiKey, invalidResponse, unavailableResponse } from "@/lib/ai/anthropic";
-import { MAX_FILE_BYTES, claudeCall, readClaimDocument, readPolicyDocument } from "@/lib/ai/documents";
+import { MAX_FILE_BYTES, type ReadCall, claudeCall, readClaimDocument, readPolicyDocument } from "@/lib/ai/documents";
+import { LimitError, clientIp, counted, limitedResponse } from "@/lib/ai/limits";
 
 export const maxDuration = 60;
 
 // MASTER.md 9장: 서류 인식(POST, 본문 form "file" + "kind"(policy | claim) + claim이면 "target"(person | property)).
 // 서버에서만 ANTHROPIC_API_KEY를 쓴다. 파일은 이 요청의 메모리에서만 다루고 저장하지 않으며, 내용은 로그에 남기지 않는다.
 // 키가 없거나 제공자가 실패하면 503 "준비 중". 응답의 글자는 모두 개인정보를 가린 것이다.
+// 비용 보호(라운드 8): IP당 하루 20회(음성과 합쳐), 넘으면 429. 한 요청에 파일 한 건.
 export async function POST(request: Request) {
   if (!hasApiKey()) return unavailableResponse();
   try {
@@ -13,16 +15,18 @@ export async function POST(request: Request) {
     const form = await request.formData().catch(() => null);
     const file = form?.get("file");
     if (!(file instanceof Blob)) throw new InputError(400, "파일을 골라 주세요.");
+    if (form!.getAll("file").length > 1) throw new InputError(400, "서류는 한 건씩 보내 주세요.");
     const kind = form?.get("kind");
     const target = form?.get("target");
     const bytes = new Uint8Array(await file.arrayBuffer());
-    const call = claudeCall(process.env.ANTHROPIC_API_KEY!.trim());
+    const call = counted(clientIp(request), claudeCall(process.env.ANTHROPIC_API_KEY!.trim())) as ReadCall;
     if (kind === "policy") return Response.json({ ok: true, kind, ...(await readPolicyDocument(bytes, call)) }, { headers: NO_STORE });
     if (kind === "claim" && (target === "person" || target === "property"))
       return Response.json({ ok: true, kind, target, ...(await readClaimDocument(bytes, target, call)) }, { headers: NO_STORE });
     throw new InputError(400, "어떤 서류인지 알 수 없습니다. 다시 시도해 주세요.");
   } catch (error) {
     if (error instanceof InputError) return invalidResponse(error.status, error.message);
+    if (error instanceof LimitError) return limitedResponse();
     return unavailableResponse();
   }
 }

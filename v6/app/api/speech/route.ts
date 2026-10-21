@@ -1,11 +1,12 @@
 import { InputError, NO_STORE, invalidResponse, speechConfig, unavailableResponse } from "@/lib/ai/anthropic";
 import { SERVER_SPEECH_ENABLED } from "@/lib/ai/features";
+import { LimitError, clientIp, counted, limitedResponse } from "@/lib/ai/limits";
 import { MAX_AUDIO_BYTES, openaiTranscribe, transcribeAudio } from "@/lib/ai/speech";
 
 export const maxDuration = 60;
 
 // MASTER.md 9장: 음성→문자 변환(POST, 본문 form "audio"). 기능이 꺼져 있거나(lib/ai/features.ts) 키가 없거나 제공자가 실패하면 503 "준비 중".
-// 음성과 바뀐 글은 저장하지 않고 로그에도 남기지 않는다.
+// 음성과 바뀐 글은 저장하지 않고 로그에도 남기지 않는다. 비용 보호(라운드 8): 서류 인식과 합쳐 IP당 하루 20회, 넘으면 429.
 export async function POST(request: Request) {
   const config = speechConfig();
   if (!SERVER_SPEECH_ENABLED || !config) return unavailableResponse();
@@ -14,10 +15,11 @@ export async function POST(request: Request) {
     const form = await request.formData().catch(() => null);
     const audio = form?.get("audio");
     if (!(audio instanceof Blob)) throw new InputError(400, "녹음을 받지 못했습니다. 다시 녹음해 주세요.");
-    const text = await transcribeAudio(audio, openaiTranscribe(config));
+    const text = await transcribeAudio(audio, counted(clientIp(request), openaiTranscribe(config)));
     return Response.json({ ok: true, text }, { headers: NO_STORE });
   } catch (error) {
     if (error instanceof InputError) return invalidResponse(error.status, error.message);
+    if (error instanceof LimitError) return limitedResponse();
     return unavailableResponse();
   }
 }
