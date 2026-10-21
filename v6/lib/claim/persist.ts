@@ -5,14 +5,20 @@ import { claimSchema, emptyClaim, type Claim } from "./types";
 // 어떤 이유로든 읽지 못하면(없음·깨짐·모르는 버전·변환 실패·모양 불일치) 앱을 멈추지 않고 빈 입력으로 새로 시작한다.
 
 export const STORAGE_KEY = "claim";
-export const CURRENT_VERSION = 1;
+export const CURRENT_VERSION = 2;
 
 /** 저장하는 모양: 버전과 데이터를 함께 둔다 */
 export type Saved = { version: number; data: unknown };
 
 /** n → n + 1 한 단계 변환. 키는 변환 전 버전 */
 export type Migration = (data: unknown) => unknown;
-export const MIGRATIONS: Record<number, Migration> = {};
+export const MIGRATIONS: Record<number, Migration> = {
+  // v1 → v2(라운드 2): 사고 사실에 운전자 관계(driverRelation)를 더했다. 예전 저장값은 "모름"(null)으로 채운다.
+  1: (data) => {
+    const claim = data as { accident?: { violations?: Record<string, unknown> } };
+    return { ...claim, accident: { ...claim.accident, violations: { ...claim.accident?.violations, driverRelation: null } } };
+  },
+};
 
 export type LoadResult =
   | { status: "loaded"; claim: Claim; from: number }

@@ -33,6 +33,16 @@ describe("저장 데이터 버전 변환", () => {
     expect(result.claim).toEqual(sample());
   });
 
+  it("실제 v1 저장값(운전자 관계 없음)을 v2로 올리면 운전자 관계는 '모름'(null)", () => {
+    const v2 = emptyClaim();
+    const { driverRelation: _gone, ...violationsV1 } = v2.accident.violations;
+    void _gone;
+    const v1 = { ...v2, accident: { ...v2.accident, violations: violationsV1 } };
+    const result = migrate({ version: 1, data: v1 });
+    expect(result.status).toBe("migrated");
+    expect(result.claim.accident.violations.driverRelation).toBeNull();
+  });
+
   it("한 단계씩 변환한다: v1 저장값을 v3까지 올린다", () => {
     const migrations = {
       1: (data: unknown) => ({ ...(data as object), skipped: [] }),

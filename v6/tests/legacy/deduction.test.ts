@@ -43,7 +43,8 @@ describe("자동차상해 공제액", () => {
     expect(deductionFor("expected").amounts.injury).toBe(12_388_360);
   });
 
-  it("상대 대인Ⅱ 가입금액을 모르면: 내 보험 지급 최소 0원(대인Ⅱ 무한 가정) / 내 보험 지급 예상 530,000원(대인Ⅰ만 공제)", () => {
+  // 라운드 1 보완 2: 시나리오 이름으로 적는다. 어느 경우든 받는 총액은 1,030,000원으로 같다.
+  it("상대 대인Ⅱ 가입 여부를 모르면 — 상대 대인Ⅱ 있음: 내 보험 0원 / 상대 대인Ⅱ 없음: 내 보험 530,000원 (받는 총액 1,030,000원 같음)", () => {
     const claim = injuryClaim({ grade: 14, faultPercent: 0, medical: 800_000, other: 230_000 });
     const loss = 1_030_000;
     const bodily1 = liabilityBodily1(claim);
@@ -60,8 +61,11 @@ describe("자동차상해 공제액", () => {
     expect(deductionFor("min").amounts.injury).toBe(1_030_000);
     expect(deductionFor("expected").amounts.injury).toBe(500_000);
     // 받을 돈 기준(자동차상해 = 실제손해 − 공제액, 부상 가입금액 이내)
-    expect(loss - deductionFor("min").amounts.injury).toBe(0);
-    expect(loss - deductionFor("expected").amounts.injury).toBe(530_000);
+    const withBodily2 = { counterparty: deductionFor("min").amounts.injury, mine: loss - deductionFor("min").amounts.injury };
+    const withoutBodily2 = { counterparty: deductionFor("expected").amounts.injury, mine: loss - deductionFor("expected").amounts.injury };
+    expect(withBodily2).toEqual({ counterparty: 1_030_000, mine: 0 }); // 상대 대인Ⅰ 500,000 + 대인Ⅱ 530,000
+    expect(withoutBodily2).toEqual({ counterparty: 500_000, mine: 530_000 });
+    expect(withBodily2.counterparty + withBodily2.mine).toBe(withoutBodily2.counterparty + withoutBodily2.mine);
     expect(deductionUnknown).toBe(true);
   });
 

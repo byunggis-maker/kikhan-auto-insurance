@@ -42,7 +42,7 @@ describe("손해 항목 목록", () => {
 
   it("가입담보와 겹치는 항목만 보인다: 자기신체사고만 있으면 사람 카드에는 치료관계비만", () => {
     expect(itemsFor("person", ["self_injury"]).map((item) => item.code)).toEqual(["treatment"]);
-    expect(itemsFor("property", ["own_damage"]).map((item) => item.code)).toEqual(["own_repair", "own_total_loss"]);
+    expect(itemsFor("property", ["own_damage"]).map((item) => item.code)).toEqual(["repair", "replacement_value", "towing"]);
     expect(itemsFor("person", ["liability_property"])).toEqual([]);
   });
 

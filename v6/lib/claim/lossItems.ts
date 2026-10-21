@@ -54,7 +54,7 @@ export type DocumentId = keyof typeof DOCUMENTS;
 /**
  * 제27조 표의 담보별 공통 서류(개인용 인쇄 58쪽). 표의 열은 대인배상·대물배상·자기차량손해·자기신체사고·무보험자동차에 의한 상해다.
  * 대인배상Ⅰ·Ⅱ는 "대인배상" 열을 쓴다. 자동차상해 특별약관은 표에 열이 없고 "정하지 않은 사항은 보통약관에 따른다"(특약 5. 준용규정)이므로
- * 자기신체사고 열을 따른다. 전손 서류(8호)는 전손일 때만 손해 항목(replacement_value·own_total_loss)에 붙인다.
+ * 자기신체사고 열을 따른다. 전손 서류(8호)는 전손일 때만 손해 항목(replacement_value)에 붙인다.
  */
 export const COVERAGE_DOCUMENTS: Record<Coverage, DocumentId[]> = {
   liability_bodily_1: ["claim_form", "loss_proof", "settlement_proof", "insurer_request"],
@@ -224,12 +224,13 @@ export const LOSS_ITEMS: LossItemDef[] = [
     basis: { ref: "별표1", clause: "가. 사망 3. 상실수익액", page: 72 },
     requiredDocs: ["death_certificate", "family_relation", "income_proof"],
   }),
-  // 별표2 대물배상 (인쇄 80~81쪽)
+  // 별표2 대물배상 (인쇄 80~81쪽). 내 차의 수리비·전손·견인비는 자기차량손해에서도 같은 항목을 쓴다:
+  // 제24조①1호 나.(수리비)·가.(보험가액 한도, 전손)·라.(제힘으로 움직일 수 없을 때 운반비), 인쇄 55쪽.
   property({
     code: "repair",
     label: "수리비",
     description: "원상회복이 가능해 수리하는 비용",
-    coverages: ["liability_property"],
+    coverages: ["liability_property", "own_damage"],
     basis: { ref: "별표2", clause: "1. 수리비용", page: 80 },
     requiredDocs: ["repair_estimate", "vehicle_value"],
   }),
@@ -237,9 +238,9 @@ export const LOSS_ITEMS: LossItemDef[] = [
     code: "replacement_value",
     label: "교환가액(전손)",
     description: "수리비가 사고 직전 가액을 넘거나 원상회복이 불가능할 때 사고 직전 가액",
-    coverages: ["liability_property"],
+    coverages: ["liability_property", "own_damage"],
     basis: { ref: "별표2", clause: "2. 교환가액", page: 80 },
-    requiredDocs: ["vehicle_value", "total_loss_transfer", "total_loss_scrap"],
+    requiredDocs: ["vehicle_value", "theft_deregistration", "total_loss_transfer", "total_loss_scrap"],
   }),
   property({
     code: "rental",
@@ -277,26 +278,9 @@ export const LOSS_ITEMS: LossItemDef[] = [
     code: "towing",
     label: "견인비",
     description: "스스로 움직일 수 없는 차를 정비공장까지 옮긴 비용",
-    coverages: ["liability_property"],
+    coverages: ["liability_property", "own_damage"],
     basis: { ref: "별표2", clause: "7. 견인비용", page: 81 },
     requiredDocs: ["towing_receipt"],
-  }),
-  // 자기차량손해 (보통약관 제21조·제24조, 인쇄 53·55쪽)
-  property({
-    code: "own_repair",
-    label: "내 차 수리비",
-    description: "내 차에 생긴 손해(수리비). 자기부담금을 빼고 받는다",
-    coverages: ["own_damage"],
-    basis: { ref: "제24조", clause: "① 지급보험금 = 손해액 + 비용 − 자기부담금", page: 55 },
-    requiredDocs: ["repair_estimate"],
-  }),
-  property({
-    code: "own_total_loss",
-    label: "내 차 전손",
-    description: "고칠 수 없거나 수리비가 차량가액을 넘을 때 사고 직전 차량가액",
-    coverages: ["own_damage"],
-    basis: { ref: "제24조", clause: "① 지급보험금 = 손해액 + 비용 − 자기부담금", page: 55 },
-    requiredDocs: ["vehicle_value", "theft_deregistration", "total_loss_transfer", "total_loss_scrap"],
   }),
 ];
 

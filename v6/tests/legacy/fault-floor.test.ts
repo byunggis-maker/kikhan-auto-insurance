@@ -101,6 +101,17 @@ describe("공제와 한도", () => {
     expect(expectOk(bodily2(claim)).total.expected).toBe(500_001);
   });
 
+  // 라운드 1 보완 1: 하한이 적용되지 않아 버림 결과가 최종 지급액에 그대로 남는 사례
+  // 입력: 9급(대인Ⅰ 한도 2,400,000), 치료관계비 300,000 + 그 밖의 손해 850,001 = 1,150,001, 과실 33%, 차량운전자 아님
+  it("원 미만 버림이 최종 지급액에 남는다: 1,150,001 × 67% = 770,500.67 → 770,500 (치료관계비 300,000 이상이라 하한 없음)", () => {
+    const claim = injuryClaim({ grade: 9, faultPercent: 33, medical: 300_000, other: 850_001, vehicleDriver: false });
+    const b1 = expectOk(liabilityBodily1(claim));
+    expect(b1.steps.find((s) => s.item === "injury_medical_floor")?.formula).toBe("과실상계 후 금액이 치료관계비·간병비 이상이라 그대로");
+    expect(b1.total.expected).toBe(770_500);
+    expect(b1.ruleIds).toContain("rounding.won");
+    expect(expectOk(bodily2(claim)).total.expected).toBe(0);
+  });
+
   it("과실비율이 없으면 0원이 아니라 정보 부족", () => {
     const result = liabilityBodily1(injuryClaim({ grade: 9, faultPercent: null, medical: 2_000_000, other: 0 }));
     expect(result.ok).toBe(false);

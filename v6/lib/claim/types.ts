@@ -25,6 +25,9 @@ export const ACCIDENT_TYPE_LABELS: Record<(typeof ACCIDENT_TYPES)[number], strin
   hit_and_run_or_uninsured: "뺑소니·무보험",
 };
 
+export const DRIVER_RELATIONS = ["policyholder_or_named", "long_term_lessee", "cohabiting_relative", "other"] as const;
+export type DriverRelation = (typeof DRIVER_RELATIONS)[number];
+
 /** 면책·제한 확인에 쓰는 사고 사실(MASTER.md 6장 (1)). 모르면 null */
 export const violationsSchema = z.object({
   drunk: z.boolean().nullable(),
@@ -35,6 +38,11 @@ export const violationsSchema = z.object({
   /** 운전자가 증권의 운전자 범위 밖인지 */
   outsideDriverScope: z.boolean().nullable(),
   intentional: z.boolean().nullable(),
+  /**
+   * 운전자와 이 보험의 관계. 음주·무면허·마약일 때 자기차량손해 면책은 운전자가 보험계약자·기명피보험자,
+   * 30일을 넘는 임대차의 임차인, 기명피보험자와 같이 살거나 생계를 같이하는 친족일 때만이다(제23조 14호). 모르면 null
+   */
+  driverRelation: z.enum(DRIVER_RELATIONS).nullable(),
 });
 
 export const accidentSchema = z.object({
@@ -203,7 +211,7 @@ export function emptyLossItem(code: string, requiredDocs: string[]): LossItem {
 }
 
 export function emptyClaim(): Claim {
-  const violations = { drunk: null, unlicensed: null, drugs: null, fledScene: null, outsideDriverScope: null, intentional: null };
+  const violations = { drunk: null, unlicensed: null, drugs: null, fledScene: null, outsideDriverScope: null, intentional: null, driverRelation: null };
   return {
     accident: { occurredAt: null, place: "", narrative: "", type: null, violations },
     myPolicy: { side: "mine", productLine: null, insurer: "", status: "full", coverages: [], driverScope: null, deductible: null, hasBodily2: null },
