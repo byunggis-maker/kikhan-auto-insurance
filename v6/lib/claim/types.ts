@@ -155,6 +155,19 @@ export const VICTIM_ROLE_LABELS: Record<(typeof VICTIM_ROLES)[number], string> =
 /** 기명피보험자와의 관계. 부모·배우자·자녀는 내 대인Ⅱ 면책(MASTER.md 6장 (1)) */
 export const RELATIONS = ["self", "spouse", "parent", "child", "other_family", "none"] as const;
 
+/**
+ * 휴업손해의 수입감소액 기준(별표1 나. 부상 3. 휴업손해 다., 개인용 인쇄 77쪽)
+ * employed: 유직자(현실소득액 기준) / homemaker: 가사종사자(일용근로자 임금) / unemployed: 무직자(수입 감소 없음)
+ * no_income: 유아·연소자·학생·연금생활자·금리·임대료 생활자(수입 감소 없음)
+ */
+export const OCCUPATIONS = ["employed", "homemaker", "unemployed", "no_income"] as const;
+export const OCCUPATION_LABELS: Record<(typeof OCCUPATIONS)[number], string> = {
+  employed: "직장·사업 등 소득이 있음",
+  homemaker: "가사종사자(전업주부 등)",
+  unemployed: "무직",
+  no_income: "유아·학생·연금생활자 등",
+};
+
 export const victimSchema = z.object({
   id: z.string().min(1),
   role: z.enum(VICTIM_ROLES),
@@ -181,6 +194,7 @@ export const victimSchema = z.object({
    * true가 아니면(아니오·모름) 휴업손해 추정은 0원이고 증명했을 때의 금액은 참고로만 보여 준다(결정 기록 D-24)
    */
   incomeProven: z.boolean().nullable(),
+  occupation: z.enum(OCCUPATIONS).nullable(),
   losses: z.array(lossItemSchema),
   /** 사용자가 직접 넣는 이 사람 손해 합계 추정 */
   userTotal: moneySchema.nullable(),

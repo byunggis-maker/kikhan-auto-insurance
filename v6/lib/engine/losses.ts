@@ -1,5 +1,5 @@
 import { lossItemDef } from "@/lib/claim/lossItems";
-import { ASSUMPTIONS, FUNERAL, INJURY_SOLATIUM, LOST_INCOME, OTHER_INJURY } from "@/lib/claim/standards";
+import { ASSUMPTIONS, DAILY_WAGE, FUNERAL, HOMEMAKER, INJURY_SOLATIUM, LOST_INCOME, NO_LOSS_OCCUPATIONS, OTHER_INJURY } from "@/lib/claim/standards";
 import type { LossItem, Property, Victim } from "@/lib/claim/types";
 import { same, won } from "./legacy/range";
 import type { Ledger, LossLine } from "./legacy/types";
@@ -24,6 +24,12 @@ function standardValue(code: string, victim: Victim): Value | null {
     return { amount, source: "약관 기준", formula: `${victim.injuryGrade}급 ${won(amount)} (${cite(INJURY_SOLATIUM.basis)})` };
   }
   if (code === "funeral") return { amount: FUNERAL.value, source: "약관 기준", formula: `정액 ${won(FUNERAL.value)} (${cite(FUNERAL.basis)})` };
+  if (code === "lost_income" && (victim.occupation === "unemployed" || victim.occupation === "no_income")) return noLossValue(victim);
+  if (code === "lost_income" && victim.occupation === "homemaker") {
+    if (DAILY_WAGE.value === null || victim.daysOffWork === null) return null;
+    const amount = Math.floor((DAILY_WAGE.value * victim.daysOffWork * LOST_INCOME.ratePercent) / 100);
+    return unprovenLostIncome(victim, { amount, source: "약관 기준", formula: `가사종사자: 일용근로자 임금 ${won(DAILY_WAGE.value)} × 휴업 ${victim.daysOffWork}일 × ${LOST_INCOME.ratePercent}% = ${won(amount)} (${cite(HOMEMAKER.basis)})` });
+  }
   if (code === "lost_income" && victim.daysOffWork !== null && victim.monthlyIncome !== null) {
     const days = ASSUMPTIONS.daysPerMonth.value;
     // 월소득 × 휴업일수 × 85 / (30 × 100), 원 미만 버림
@@ -56,6 +62,12 @@ function unprovenLostIncome(victim: Victim, value: Value): Value {
   };
 }
 
+/** 무직자·유아·학생·연금생활자 등은 수입 감소가 없는 것으로 한다 */
+function noLossValue(victim: Victim): Value {
+  const who = victim.occupation === "unemployed" ? "무직자" : "유아·연소자·학생·연금생활자 등";
+  return { amount: 0, source: "약관 기준", formula: `${who}는 수입의 감소가 없는 것으로 함: 0원 (${cite(NO_LOSS_OCCUPATIONS.basis)})` };
+}
+
 function cite(basis: { source: string; page: number }) {
   return `${basis.source}, 인쇄 ${basis.page}쪽`;
 }
@@ -68,6 +80,7 @@ export function pickValue(item: LossItem, mode: ValueMode, victim?: Victim): Val
     const source = item.source.estimated === "policy_standard" ? "약관 기준" : item.source.estimated === "app_default" ? "앱 기본값" : "사용자 추정";
     const value = { amount: item.estimated, source, formula: `${source} ${won(item.estimated)}` };
     // 사용자가 넣은 휴업손해 추정액에도 같은 증명 요건을 적용한다. 서류 금액(confirmed)은 증명된 것으로 본다.
+    if (item.code === "lost_income" && victim && (victim.occupation === "unemployed" || victim.occupation === "no_income")) return noLossValue(victim);
     return item.code === "lost_income" && victim ? unprovenLostIncome(victim, value) : value;
   }
   return victim ? standardValue(item.code, victim) : null;
@@ -90,6 +103,8 @@ export function personLoss(victim: Victim, mode: ValueMode): PersonLoss {
     const value = pickValue(item, mode, victim);
     if (value === null) {
       missing.push(item.code);
+      if (item.code === "lost_income" && mode === "with_estimates" && victim.occupation === "homemaker" && DAILY_WAGE.value === null)
+        notes.push(`가사종사자 휴업손해는 일용근로자 임금 × 휴업일수 × 85%입니다(${cite(HOMEMAKER.basis)}). 일용근로자 임금은 약관에 금액이 없어(공표 노임) 아직 넣지 않았습니다. 금액을 직접 넣어 주세요.`);
       if (item.code === "other_injury" && mode === "with_estimates" && victim.hospitalDays !== null && victim.mealsNotProvided === null)
         notes.push(`입원 ${victim.hospitalDays}일: 입원 식대(1끼 ${won(OTHER_INJURY.perMeal)})는 병원 식사를 받지 않은 끼니 수를 넣으면 계산합니다(별표1 나. 5. 가., 인쇄 78쪽).`);
       continue;

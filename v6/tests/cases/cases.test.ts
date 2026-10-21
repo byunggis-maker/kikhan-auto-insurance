@@ -190,6 +190,30 @@ describe("사례별 추가 자기검사", () => {
   });
 });
 
+describe("휴업손해 직업 구분(별표1 나. 3. 다., 인쇄 77쪽, 결정 기록 D-27)", () => {
+  const base = CASES.find((c) => c.no === 20)!.claim;
+  const withJob = (occupation: "employed" | "homemaker" | "unemployed" | "no_income") => calculate({ ...base, victims: base.victims.map((v) => ({ ...v, occupation })) }, 30).cards[0];
+
+  it("무직자·유아·학생·연금생활자 등은 수입 감소가 없는 것으로 0원(사용자 추정액이 있어도)", () => {
+    for (const job of ["unemployed", "no_income"] as const) {
+      const d = withJob(job).details.find((x) => x.code === "lost_income")!;
+      expect(d.withEstimates).toBe(0);
+      expect(d.formula).toContain("수입의 감소가 없는 것으로 함");
+    }
+  });
+
+  it("유직자는 월소득 기준(지금과 같음)", () => {
+    expect(withJob("employed").details.find((x) => x.code === "lost_income")?.withEstimates).toBe(850_000);
+  });
+
+  it("가사종사자는 일용근로자 임금 기준인데 약관에 금액이 없어 '입력 필요'와 안내", () => {
+    const card = withJob("homemaker");
+    expect(card.details.find((x) => x.code === "lost_income")).toBeUndefined();
+    expect(card.missing).toContain("lost_income");
+    expect(card.notes.join()).toContain("일용근로자 임금은 약관에 금액이 없어");
+  });
+});
+
 describe("상대 대인Ⅱ 가입 여부 모름(라운드 2 결정 4)", () => {
   // 운전자 14급, 내 과실 0%, 손해 1,030,000. 상대는 보험에 들었지만 대인Ⅱ 가입 여부를 모른다.
   const base = claim({ myFault: 0, victims: [victim({ id: "나", role: "driver", relationToNamedInsured: "self", vehicleDriver: true, injuryGrade: 14, losses: [item("treatment", { c: 800_000 }), item("solatium_injury", { c: 150_000 }), item("other_injury", { c: 80_000 })] })] });

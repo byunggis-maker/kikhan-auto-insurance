@@ -56,7 +56,7 @@ describe("저장 데이터 버전 변환", () => {
     const v3victim = { id: "나", role: "driver", label: "나", relationToNamedInsured: "self", vehicleDriver: true, age: 40, injuryGrade: 14, disabilityGrade: null, died: false, rideAlongReductionPercent: 0, hospitalDays: null, outpatientDays: null, mealsNotProvided: null, daysOffWork: 5, monthlyIncome: 3_000_000, losses: [], userTotal: null };
     const result = migrate({ version: 3, data: { ...v4, victims: [v3victim] } });
     expect(result.status).toBe("migrated");
-    expect(result.claim.victims[0]).toMatchObject({ incomeProven: null, daysOffWork: 5 });
+    expect(result.claim.victims[0]).toMatchObject({ incomeProven: null, daysOffWork: 5, occupation: null });
   });
 
   it("한 단계씩 변환한다: v1 저장값을 v3까지 올린다", () => {

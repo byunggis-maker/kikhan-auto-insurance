@@ -5,7 +5,7 @@ import { claimSchema, emptyClaim, type Claim } from "./types";
 // 어떤 이유로든 읽지 못하면(없음·깨짐·모르는 버전·변환 실패·모양 불일치) 앱을 멈추지 않고 빈 입력으로 새로 시작한다.
 
 export const STORAGE_KEY = "claim";
-export const CURRENT_VERSION = 4;
+export const CURRENT_VERSION = 5;
 
 /** 저장하는 모양: 버전과 데이터를 함께 둔다 */
 export type Saved = { version: number; data: unknown };
@@ -28,6 +28,11 @@ export const MIGRATIONS: Record<number, Migration> = {
   3: (data) => {
     const claim = data as { victims?: Record<string, unknown>[] };
     return { ...claim, victims: (claim.victims ?? []).map((victim) => ({ incomeProven: null, ...victim })) };
+  },
+  // v4 → v5(라운드 5 전): 사람 카드에 휴업손해 직업 구분(occupation)을 더했다. 예전 저장값은 "모름"(null)
+  4: (data) => {
+    const claim = data as { victims?: Record<string, unknown>[] };
+    return { ...claim, victims: (claim.victims ?? []).map((victim) => ({ occupation: null, ...victim })) };
   },
 };
 

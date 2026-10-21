@@ -63,6 +63,14 @@ export const INJURY_SOLATIUM = {
 export const FUNERAL = { value: 5_000_000, basis: { source: "별표1 가. 사망 1. 장례비", page: 72 } satisfies Basis };
 /** 휴업손해: 1일 수입감소액 × 휴업일수 × 85/100. 별표1 나. 부상 3. 휴업손해 가. 산정방법, 인쇄 76쪽 */
 export const LOST_INCOME = { ratePercent: 85, basis: { source: "별표1 나. 부상 3. 휴업손해", page: 76 } satisfies Basis };
+/**
+ * 휴업손해 직업 구분(별표1 나. 3. 다., 인쇄 77쪽): 가사종사자는 일용근로자 임금, 무직자·유아·학생·연금생활자 등은 수입 감소 없음.
+ * 일용근로자 임금은 약관에 금액이 없다(통계작성지정기관이 공표한 노임 — 별표1 가. 3. 용어풀이 ②, 인쇄 73쪽). 값과 출처를 사람이 넣기 전까지 null.
+ */
+export const DAILY_WAGE = { value: null as number | null, basis: { source: "별표1 가. 사망 3. 상실수익액 용어풀이 ②(일용근로자 임금의 정의)", page: 73 } satisfies Basis };
+export const NO_LOSS_OCCUPATIONS = { basis: { source: "별표1 나. 부상 3. 휴업손해 다.(3)", page: 77 } satisfies Basis };
+export const HOMEMAKER = { basis: { source: "별표1 나. 부상 3. 휴업손해 다.(2)", page: 77 } satisfies Basis };
+
 /** 그 밖의 손해배상금: 입원 중 병원 식사를 받지 않은 끼니 1끼 4,030원, 통원 1일 8,000원. 별표1 나. 부상 5., 인쇄 78쪽 */
 export const OTHER_INJURY = { perMeal: 4_030, perOutpatientDay: 8_000, basis: { source: "별표1 나. 부상 5. 그 밖의 손해배상금", page: 78 } satisfies Basis };
 
