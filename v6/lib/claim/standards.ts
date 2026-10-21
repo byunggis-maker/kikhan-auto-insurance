@@ -73,7 +73,8 @@ export const DAILY_WAGE = {
   daysPerMonth: 25,
 };
 
-type WageEntry = { effectiveFrom: string; value: number; source: string };
+/** estimatedStart: 적용 시작일을 공표일로 미루어 정한 것(원문에 적용일이 없음). 결과에 "적용일 추정"을 붙인다 */
+type WageEntry = { effectiveFrom: string; value: number; source: string; estimatedStart?: boolean };
 
 /** 공사부문 보통인부 일급(대한건설협회 건설업 임금실태조사). 적용 시작일별, 값은 칸 제공(결정 기록 D-31·D-35) */
 export const CONSTRUCTION_WAGES: WageEntry[] = [
@@ -83,15 +84,17 @@ export const CONSTRUCTION_WAGES: WageEntry[] = [
 ];
 
 /**
- * 제조부문 단순노무종사원 일급(중소기업중앙회 중소제조업 직종별 임금조사). 적용 시작일별, 값은 칸 제공(D-35).
- * 95,767원은 2026년 상반기 조사값이며, 2차 자료(언론 보도·노임단가 정리 글) 기준 2026-07-01부터 적용한다.
- * 그 전 적용분(2025-07-01)은 값을 받지 못해 비워 둔다 → 그 기간 사고는 '입력 필요'.
+ * 제조부문 단순노무종사원 일급(중소기업중앙회 중소제조업 직종별 임금조사). 적용 시작일별, 값과 적용일은 칸 제공(D-35·D-38).
+ * 2026-01-01 전 사고는 값이 없어 '입력 필요'.
  */
-export const MANUFACTURING_WAGES: WageEntry[] = [{ effectiveFrom: "2026-07-01", value: 95_767, source: "중소기업중앙회" }];
+export const MANUFACTURING_WAGES: WageEntry[] = [
+  { effectiveFrom: "2026-01-01", value: 90_694, source: "중소기업중앙회 2025 하반기 조사(2025-11-27 발표)", estimatedStart: true },
+  { effectiveFrom: "2026-07-01", value: 95_767, source: "중소기업중앙회 2026 상반기 조사(2026-06-29 발표)" },
+];
 
 const entryFor = (table: WageEntry[], date: string) => [...table].filter((e) => e.effectiveFrom <= date).sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom))[0] ?? null;
 
-export type DailyWage = { value: number; monthly: number; construction: WageEntry; manufacturing: WageEntry; formula: string };
+export type DailyWage = { value: number; monthly: number; construction: WageEntry; manufacturing: WageEntry; estimatedStart: boolean; formula: string };
 
 /** 사고일에 적용 중인 두 단가로 일용근로자 임금(1일, 원 미만 버림)과 월 임금(× 25일)을 낸다. 한쪽 단가라도 없으면 null */
 export function dailyWageFor(date: string): DailyWage | null {
@@ -100,12 +103,14 @@ export function dailyWageFor(date: string): DailyWage | null {
   if (!construction || !manufacturing) return null;
   const value = Math.floor((construction.value + manufacturing.value) / 2);
   const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
+  const estimatedStart = construction.estimatedStart === true || manufacturing.estimatedStart === true;
   return {
     value,
     monthly: value * DAILY_WAGE.daysPerMonth,
     construction,
     manufacturing,
-    formula: `(보통인부 ${won(construction.value)} + 단순노무 ${won(manufacturing.value)}) ÷ 2 = ${won(value)}, 약관 별표1(인쇄 ${DAILY_WAGE.basis.page}쪽)`,
+    estimatedStart,
+    formula: `(보통인부 ${won(construction.value)} + 단순노무 ${won(manufacturing.value)}${manufacturing.estimatedStart ? "(적용일 추정)" : ""}) ÷ 2 = ${won(value)}, 약관 별표1(인쇄 ${DAILY_WAGE.basis.page}쪽)`,
   };
 }
 

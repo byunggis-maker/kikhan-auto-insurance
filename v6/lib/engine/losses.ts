@@ -20,8 +20,20 @@ type Value = { amount: number; source: string; formula: string };
 /** 약관 기준으로 계산할 수 있는 항목의 값. 계산에 필요한 입력이 없으면 null */
 function standardValue(code: string, victim: Victim, date: string): Value | null {
   const wage = dailyWageFor(date);
-  const wageText = (who: string, w: NonNullable<typeof wage>, amount: number, basis: { source: string; page: number }) =>
-    `${who}: 일용근로자 임금 ${won(w.value)} × 휴업 ${victim.daysOffWork}일 × ${LOST_INCOME.ratePercent}% = ${won(amount)} (${cite(basis)}; 일용근로자 임금 ${w.formula})`;
+  /**
+   * 일용근로자 임금을 쓰는 휴업손해(라운드 6c, 결정 기록 D-38): 1일 수입감소액 = 월 임금(일급 × 25일) ÷ 30.
+   * 그 뒤 85%, 휴업일수를 곱한다. 원 미만은 단계마다 버린다.
+   */
+  const wageLostIncome = (who: string, w: NonNullable<typeof wage>, days: number, basis: { source: string; page: number }): Value => {
+    const perDay = Math.floor(w.monthly / ASSUMPTIONS.daysPerMonth.value);
+    const perDayLoss = Math.floor((perDay * LOST_INCOME.ratePercent) / 100);
+    const amount = perDayLoss * days;
+    return {
+      amount,
+      source: "약관 기준",
+      formula: `${who}: 월 ${won(w.monthly)}(일 ${won(w.value)} × 25일) ÷ ${ASSUMPTIONS.daysPerMonth.value} × ${LOST_INCOME.ratePercent}% × ${days}일 = ${won(amount)} (${cite(basis)}; 일용근로자 임금 ${w.formula}; 원 미만은 단계마다 버림)`,
+    };
+  };
   if (code === "solatium_injury" && victim.injuryGrade !== null) {
     const amount = INJURY_SOLATIUM.value[victim.injuryGrade];
     return { amount, source: "약관 기준", formula: `${victim.injuryGrade}급 ${won(amount)} (${cite(INJURY_SOLATIUM.basis)})` };
@@ -30,14 +42,12 @@ function standardValue(code: string, victim: Victim, date: string): Value | null
   if (code === "lost_income" && (victim.occupation === "unemployed" || victim.occupation === "no_income")) return noLossValue(victim);
   if (code === "lost_income" && victim.occupation === "homemaker") {
     if (wage === null || victim.daysOffWork === null) return null;
-    const amount = Math.floor((wage.value * victim.daysOffWork * LOST_INCOME.ratePercent) / 100);
-    return unprovenLostIncome(victim, { amount, source: "약관 기준", formula: wageText("가사종사자", wage, amount, HOMEMAKER.basis) });
+    return unprovenLostIncome(victim, wageLostIncome("가사종사자", wage, victim.daysOffWork, HOMEMAKER.basis));
   }
   // 유직자가 월소득 금액을 증명하지 못하면 일용근로자 임금(결정 기록 D-32)
   if (code === "lost_income" && victim.occupation !== "homemaker" && victim.incomeAmountProven === false) {
     if (wage === null || victim.daysOffWork === null) return null;
-    const amount = Math.floor((wage.value * victim.daysOffWork * LOST_INCOME.ratePercent) / 100);
-    return unprovenLostIncome(victim, { amount, source: "약관 기준", formula: wageText("소득 금액 증명 곤란(유직자)", wage, amount, UNPROVEN_EARNER.basis) });
+    return unprovenLostIncome(victim, wageLostIncome("소득 금액 증명 곤란(유직자)", wage, victim.daysOffWork, UNPROVEN_EARNER.basis));
   }
   if (code === "lost_income" && victim.daysOffWork !== null && victim.monthlyIncome !== null) {
     const days = ASSUMPTIONS.daysPerMonth.value;
@@ -113,7 +123,7 @@ export function personLoss(victim: Victim, mode: ValueMode, date: string = STAND
     if (value === null) {
       missing.push(item.code);
       if (item.code === "lost_income" && mode === "with_estimates" && (victim.occupation === "homemaker" || victim.incomeAmountProven === false) && dailyWageFor(date) === null)
-        notes.push(`이 휴업손해는 일용근로자 임금 × 휴업일수 × 85%입니다(${cite(HOMEMAKER.basis)}). 사고일(${date})에 적용할 일용근로자 임금 값이 아직 없습니다. 금액을 직접 넣어 주세요.`);
+        notes.push(`이 휴업손해는 월 일용근로자 임금 ÷ 30 × 85% × 휴업일수입니다(${cite(HOMEMAKER.basis)}). 사고일(${date})에 적용할 일용근로자 임금 값이 아직 없습니다. 금액을 직접 넣어 주세요.`);
       if (item.code === "other_injury" && mode === "with_estimates" && victim.hospitalDays !== null && victim.mealsNotProvided === null)
         notes.push(`입원 ${victim.hospitalDays}일: 입원 식대(1끼 ${won(OTHER_INJURY.perMeal)})는 병원 식사를 받지 않은 끼니 수를 넣으면 계산합니다(별표1 나. 5. 가., 인쇄 78쪽).`);
       continue;

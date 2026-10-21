@@ -19,7 +19,7 @@ describe("일용근로자 임금(별표1 인쇄 74쪽, 결정 기록 D-35)", () 
     expect(wage.value).toBe(134_232);
     expect(wage.monthly).toBe(3_355_800);
     expect(wage.construction).toMatchObject({ effectiveFrom: "2026-09-01", value: 172_698, source: "대한건설협회" });
-    expect(wage.manufacturing).toMatchObject({ effectiveFrom: "2026-07-01", value: 95_767, source: "중소기업중앙회" });
+    expect(wage.manufacturing).toMatchObject({ effectiveFrom: "2026-07-01", value: 95_767, source: "중소기업중앙회 2026 상반기 조사(2026-06-29 발표)" });
     expect(wage.formula).toBe("(보통인부 172,698원 + 단순노무 95,767원) ÷ 2 = 134,232원, 약관 별표1(인쇄 74쪽)");
   });
 
@@ -30,7 +30,18 @@ describe("일용근로자 임금(별표1 인쇄 74쪽, 결정 기록 D-35)", () 
     expect(wage.monthly).toBe(133_917 * 25);
   });
 
-  it("단순노무 단가가 없는 날(2026-07-01 전)은 null", () => {
-    expect(dailyWageFor("2026-06-30")).toBeNull();
+  it("2026-03 사고: 보통인부 172,068 + 단순노무 90,694(2026-01-01 적용, 적용일 추정) 평균 → 131,381원", () => {
+    const wage = dailyWageFor("2026-03-10")!;
+    expect(wage.construction.value).toBe(172_068);
+    expect(wage.manufacturing).toMatchObject({ effectiveFrom: "2026-01-01", value: 90_694, estimatedStart: true });
+    expect(wage.value).toBe(131_381);
+    expect(wage.estimatedStart).toBe(true);
+    expect(wage.formula).toBe("(보통인부 172,068원 + 단순노무 90,694원(적용일 추정)) ÷ 2 = 131,381원, 약관 별표1(인쇄 74쪽)");
+  });
+
+  it("2026-07-01부터는 95,767원(2026 상반기 조사, 적용일 확정), 2026-01-01 전은 null", () => {
+    expect(dailyWageFor("2026-07-01")!.manufacturing).toMatchObject({ value: 95_767, source: "중소기업중앙회 2026 상반기 조사(2026-06-29 발표)" });
+    expect(dailyWageFor("2026-07-01")!.estimatedStart).toBe(false);
+    expect(dailyWageFor("2025-12-31")).toBeNull();
   });
 });

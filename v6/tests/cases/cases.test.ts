@@ -207,32 +207,36 @@ describe("휴업손해 직업 구분(별표1 나. 3. 다., 인쇄 77쪽, 결정 
     expect(withJob("employed").details.find((x) => x.code === "lost_income")?.withEstimates).toBe(850_000);
   });
 
-  it("가사종사자는 일용근로자 임금 × 휴업일수 × 85%: 사고일 2026-09-01 → (172,698 + 95,767) ÷ 2 = 134,232원 × 10일 × 85% = 1,140,972원", () => {
+  it("가사종사자 휴업손해는 월 환산(라운드 6c): 사고일 2026-09-01, 휴업 10일 → 월 3,355,800원(일 134,232원 × 25일) ÷ 30 × 85% × 10일 = 950,810원", () => {
     const d = withJob("homemaker").details.find((x) => x.code === "lost_income")!;
-    expect(d.withEstimates).toBe(1_140_972);
+    // 3,355,800 ÷ 30 = 111,860 → × 85% = 95,081 → × 10일 = 950,810
+    expect(d.withEstimates).toBe(950_810);
+    expect(d.formula).toContain("가사종사자: 월 3,355,800원(일 134,232원 × 25일) ÷ 30 × 85% × 10일 = 950,810원");
     expect(d.formula).toContain("(보통인부 172,698원 + 단순노무 95,767원) ÷ 2 = 134,232원, 약관 별표1(인쇄 74쪽)");
     expect(d.formula).not.toContain("검토 필요");
+    expect(d.formula).not.toContain("적용일 추정");
   });
 
-  it("일용근로자 임금은 사고일에 적용 중인 두 단가의 평균(2026-08 → 보통인부 172,068원), 단순노무 단가가 없는 날은 입력 필요", () => {
+  it("일용근로자 임금은 사고일에 적용 중인 두 단가의 평균, 원 미만은 단계마다 버림. 2026-01-01 전은 입력 필요", () => {
     const at = (occurredAt: string) => calculate({ ...base, accident: { ...base.accident, occurredAt }, victims: base.victims.map((v) => ({ ...v, occupation: "homemaker" as const })) }, 30).cards[0];
+    // 2026-08: (172,068 + 95,767) ÷ 2 = 133,917 → 월 3,347,925 ÷ 30 = 111,597 → × 85% = 94,857 → × 10 = 948,570
     const august = at("2026-08-15").details.find((x) => x.code === "lost_income")!;
-    // (172,068 + 95,767) ÷ 2 = 133,917.5 → 133,917(원 미만 버림) × 10 × 85%
-    expect(august.withEstimates).toBe(Math.floor(133_917 * 10 * 0.85));
+    expect(august.withEstimates).toBe(948_570);
     expect(august.formula).toContain("보통인부 172,068원 + 단순노무 95,767원");
-    // 단순노무종사원 95,767원은 2026-07-01부터 적용. 그 전 사고는 값이 없어 입력 필요
-    for (const date of ["2026-06-30", "2025-12-31"]) {
-      const before = at(date);
-      expect(before.missing).toContain("lost_income");
-      expect(before.notes.join()).toContain("적용할 일용근로자 임금 값이 아직 없습니다");
-    }
+    // 2026-03: (172,068 + 90,694) ÷ 2 = 131,381 → 월 3,284,525 ÷ 30 = 109,484 → × 85% = 93,061 → × 10 = 930,610, 단순노무 적용일 추정
+    const march = at("2026-03-10").details.find((x) => x.code === "lost_income")!;
+    expect(march.withEstimates).toBe(930_610);
+    expect(march.formula).toContain("보통인부 172,068원 + 단순노무 90,694원(적용일 추정)");
+    const before = at("2025-12-31");
+    expect(before.missing).toContain("lost_income");
+    expect(before.notes.join()).toContain("적용할 일용근로자 임금 값이 아직 없습니다");
   });
 
   it("유직자가 월소득 금액을 증명하지 못하면(incomeAmountProven = false) 일용근로자 임금으로 계산(결정 기록 D-32)", () => {
     const r = calculate({ ...base, victims: base.victims.map((v) => ({ ...v, occupation: "employed" as const, incomeAmountProven: false })) }, 30);
     const d = r.cards[0].details.find((x) => x.code === "lost_income")!;
-    expect(d.withEstimates).toBe(1_140_972);
-    expect(d.formula).toContain("소득 금액 증명 곤란(유직자)");
+    expect(d.withEstimates).toBe(950_810);
+    expect(d.formula).toContain("소득 금액 증명 곤란(유직자): 월 3,355,800원(일 134,232원 × 25일) ÷ 30 × 85% × 10일");
     expect(d.formula).toContain("인쇄 74쪽");
     expect(r.notices.join()).toContain("일용근로자 임금 134,232원으로 계산했습니다");
     // 수입 감소(휴업) 사실도 증명하지 못하면 0원(D-24)
