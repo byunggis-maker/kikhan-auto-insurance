@@ -10,19 +10,21 @@ import { MoneyInput } from "./fields";
 // 빈 칸으로 두고 엔진이 계산한다(결정 기록 D-18). 누르지 않으면 항목이 없는 것으로 본다(합계 칸만 쓰는 경우를 지키기 위해).
 
 type Props = {
+  /** 사고일. 약관 기준 금액(일용근로자 임금 등)을 엔진과 같은 날짜로 계산한다 */
+  date: string;
   def: LossItemDef;
   item: LossItem | undefined;
   victim?: Victim;
   onChange: (change: { confirmed?: number | null; estimated?: number | null; standard?: boolean }) => void;
 };
 
-export function LossCard({ def, item, victim, onChange }: Props) {
-  const standard = victim ? pickValue(emptyLossItem(def.code, []), "with_estimates", victim) : null;
+export function LossCard({ date, def, item, victim, onChange }: Props) {
+  const standard = victim ? pickValue(emptyLossItem(def.code, []), "with_estimates", victim, date) : null;
   const usingStandard = item !== undefined && item.confirmed === null && item.estimated === null;
   // 카드에는 이 항목에만 필요한 서류를 적는다. 담보 공통 서류(청구서 등)는 화면 아래에 한 번만(Step6Losses)
   const docs = def.requiredDocs;
   return (
-    <article className="rounded-2xl border-2 border-line bg-white p-4">
+    <article id={`loss-${def.code}`} className="scroll-mt-4 rounded-2xl border-2 border-line bg-white p-4">
       <h3 className="text-lg font-bold">{def.label}</h3>
       <p className="text-sm font-semibold text-ink-soft">{def.description}</p>
       <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">

@@ -17,7 +17,7 @@ export function item(code: string, value: { c?: number; e?: number }): LossItem 
 }
 
 export function victim(change: Partial<Victim> & Pick<Victim, "id" | "role">): Victim {
-  return { label: change.id, relationToNamedInsured: null, vehicleDriver: null, age: 40, injuryGrade: null, disabilityGrade: null, died: false, rideAlongReductionPercent: 0, hospitalDays: null, outpatientDays: null, mealsNotProvided: null, daysOffWork: null, monthlyIncome: null, incomeProven: null, occupation: null, losses: [], userTotal: null, ...change };
+  return { label: change.id, relationToNamedInsured: null, vehicleDriver: null, age: 40, injuryGrade: null, disabilityGrade: null, died: false, rideAlongReductionPercent: 0, hospitalDays: null, outpatientDays: null, mealsNotProvided: null, daysOffWork: null, monthlyIncome: null, incomeProven: null, occupation: null, incomeAmountProven: null, losses: [], userTotal: null, ...change };
 }
 
 export function property(change: Partial<Property> & Pick<Property, "id" | "role">): Property {

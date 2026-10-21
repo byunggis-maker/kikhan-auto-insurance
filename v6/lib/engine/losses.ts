@@ -1,5 +1,5 @@
 import { lossItemDef } from "@/lib/claim/lossItems";
-import { ASSUMPTIONS, DAILY_WAGE, FUNERAL, HOMEMAKER, INJURY_SOLATIUM, LOST_INCOME, NO_LOSS_OCCUPATIONS, OTHER_INJURY } from "@/lib/claim/standards";
+import { ASSUMPTIONS, DAILY_WAGE, FUNERAL, HOMEMAKER, INJURY_SOLATIUM, LOST_INCOME, NO_LOSS_OCCUPATIONS, OTHER_INJURY, STANDARDS_AS_OF, UNPROVEN_EARNER, dailyWageFor } from "@/lib/claim/standards";
 import type { LossItem, Property, Victim } from "@/lib/claim/types";
 import { same, won } from "./legacy/range";
 import type { Ledger, LossLine } from "./legacy/types";
@@ -18,7 +18,10 @@ export const UNCLASSIFIED = "unclassified";
 type Value = { amount: number; source: string; formula: string };
 
 /** 약관 기준으로 계산할 수 있는 항목의 값. 계산에 필요한 입력이 없으면 null */
-function standardValue(code: string, victim: Victim): Value | null {
+function standardValue(code: string, victim: Victim, date: string): Value | null {
+  const wage = dailyWageFor(date);
+  const wageText = (who: string, w: NonNullable<typeof wage>, amount: number, basis: { source: string; page: number }) =>
+    `${who}: 일용근로자 임금 ${won(w.value)}(${w.effectiveFrom} 적용, ${w.source}) × 휴업 ${victim.daysOffWork}일 × ${LOST_INCOME.ratePercent}% = ${won(amount)} (${cite(basis)}; 일용근로자 임금 = ${DAILY_WAGE.definition}, ${cite(DAILY_WAGE.basis)}. 검토 필요: 공표 원문·약관 산식과 대조)`;
   if (code === "solatium_injury" && victim.injuryGrade !== null) {
     const amount = INJURY_SOLATIUM.value[victim.injuryGrade];
     return { amount, source: "약관 기준", formula: `${victim.injuryGrade}급 ${won(amount)} (${cite(INJURY_SOLATIUM.basis)})` };
@@ -26,9 +29,15 @@ function standardValue(code: string, victim: Victim): Value | null {
   if (code === "funeral") return { amount: FUNERAL.value, source: "약관 기준", formula: `정액 ${won(FUNERAL.value)} (${cite(FUNERAL.basis)})` };
   if (code === "lost_income" && (victim.occupation === "unemployed" || victim.occupation === "no_income")) return noLossValue(victim);
   if (code === "lost_income" && victim.occupation === "homemaker") {
-    if (DAILY_WAGE.value === null || victim.daysOffWork === null) return null;
-    const amount = Math.floor((DAILY_WAGE.value * victim.daysOffWork * LOST_INCOME.ratePercent) / 100);
-    return unprovenLostIncome(victim, { amount, source: "약관 기준", formula: `가사종사자: 일용근로자 임금 ${won(DAILY_WAGE.value)} × 휴업 ${victim.daysOffWork}일 × ${LOST_INCOME.ratePercent}% = ${won(amount)} (${cite(HOMEMAKER.basis)})` });
+    if (wage === null || victim.daysOffWork === null) return null;
+    const amount = Math.floor((wage.value * victim.daysOffWork * LOST_INCOME.ratePercent) / 100);
+    return unprovenLostIncome(victim, { amount, source: "약관 기준", formula: wageText("가사종사자", wage, amount, HOMEMAKER.basis) });
+  }
+  // 유직자가 월소득 금액을 증명하지 못하면 일용근로자 임금(결정 기록 D-32)
+  if (code === "lost_income" && victim.occupation !== "homemaker" && victim.incomeAmountProven === false) {
+    if (wage === null || victim.daysOffWork === null) return null;
+    const amount = Math.floor((wage.value * victim.daysOffWork * LOST_INCOME.ratePercent) / 100);
+    return unprovenLostIncome(victim, { amount, source: "약관 기준", formula: wageText("소득 금액 증명 곤란(유직자)", wage, amount, UNPROVEN_EARNER.basis) });
   }
   if (code === "lost_income" && victim.daysOffWork !== null && victim.monthlyIncome !== null) {
     const days = ASSUMPTIONS.daysPerMonth.value;
@@ -73,7 +82,7 @@ function cite(basis: { source: string; page: number }) {
 }
 
 /** 항목 하나에 쓸 값. null이면 "입력 필요" */
-export function pickValue(item: LossItem, mode: ValueMode, victim?: Victim): Value | null {
+export function pickValue(item: LossItem, mode: ValueMode, victim?: Victim, date: string = STANDARDS_AS_OF): Value | null {
   if (item.confirmed !== null) return { amount: item.confirmed, source: "서류", formula: `서류 금액 ${won(item.confirmed)}${item.evidence ? ` (${item.evidence})` : ""}` };
   if (mode === "confirmed") return null;
   if (item.estimated !== null) {
@@ -83,7 +92,7 @@ export function pickValue(item: LossItem, mode: ValueMode, victim?: Victim): Val
     if (item.code === "lost_income" && victim && (victim.occupation === "unemployed" || victim.occupation === "no_income")) return noLossValue(victim);
     return item.code === "lost_income" && victim ? unprovenLostIncome(victim, value) : value;
   }
-  return victim ? standardValue(item.code, victim) : null;
+  return victim ? standardValue(item.code, victim, date) : null;
 }
 
 export type PersonLoss = { ledger: Ledger; actualLoss: number; missing: string[]; notes: string[]; unclassified: boolean; details: LossDetail[] };
@@ -92,7 +101,7 @@ function lossLine(item: string, category: LossLine["category"], amount: number, 
   return { item, category, label, status: "calculated", amount: same(amount), formula: "", ruleIds: [], missing: [], flags: [], required: false, medical, guaranteed };
 }
 
-export function personLoss(victim: Victim, mode: ValueMode): PersonLoss {
+export function personLoss(victim: Victim, mode: ValueMode, date: string = STANDARDS_AS_OF): PersonLoss {
   const lines: LossLine[] = [];
   const missing: string[] = [];
   const notes: string[] = [];
@@ -100,11 +109,11 @@ export function personLoss(victim: Victim, mode: ValueMode): PersonLoss {
   for (const item of victim.losses) {
     const def = lossItemDef(item.code);
     if (!def || def.target !== "person" || def.category === "property") continue;
-    const value = pickValue(item, mode, victim);
+    const value = pickValue(item, mode, victim, date);
     if (value === null) {
       missing.push(item.code);
-      if (item.code === "lost_income" && mode === "with_estimates" && victim.occupation === "homemaker" && DAILY_WAGE.value === null)
-        notes.push(`가사종사자 휴업손해는 일용근로자 임금 × 휴업일수 × 85%입니다(${cite(HOMEMAKER.basis)}). 일용근로자 임금은 약관에 금액이 없어(공표 노임) 아직 넣지 않았습니다. 금액을 직접 넣어 주세요.`);
+      if (item.code === "lost_income" && mode === "with_estimates" && (victim.occupation === "homemaker" || victim.incomeAmountProven === false) && dailyWageFor(date) === null)
+        notes.push(`이 휴업손해는 일용근로자 임금 × 휴업일수 × 85%입니다(${cite(HOMEMAKER.basis)}). 사고일(${date})에 적용할 일용근로자 임금 값이 없습니다. 금액을 직접 넣어 주세요.`);
       if (item.code === "other_injury" && mode === "with_estimates" && victim.hospitalDays !== null && victim.mealsNotProvided === null)
         notes.push(`입원 ${victim.hospitalDays}일: 입원 식대(1끼 ${won(OTHER_INJURY.perMeal)})는 병원 식사를 받지 않은 끼니 수를 넣으면 계산합니다(별표1 나. 5. 가., 인쇄 78쪽).`);
       continue;

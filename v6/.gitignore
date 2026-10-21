@@ -31,3 +31,6 @@ next-env.d.ts
 
 # 임시 파일(약관 글자 추출본 등). v6 밖에는 파일을 만들지 않는다(MASTER.md 결정 기록 D-10)
 /.tmp/
+
+# PDF용 글꼴. dev·build 전에 node_modules에서 복사한다(scripts/copy-fonts.mjs)
+/public/fonts/

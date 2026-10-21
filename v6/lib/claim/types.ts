@@ -195,6 +195,11 @@ export const victimSchema = z.object({
    */
   incomeProven: z.boolean().nullable(),
   occupation: z.enum(OCCUPATIONS).nullable(),
+  /**
+   * 월소득 금액을 세법상 관계 서류로 증명할 수 있는지(유직자). false이면 일용근로자 임금으로 계산한다
+   * (별표1 나. 3. 다.(1)(가)가 준용하는 가. 3. 나.(1) 2), 인쇄 74쪽, 결정 기록 D-32). incomeProven은 수입 감소(휴업) 사실의 증명이다.
+   */
+  incomeAmountProven: z.boolean().nullable(),
   losses: z.array(lossItemSchema),
   /** 사용자가 직접 넣는 이 사람 손해 합계 추정 */
   userTotal: moneySchema.nullable(),

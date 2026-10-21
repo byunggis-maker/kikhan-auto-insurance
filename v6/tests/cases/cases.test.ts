@@ -206,11 +206,32 @@ describe("휴업손해 직업 구분(별표1 나. 3. 다., 인쇄 77쪽, 결정 
     expect(withJob("employed").details.find((x) => x.code === "lost_income")?.withEstimates).toBe(850_000);
   });
 
-  it("가사종사자는 일용근로자 임금 기준인데 약관에 금액이 없어 '입력 필요'와 안내", () => {
-    const card = withJob("homemaker");
-    expect(card.details.find((x) => x.code === "lost_income")).toBeUndefined();
-    expect(card.missing).toContain("lost_income");
-    expect(card.notes.join()).toContain("일용근로자 임금은 약관에 금액이 없어");
+  it("가사종사자는 일용근로자 임금 × 휴업일수 × 85%: 사고일 2026-09-01 → 172,698원 × 10일 × 85% = 1,467,933원", () => {
+    const d = withJob("homemaker").details.find((x) => x.code === "lost_income")!;
+    expect(d.withEstimates).toBe(1_467_933);
+    expect(d.formula).toContain("172,698원(2026-09-01 적용");
+    expect(d.formula).toContain("검토 필요");
+  });
+
+  it("일용근로자 임금은 사고일에 적용 중인 값을 고른다(2025-09-01 / 2026-01-01 / 2026-09-01), 없으면 입력 필요", () => {
+    const at = (occurredAt: string) => calculate({ ...base, accident: { ...base.accident, occurredAt }, victims: base.victims.map((v) => ({ ...v, occupation: "homemaker" as const })) }, 30).cards[0];
+    expect(at("2025-12-31").details.find((x) => x.code === "lost_income")?.withEstimates).toBe(Math.floor(171_037 * 10 * 0.85));
+    expect(at("2026-01-01").details.find((x) => x.code === "lost_income")?.withEstimates).toBe(Math.floor(172_068 * 10 * 0.85));
+    const before = at("2025-08-31");
+    expect(before.missing).toContain("lost_income");
+    expect(before.notes.join()).toContain("적용할 일용근로자 임금 값이 없습니다");
+  });
+
+  it("유직자가 월소득 금액을 증명하지 못하면(incomeAmountProven = false) 일용근로자 임금으로 계산(결정 기록 D-32)", () => {
+    const r = calculate({ ...base, victims: base.victims.map((v) => ({ ...v, occupation: "employed" as const, incomeAmountProven: false })) }, 30);
+    const d = r.cards[0].details.find((x) => x.code === "lost_income")!;
+    expect(d.withEstimates).toBe(1_467_933);
+    expect(d.formula).toContain("소득 금액 증명 곤란(유직자)");
+    expect(d.formula).toContain("인쇄 74쪽");
+    expect(r.notices.join()).toContain("일용근로자 임금 172,698원(2026-09-01 적용");
+    // 수입 감소(휴업) 사실도 증명하지 못하면 0원(D-24)
+    const none = calculate({ ...base, victims: base.victims.map((v) => ({ ...v, occupation: "employed" as const, incomeAmountProven: false, incomeProven: false })) }, 30);
+    expect(none.cards[0].details.find((x) => x.code === "lost_income")?.withEstimates).toBe(0);
   });
 });
 

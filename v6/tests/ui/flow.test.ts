@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { claimSchema, emptyClaim, type Claim } from "@/lib/claim/types";
 import { calculate } from "@/lib/engine/dual-run";
-import { counterpartyOf, screensFor, setCoverage, setItem, setPropertyCount, setVictimCount, skip, skippedLabels, toggleCoverage, unskip, visibleItems } from "@/lib/ui/flow";
+import { counterpartyOf, screensFor, setCoverage, setItem, setPropertyCount, setVictimCount, skip, skippedLabels, standardFillable, toggleCoverage, unskip, visibleItems } from "@/lib/ui/flow";
 
 // 입력 7단계의 화면 순서·건너뛰기·항목 고르기(라운드 5). 화면이 쓰는 함수만으로 사례 (1)·(2)를 입력해 엔진 값과 맞춰 본다.
 
@@ -9,7 +9,7 @@ const base = (): Claim => ({ ...emptyClaim(), accident: { ...emptyClaim().accide
 const kinds = (claim: Claim) => screensFor(claim).map((s) => s.kind);
 
 describe("화면 순서", () => {
-  it("7단계가 순서대로 나오고 마지막은 결과 미리보기(카드가 있어야 6단계가 생긴다)", () => {
+  it("7단계가 순서대로 나오고 마지막은 보상 검토서(카드가 있어야 6단계가 생긴다)", () => {
     expect(screensFor(base()).some((s) => s.step === 6)).toBe(false);
     const screens = screensFor(setVictimCount(base(), "driver", 1));
     expect([...new Set(screens.map((s) => s.step))]).toEqual([1, 2, 3, 4, 5, 6, 7]);
@@ -135,5 +135,20 @@ describe("화면 함수로 입력한 사례가 엔진 기대값과 같다", () =
     expect(at("family_passenger-1:liability_bodily_1:own_insurer")).toEqual([230_000, 1_200_000]);
     expect(at("family_passenger-1:liability_bodily_2:own_insurer")).toEqual([0, 0]);
     expect(at("family_passenger-1:auto_injury:own_insurer")).toEqual([0, 292_000]);
+  });
+});
+
+describe("약관 기준으로 채울 수 있는 칸(라운드 5 보완 B)", () => {
+  it("급수·통원일수·휴업 정보가 있으면 위자료·그 밖의 손해·휴업손해를 세고, 이미 쓰는 항목과 0원은 빼며, 6단계 그 카드 화면으로 보낸다", () => {
+    let c = setVictimCount(base(), "driver", 1);
+    c = { ...c, victims: c.victims.map((v) => ({ ...v, injuryGrade: 9, outpatientDays: 10, daysOffWork: 10, occupation: "homemaker" as const, incomeProven: true })) };
+    expect(standardFillable(c).map((f) => f.code)).toEqual(["solatium_injury", "lost_income", "other_injury"]);
+    expect(standardFillable(c)[0]).toMatchObject({ screenId: "losses:driver-1", label: "나(운전자): 부상 위자료" });
+    // 위자료를 약관 기준으로 쓰기 시작하면(빈 항목) 빠진다
+    c = setItem(c, "driver-1", "solatium_injury", { standard: true });
+    expect(standardFillable(c).map((f) => f.code)).toEqual(["lost_income", "other_injury"]);
+    // 수입 감소를 증명하지 못하면 휴업손해 약관 기준은 0원이라 세지 않는다
+    c = { ...c, victims: c.victims.map((v) => ({ ...v, incomeProven: false })) };
+    expect(standardFillable(c).map((f) => f.code)).toEqual(["other_injury"]);
   });
 });

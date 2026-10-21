@@ -1,176 +1,319 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { lossItemDef } from "@/lib/claim/lossItems";
-import { PAYERS, PAYER_LABELS, type Claim } from "@/lib/claim/types";
+import type { Claim } from "@/lib/claim/types";
 import { calculateScenarios } from "@/lib/engine/fault-scenarios";
-import type { Result, ResultLine } from "@/lib/engine/types";
-import { skippedLabels } from "@/lib/ui/flow";
+import { buildReview, type Review } from "@/lib/report/review";
+import { skippedLabels, standardFillable } from "@/lib/ui/flow";
 import { manwon } from "../fields";
 
-// MASTER.md 7장 7단계 결과 미리보기: 맨 위 세 숫자 + 담보 표. 정식 보상 검토서(8장)는 라운드 6.
+// MASTER.md 8장 보상 검토서(7단계). 위에서 결론(세 숫자·받을 곳별), 아래로 근거(담보·시나리오·입력 필요·서류·다음 할 일).
+// 화면·엑셀·PDF가 같은 검토서 모델(lib/report/review.ts)을 쓴다. 모델의 글자는 모두 개인정보 가림을 거친다.
 
 const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
-
-const STATUS_TEXT: Record<ResultLine["status"], string> = { paid: "", excluded: "보상 안 됨", needs_input: "입력 필요", not_implemented: "계산 준비 중" };
 
 function Big({ label, value, sub, tone }: { label: string; value: number; sub?: string; tone?: "estimate" | "burden" }) {
   const color = tone === "estimate" ? "border-estimate-line bg-estimate text-estimate-ink" : tone === "burden" ? "border-ink bg-white text-ink" : "border-ink bg-ink text-white";
   return (
-    <div className={`rounded-2xl border-2 p-4 ${color}`}>
+    <div className={`rounded-2xl border-2 px-4 py-3 ${color}`}>
       <p className="text-sm font-bold">{label}</p>
       <p className="text-3xl font-bold tracking-tight">{manwon(value)}</p>
-      <p className="text-sm font-semibold opacity-90">{won(value)}{sub ? ` · ${sub}` : ""}</p>
+      <p className="text-sm font-semibold opacity-90">
+        {won(value)}
+        {sub ? ` · ${sub}` : ""}
+      </p>
     </div>
   );
 }
 
-function Summary({ result, claim }: { result: Result; claim: Claim }) {
-  if (result.blocked) return <p className="rounded-xl border-2 border-ink bg-white p-4 font-bold">{result.blocked}</p>;
-  const { totals } = result;
-  const missing = [
-    ...skippedLabels(claim).map((label) => `건너뜀: ${label}`),
-    ...result.cards.flatMap((card) => card.missing.map((code) => `${card.label}: ${lossItemDef(code)?.label ?? code} 금액(서류)`)),
-    ...result.lines.filter((l) => l.status === "needs_input").map((l) => `${l.cardLabel} ${l.label}: ${l.formula}`),
-  ];
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="space-y-5">
-      <div className="space-y-2">
-        <Big label="확정 기준 받을 돈" value={totals.receive.confirmed} sub="서류로 확인한 금액만" />
-        <Big label="추정 포함 받을 돈" value={totals.receive.withEstimates} sub={`추정분 ${manwon(totals.receive.estimatePart)}`} tone="estimate" />
-        <Big label="내가 낼 돈" value={totals.burden.withEstimates} sub={`확정 기준 ${manwon(totals.burden.confirmed)}`} tone="burden" />
-        {totals.toCounterparty.withEstimates > 0 && <p className="text-sm font-bold">내 보험이 상대방에게 줄 돈(추정 포함): {manwon(totals.toCounterparty.withEstimates)}</p>}
-      </div>
-
-      <section>
-        <h3 className="mb-2 text-lg font-bold">받을 곳별</h3>
-        <ul className="divide-y-2 divide-line rounded-2xl border-2 border-line bg-white">
-          {PAYERS.filter((p) => totals.byPayer[p].withEstimates > 0).map((p) => (
-            <li key={p} className="px-4 py-3 font-bold">
-              <span className="block">{PAYER_LABELS[p]}</span>
-              <span className="mt-1 flex justify-between text-sm">
-                <span>확정</span>
-                <span>{manwon(totals.byPayer[p].confirmed)}</span>
-              </span>
-              <span className="flex justify-between text-sm text-estimate-ink">
-                <span>추정 포함</span>
-                <span>{manwon(totals.byPayer[p].withEstimates)}</span>
-              </span>
-            </li>
-          ))}
-          {PAYERS.every((p) => totals.byPayer[p].withEstimates === 0) && <li className="px-4 py-3 font-semibold">아직 받을 돈이 계산되지 않았습니다.</li>}
-        </ul>
-      </section>
-
-      {result.cards.map((card) => {
-        const lines = result.lines.filter((l) => l.cardId === card.cardId);
-        return (
-          <section key={card.cardId} className="rounded-2xl border-2 border-line bg-white p-4">
-            <h3 className="text-lg font-bold">{card.label}</h3>
-            <p className="text-sm font-semibold text-ink-soft">
-              실제손해 {manwon(card.actualLoss.confirmed)} <span className="text-estimate-ink">/ {manwon(card.actualLoss.withEstimates)}</span> · 보상 안 되는 손해 {manwon(card.uncovered.withEstimates)}
-            </p>
-            {/* 좁은 화면에서도 숫자가 꺾이지 않게, 담보마다 한 덩어리로 두고 금액 세 칸을 나란히 둔다 */}
-            <ul className="mt-3 divide-y-2 divide-line">
-              {lines.map((l) => (
-                <li key={l.key} className="py-3">
-                  <p className="font-bold">
-                    {l.label} <span className="text-sm font-semibold text-ink-soft">· {PAYER_LABELS[l.payer]}{l.status !== "paid" ? ` · ${STATUS_TEXT[l.status]}` : ""}</span>
-                  </p>
-                  <dl className="mt-2 grid grid-cols-3 gap-2 text-right">
-                    <div>
-                      <dt className="text-xs font-bold">확정</dt>
-                      <dd className="font-bold tabular-nums">{l.confirmed.toLocaleString("ko-KR")}</dd>
-                    </div>
-                    <div className="text-estimate-ink">
-                      <dt className="text-xs font-bold">추정 포함</dt>
-                      <dd className="font-bold tabular-nums">{l.withEstimates.toLocaleString("ko-KR")}</dd>
-                    </div>
-                    <div className="text-estimate-ink">
-                      <dt className="text-xs font-bold">추정분</dt>
-                      <dd className="font-bold tabular-nums">{l.estimatePart.toLocaleString("ko-KR")}</dd>
-                    </div>
-                  </dl>
-                  <details className="mt-2">
-                    <summary className="cursor-pointer text-sm font-bold">계산식·근거</summary>
-                    <p className="mt-1 text-sm font-semibold">{l.formula}</p>
-                    <p className="mt-1 text-xs font-semibold text-ink-soft">{l.basis}</p>
-                    {l.flags.map((f) => (
-                      <p key={f} className="mt-1 text-xs font-bold text-estimate-ink">· {f}</p>
-                    ))}
-                  </details>
-                </li>
-              ))}
-            </ul>
-            {result.notes.filter((n) => n.cardId === card.cardId).map((n) => (
-              <p key={n.key} className="mt-2 text-sm font-semibold">· {n.text}</p>
-            ))}
-            {card.notes.map((n) => (
-              <p key={n} className="mt-2 text-sm font-semibold text-estimate-ink">· {n}</p>
-            ))}
-          </section>
-        );
-      })}
-
-      {result.burdens.length > 0 && (
-        <section>
-          <h3 className="mb-2 text-lg font-bold">내가 낼 돈</h3>
-          <ul className="divide-y-2 divide-line rounded-2xl border-2 border-line bg-white">
-            {result.burdens.map((b) => (
-              <li key={b.key} className="px-4 py-3">
-                <p className="flex justify-between font-bold">
-                  <span>{b.label}</span>
-                  <span>{manwon(b.withEstimates)}</span>
-                </p>
-                <p className="text-xs font-semibold text-ink-soft">{b.formula} · {b.basis}</p>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {missing.length > 0 && (
-        <section>
-          <h3 className="mb-2 text-lg font-bold">입력 필요</h3>
-          <ul className="space-y-1 rounded-2xl border-2 border-line bg-white p-4 text-sm font-semibold">
-            {missing.map((m) => (
-              <li key={m}>· {m}</li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {result.notices.length > 0 && (
-        <section className="space-y-1 text-sm font-semibold text-ink-soft">
-          {result.notices.map((n) => (
-            <p key={n}>※ {n}</p>
-          ))}
-        </section>
-      )}
-    </div>
+    <section>
+      <h3 className="mb-2 text-lg font-bold">{title}</h3>
+      {children}
+    </section>
   );
 }
 
-export function Step7Review({ claim }: { claim: Claim }) {
+const box = "rounded-2xl border-2 border-line bg-white";
+
+/** 담보 한 줄: 금액 세 칸은 나란히(390px에서도 숫자가 꺾이지 않게), 계산식·조항은 펼쳐 본다. 면책 사유는 늘 보인다 */
+function Line({ line }: { line: Review["cards"][number]["lines"][number] }) {
+  return (
+    <li className="py-3">
+      <p className="font-bold">
+        {line.label}{" "}
+        <span className="text-sm font-semibold text-ink-soft">
+          · {line.payer}
+          {line.status !== "지급" ? ` · ${line.status}` : ""}
+        </span>
+      </p>
+      <dl className="mt-2 grid grid-cols-3 gap-2 text-right">
+        <div>
+          <dt className="text-xs font-bold">확정</dt>
+          <dd className="font-bold tabular-nums">{line.confirmed.toLocaleString("ko-KR")}</dd>
+        </div>
+        <div className="text-estimate-ink">
+          <dt className="text-xs font-bold">추정 포함</dt>
+          <dd className="font-bold tabular-nums">{line.withEstimates.toLocaleString("ko-KR")}</dd>
+        </div>
+        <div className="text-estimate-ink">
+          <dt className="text-xs font-bold">추정분</dt>
+          <dd className="font-bold tabular-nums">{line.estimatePart.toLocaleString("ko-KR")}</dd>
+        </div>
+      </dl>
+      {line.exclusion && <p className="mt-2 text-sm font-bold">면책 사유: {line.exclusion}</p>}
+      <details className="mt-2">
+        <summary className="cursor-pointer text-sm font-bold">계산식·약관 조항</summary>
+        {line.formula && <p className="mt-1 text-sm font-semibold">{line.formula}</p>}
+        <p className="mt-1 text-xs font-semibold text-ink-soft">약관 조항: {line.basis}</p>
+        {line.flags.map((f) => (
+          <p key={f} className="mt-1 text-xs font-bold text-estimate-ink">
+            · {f}
+          </p>
+        ))}
+      </details>
+    </li>
+  );
+}
+
+type SaveState = { kind: "xlsx" | "pdf"; status: "working" | "error"; message?: string } | null;
+
+/** 브라우저에서 파일로 내려받는다(인쇄 창이 아니라 다운로드) */
+function download(bytes: Uint8Array, name: string, type: string) {
+  const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}
+
+async function saveReview(review: Review, kind: "xlsx" | "pdf") {
+  // 파일 이름에는 사고일과 과실만 넣는다(개인정보 없음)
+  const name = `보상검토서_${review.accident.date === "모름" ? "사고일모름" : review.accident.date}_내과실${review.faultPercent}`;
+  if (kind === "xlsx") {
+    const { reviewToXlsx } = await import("@/lib/export/excel");
+    download(await reviewToXlsx(review), `${name}.xlsx`, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    return;
+  }
+  const { PDF_FONT_FILES, reviewToPdf } = await import("@/lib/export/pdf");
+  const font = async (file: string) => {
+    const response = await fetch(`/fonts/${file}`);
+    if (!response.ok) throw new Error(`글꼴을 불러오지 못했습니다(${response.status})`);
+    return new Uint8Array(await response.arrayBuffer());
+  };
+  const [regular, bold] = await Promise.all([font(PDF_FONT_FILES.regular), font(PDF_FONT_FILES.bold)]);
+  download(await reviewToPdf(review, { regular, bold }), `${name}.pdf`, "application/pdf");
+}
+
+export function Step7Review({ claim, goTo }: { claim: Claim; goTo: (screenId: string, anchor?: string) => void }) {
   const results = useMemo(() => calculateScenarios(claim), [claim]);
   const [index, setIndex] = useState(0);
-  const result = results[Math.min(index, results.length - 1)];
+  const review = useMemo(() => buildReview(claim, results, index, skippedLabels(claim)), [claim, results, index]);
+  const fillable = useMemo(() => standardFillable(claim), [claim]);
+  const [saving, setSaving] = useState<SaveState>(null);
+
+  const save = async (kind: "xlsx" | "pdf") => {
+    setSaving({ kind, status: "working" });
+    try {
+      await saveReview(review, kind);
+      setSaving(null);
+    } catch (error) {
+      setSaving({ kind, status: "error", message: error instanceof Error ? error.message : String(error) });
+    }
+  };
+
   return (
-    <div className="space-y-4">
-      <p className="rounded-xl border-2 border-estimate-line bg-estimate px-4 py-3 font-bold text-estimate-ink">추정액이며 확정 금액은 보험사가 정합니다.</p>
+    <div className="space-y-5">
+      {/* 고지는 화면을 내려도 맨 위에 붙어 있다 */}
+      <p className="sticky top-0 z-10 rounded-xl border-2 border-estimate-line bg-estimate px-4 py-2 font-bold text-estimate-ink">{review.notice}</p>
+
       {results.length > 1 && (
         <div>
-          <p className="mb-2 font-bold">과실을 몰라 네 경우로 계산했습니다. 내 과실:</p>
+          <p className="mb-2 text-sm font-bold">과실을 몰라 네 경우로 계산했습니다. 내 과실:</p>
           <div className="grid grid-cols-4 gap-2" role="tablist">
             {results.map((r, i) => (
-              <button key={r.faultPercent} type="button" role="tab" aria-selected={i === index} className={`min-h-12 rounded-xl border-2 font-bold ${i === index ? "border-ink bg-ink text-white" : "border-line bg-white"}`} onClick={() => setIndex(i)}>
+              <button key={r.faultPercent} type="button" role="tab" aria-selected={i === index} className={`min-h-11 rounded-xl border-2 font-bold ${i === index ? "border-ink bg-ink text-white" : "border-line bg-white"}`} onClick={() => setIndex(i)}>
                 {r.faultPercent}%
               </button>
             ))}
           </div>
         </div>
       )}
-      <Summary result={result} claim={claim} />
+
+      {review.blocked ? (
+        <p className="rounded-xl border-2 border-ink bg-white p-4 font-bold">{review.blocked}</p>
+      ) : (
+        <div className="space-y-2">
+          <Big label="확정 기준 받을 돈" value={review.top.receiveConfirmed} sub="서류로 확인한 금액만" />
+          <Big label="추정 포함 받을 돈" value={review.top.receiveWithEstimates} sub={`추정분 ${manwon(review.top.receiveEstimatePart)}`} tone="estimate" />
+          <Big label="내가 낼 돈" value={review.top.burdenWithEstimates} sub={`확정 기준 ${manwon(review.top.burdenConfirmed)}`} tone="burden" />
+          {review.top.toCounterparty > 0 && <p className="text-sm font-bold">내 보험이 상대방에게 줄 돈(추정 포함): {manwon(review.top.toCounterparty)}</p>}
+        </div>
+      )}
+
+      {/* 라운드 5 보완 B: 약관 기준으로 채울 수 있는 칸 */}
+      {fillable.length > 0 && (
+        <div className="rounded-2xl border-2 border-estimate-line bg-estimate p-4 text-estimate-ink">
+          <p className="font-bold">약관 기준으로 채울 수 있는 칸이 {fillable.length}개 있어요</p>
+          <p className="mt-1 text-sm font-semibold">{fillable.map((f) => f.label).join(" · ")}</p>
+          <button type="button" className="mt-3 min-h-11 rounded-xl bg-estimate-ink px-4 font-bold text-white" onClick={() => goTo(fillable[0].screenId, `loss-${fillable[0].code}`)}>
+            채우기
+          </button>
+        </div>
+      )}
+
+      <div>
+        <div className="grid grid-cols-2 gap-2">
+          {(["xlsx", "pdf"] as const).map((kind) => (
+            <button key={kind} type="button" disabled={saving?.status === "working"} className="min-h-12 rounded-xl border-2 border-ink bg-white font-bold disabled:opacity-50" onClick={() => save(kind)}>
+              {saving?.kind === kind && saving.status === "working" ? "만드는 중…" : kind === "xlsx" ? "엑셀로 저장" : "PDF로 저장"}
+            </button>
+          ))}
+        </div>
+        {saving?.status === "error" && <p className="mt-2 text-sm font-bold">저장하지 못했습니다: {saving.message}</p>}
+        <p className="mt-2 text-xs font-semibold text-ink-soft">파일은 이 기기에만 저장됩니다. 주민번호·증권번호·차량번호·전화번호는 가려서 넣습니다.</p>
+      </div>
+
+      <Section title="계산 기준">
+        <ul className={`${box} space-y-1 p-4 text-sm font-semibold`}>
+          {review.standards.map((s) => (
+            <li key={s}>· {s}</li>
+          ))}
+        </ul>
+      </Section>
+
+      <Section title="받을 곳별">
+        <ul className={`divide-y-2 divide-line ${box}`}>
+          {review.byPayer.map((p) => (
+            <li key={p.payer} className="px-4 py-3 font-bold">
+              <span className="block">{p.payer}</span>
+              <span className="mt-1 flex justify-between text-sm">
+                <span>확정</span>
+                <span>{manwon(p.confirmed)}</span>
+              </span>
+              <span className="flex justify-between text-sm text-estimate-ink">
+                <span>추정 포함</span>
+                <span>{manwon(p.withEstimates)}</span>
+              </span>
+            </li>
+          ))}
+          {review.byPayer.length === 0 && <li className="px-4 py-3 font-semibold">아직 받을 돈이 계산되지 않았습니다.</li>}
+        </ul>
+      </Section>
+
+      <Section title="사람·물건별 담보">
+        <div className="space-y-3">
+          {review.cards.map((card) => (
+            <section key={card.label} className={`${box} p-4`} data-card={card.label}>
+              <h4 className="text-lg font-bold">{card.label}</h4>
+              <p className="text-sm font-semibold text-ink-soft">
+                실제손해 {manwon(card.actualLoss.confirmed)} <span className="text-estimate-ink">/ {manwon(card.actualLoss.withEstimates)}</span> · 보상 안 되는 손해 {manwon(card.uncovered.withEstimates)}
+              </p>
+              <ul className="mt-1 divide-y-2 divide-line">
+                {card.lines.map((line) => (
+                  <Line key={`${line.label}:${line.payer}`} line={line} />
+                ))}
+              </ul>
+              {card.notes.map((n) => (
+                <p key={n} className="mt-2 text-sm font-semibold text-estimate-ink">
+                  · {n}
+                </p>
+              ))}
+            </section>
+          ))}
+        </div>
+      </Section>
+
+      {review.burdens.length > 0 && (
+        <Section title="내가 낼 돈 내역">
+          <ul className={`divide-y-2 divide-line ${box}`}>
+            {review.burdens.map((b) => (
+              <li key={b.label} className="px-4 py-3">
+                <p className="flex justify-between gap-2 font-bold">
+                  <span>{b.label}</span>
+                  <span className="shrink-0">{manwon(b.withEstimates)}</span>
+                </p>
+                <p className="text-xs font-semibold text-ink-soft">
+                  {b.formula} · {b.basis}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
+
+      {review.scenarios.length > 1 && (
+        <Section title="과실 시나리오">
+          <div className={`${box} overflow-hidden text-sm`}>
+            <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr] gap-2 border-b-2 border-ink px-3 py-2 text-xs font-bold">
+              <span>경우</span>
+              <span className="text-right">받을 돈 확정</span>
+              <span className="text-right text-estimate-ink">추정 포함</span>
+              <span className="text-right">내가 낼 돈</span>
+            </div>
+            {review.scenarios.map((s) => (
+              <div key={s.label} className={`grid grid-cols-[1.4fr_1fr_1fr_1fr] gap-2 border-b border-line px-3 py-2 font-bold tabular-nums last:border-b-0 ${s.faultPercent === review.faultPercent ? "bg-surface" : ""}`}>
+                <span>{s.label.replace("내 과실 ", "")}</span>
+                <span className="text-right">{manwon(s.receiveConfirmed)}</span>
+                <span className="text-right text-estimate-ink">{manwon(s.receiveWithEstimates)}</span>
+                <span className="text-right">{manwon(s.burdenWithEstimates)}</span>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {review.missing.length > 0 && (
+        <Section title="입력 필요">
+          <ul className={`${box} space-y-1 p-4 text-sm font-semibold`}>
+            {review.missing.map((m) => (
+              <li key={m}>· {m}</li>
+            ))}
+          </ul>
+        </Section>
+      )}
+
+      {review.checklist.length > 0 && (
+        <Section title="필요 서류 체크리스트">
+          <div className="space-y-3">
+            {review.checklist.map((group) => (
+              <fieldset key={`${group.payer}:${group.coverage}`} className={`${box} p-4`}>
+                <legend className="px-1 font-bold">
+                  {group.payer} · {group.coverage}
+                </legend>
+                {group.docs.map((d) => (
+                  <label key={d.label} className="flex min-h-11 items-start gap-3 py-1 text-sm font-semibold">
+                    <input type="checkbox" className="mt-0.5 size-5 shrink-0 accent-ink" />
+                    <span>
+                      {d.label} <span className="text-ink-soft">(약관 제27조 {d.clause27}호)</span>
+                    </span>
+                  </label>
+                ))}
+              </fieldset>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      <Section title="다음 할 일">
+        <ol className={`${box} list-decimal space-y-1 py-4 pr-4 pl-9 text-sm font-semibold`}>
+          {review.nextSteps.map((s) => (
+            <li key={s}>{s}</li>
+          ))}
+        </ol>
+      </Section>
+
+      {review.notices.length > 0 && (
+        <section className="space-y-1 text-sm font-semibold text-ink-soft">
+          {review.notices.map((n) => (
+            <p key={n}>※ {n}</p>
+          ))}
+        </section>
+      )}
     </div>
   );
 }

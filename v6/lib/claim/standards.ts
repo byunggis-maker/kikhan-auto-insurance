@@ -67,7 +67,30 @@ export const LOST_INCOME = { ratePercent: 85, basis: { source: "별표1 나. 부
  * 휴업손해 직업 구분(별표1 나. 3. 다., 인쇄 77쪽): 가사종사자는 일용근로자 임금, 무직자·유아·학생·연금생활자 등은 수입 감소 없음.
  * 일용근로자 임금은 약관에 금액이 없다(통계작성지정기관이 공표한 노임 — 별표1 가. 3. 용어풀이 ②, 인쇄 73쪽). 값과 출처를 사람이 넣기 전까지 null.
  */
-export const DAILY_WAGE = { value: null as number | null, basis: { source: "별표1 가. 사망 3. 상실수익액 용어풀이 ②(일용근로자 임금의 정의)", page: 73 } satisfies Basis };
+export const DAILY_WAGE = {
+  basis: { source: "별표1 가. 사망 3. 상실수익액 용어풀이 ②(일용근로자 임금의 정의)", page: 73 } satisfies Basis,
+  /** 약관 산식(인쇄 74쪽): (공사부문 보통인부임금 + 제조부문 단순노무종사원임금) / 2, 월 임금 산출 시 25일 기준 */
+  definition: "(공사부문 보통인부임금 + 제조부문 단순노무종사원임금) / 2",
+  daysPerMonth: 25,
+};
+
+/**
+ * 일용근로자 임금(1일)의 적용일별 값(라운드 5 Q1, 결정 기록 D-31). 사고일에 적용 중인 값을 고른다.
+ * 값은 칸이 준 2차 자료 확인값이다. 대한건설협회·중소기업중앙회 공표 원문과 아직 대조하지 못했고,
+ * 약관 정의(두 임금의 평균)와 같은 값인지 확인이 필요해 결과에 '검토 필요'를 붙인다.
+ */
+export const DAILY_WAGES: { effectiveFrom: string; value: number; source: string }[] = [
+  { effectiveFrom: "2025-09-01", value: 171_037, source: "칸 제공(2차 자료)" },
+  { effectiveFrom: "2026-01-01", value: 172_068, source: "칸 제공(2차 자료)" },
+  { effectiveFrom: "2026-09-01", value: 172_698, source: "칸 제공(2차 자료 확인값)" },
+];
+
+export function dailyWageFor(date: string): { effectiveFrom: string; value: number; source: string } | null {
+  return [...DAILY_WAGES].filter((entry) => entry.effectiveFrom <= date).sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom))[0] ?? null;
+}
+
+/** 유직자가 현실소득액을 증명하기 곤란하면 일용근로자 임금(별표1 가. 3. 나.(1) 2), 인쇄 74쪽 — 휴업손해 다.(1)(가)가 준용) */
+export const UNPROVEN_EARNER = { basis: { source: "별표1 나. 3. 다.(1)(가) → 가. 3. 나.(1) 2) 현실소득액을 증명하기 곤란한 자", page: 74 } satisfies Basis };
 export const NO_LOSS_OCCUPATIONS = { basis: { source: "별표1 나. 부상 3. 휴업손해 다.(3)", page: 77 } satisfies Basis };
 export const HOMEMAKER = { basis: { source: "별표1 나. 부상 3. 휴업손해 다.(2)", page: 77 } satisfies Basis };
 

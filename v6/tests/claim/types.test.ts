@@ -51,6 +51,7 @@ describe("자료 구조(MASTER.md 4장)", () => {
       monthlyIncome: null,
       incomeProven: null,
       occupation: null,
+      incomeAmountProven: null,
       losses: [],
       userTotal: 3_000_000,
     };

@@ -59,6 +59,12 @@ describe("저장 데이터 버전 변환", () => {
     expect(result.claim.victims[0]).toMatchObject({ incomeProven: null, daysOffWork: 5, occupation: null });
   });
 
+  it("v5 저장값을 v6으로 올리면 월소득 금액 증명 여부는 '모름'(null)", () => {
+    const result = migrate({ version: 5, data: { ...emptyClaim(), victims: [{ ...emptyClaim(), id: "x" }].map(() => ({ id: "나", role: "driver", label: "나", relationToNamedInsured: "self", vehicleDriver: true, age: 40, injuryGrade: 14, disabilityGrade: null, died: false, rideAlongReductionPercent: 0, hospitalDays: null, outpatientDays: null, mealsNotProvided: null, daysOffWork: null, monthlyIncome: null, incomeProven: null, occupation: "employed", losses: [], userTotal: null })) } });
+    expect(result.status).toBe("migrated");
+    expect(result.claim.victims[0]).toMatchObject({ incomeAmountProven: null, occupation: "employed" });
+  });
+
   it("한 단계씩 변환한다: v1 저장값을 v3까지 올린다", () => {
     const migrations = {
       1: (data: unknown) => ({ ...(data as object), skipped: [] }),

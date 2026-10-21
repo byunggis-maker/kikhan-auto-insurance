@@ -1,10 +1,12 @@
 import { documentsFor, itemsFor, lossItemDef, type LossItemDef } from "@/lib/claim/lossItems";
+import { STANDARDS_AS_OF } from "@/lib/claim/standards";
 import { emptyLossItem, type Claim, type Coverage, type Policy, type PolicyCoverage, type Property, type Victim } from "@/lib/claim/types";
+import { pickValue } from "@/lib/engine/losses";
 
 // MASTER.md 7장 입력 7단계의 화면 순서와 상태 변경. React와 분리해 테스트한다(tests/ui/flow.test.ts).
 // 한 화면에 질문 하나가 원칙이다. 6단계의 "치료·휴업 사실"만 한 화면에 묶었다(사람마다 7개 질문이 되면 너무 길어서, 라운드 5 보고서).
 
-export const STEP_TITLES = ["사고 접수", "사람·물건 정리", "내 보험", "상대 보험", "면책·과실", "손해 입력", "결과 미리보기"] as const;
+export const STEP_TITLES = ["사고 접수", "사람·물건 정리", "내 보험", "상대 보험", "면책·과실", "손해 입력", "보상 검토서"] as const;
 
 export type ScreenKind =
   | "narrative"
@@ -95,7 +97,7 @@ export function screensFor(claim: Claim): Screen[] {
   for (const p of claim.properties) add({ id: `propertyLosses:${p.id}`, step: 6, kind: "propertyLosses", cardId: p.id, title: `${p.label}의 손해`, hint: "서류로 확인한 금액과 대략 생각하는 금액을 따로 적으세요." });
 
   // 7 결과 미리보기
-  add({ id: "result", step: 7, kind: "result", title: "결과 미리보기", skippable: false });
+  add({ id: "result", step: 7, kind: "result", title: "보상 검토서", skippable: false });
   return s;
 }
 
@@ -135,7 +137,7 @@ function clearFor(claim: Claim, screen: Screen): Claim {
     case "counterpartyRole":
       return updateVictim(claim, screen.cardId, { vehicleDriver: null });
     case "facts":
-      return updateVictim(claim, screen.cardId, { hospitalDays: null, outpatientDays: null, mealsNotProvided: null, daysOffWork: null, monthlyIncome: null, incomeProven: null, occupation: null });
+      return updateVictim(claim, screen.cardId, { hospitalDays: null, outpatientDays: null, mealsNotProvided: null, daysOffWork: null, monthlyIncome: null, incomeProven: null, occupation: null, incomeAmountProven: null });
     case "vehicleValue":
       return { ...claim, properties: claim.properties.map((p) => (p.id === screen.cardId ? { ...p, valueAtAccident: null } : p)) };
     case "productLine":
@@ -194,6 +196,7 @@ export function newVictim(role: Victim["role"], n: number, claim: Claim): Victim
     monthlyIncome: null,
     incomeProven: null,
     occupation: null,
+    incomeAmountProven: null,
     losses: [],
     userTotal: null,
   };
@@ -307,6 +310,23 @@ const order = (code: string) => {
   const def = lossItemDef(code);
   return def ? ["rescue_cost", "treatment", "future_treatment", "solatium_injury", "lost_income", "nursing", "other_injury", "solatium_disability", "lost_earnings_disability", "home_nursing", "funeral", "solatium_death", "lost_earnings_death", "repair", "replacement_value", "rental", "idle", "business_loss", "depreciation", "towing"].indexOf(code) : 99;
 };
+
+/** 계산에 쓰는 날짜(사고일, 모르면 금액 기준의 날짜). 약관 기준 금액과 일용근로자 임금이 이 날짜로 정해진다 */
+export function claimDate(claim: Claim): string {
+  return claim.accident.occurredAt?.slice(0, 10) ?? STANDARDS_AS_OF;
+}
+
+// ── 7단계 "약관 기준으로 채울 수 있는 칸"(라운드 5 보완 B) ──
+/** 약관 기준 금액이 0원보다 크게 나오는데 아직 쓰지 않은(항목이 없는) 칸. 순서는 6단계 화면 순서 */
+export function standardFillable(claim: Claim): { cardId: string; code: string; label: string; screenId: string }[] {
+  const date = claimDate(claim);
+  return claim.victims.flatMap((victim) =>
+    visibleItems(claim, victim.id)
+      .filter((def) => !victim.losses.some((i) => i.code === def.code))
+      .filter((def) => (pickValue(emptyLossItem(def.code, []), "with_estimates", victim, date)?.amount ?? 0) > 0)
+      .map((def) => ({ cardId: victim.id, code: def.code, label: `${victim.label}: ${def.label}`, screenId: `losses:${victim.id}` })),
+  );
+}
 
 // ── 7단계 "입력 필요" 목록 ──
 export function skippedLabels(claim: Claim): string[] {

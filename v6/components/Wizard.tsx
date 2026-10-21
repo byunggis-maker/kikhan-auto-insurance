@@ -18,7 +18,7 @@ import type { ScreenProps } from "./steps/types";
 // 입력 7단계(MASTER.md 7장). 한 화면에 질문 하나, 아래에 이전·다음과 "모르면 건너뛰기".
 // 입력값과 진행 위치는 이 브라우저의 localStorage에만 저장한다(새로고침해도 이어서 입력).
 
-function Body(props: ScreenProps) {
+function Body(props: ScreenProps & { goTo: (screenId: string, anchor?: string) => void }) {
   switch (props.screen.step) {
     case 1:
       return <Step1Accident {...props} />;
@@ -33,7 +33,7 @@ function Body(props: ScreenProps) {
     case 6:
       return <Step6Losses {...props} />;
     default:
-      return <Step7Review claim={props.claim} />;
+      return <Step7Review claim={props.claim} goTo={props.goTo} />;
   }
 }
 
@@ -41,6 +41,8 @@ export function Wizard() {
   const [claim, setClaim] = useState<Claim | null>(null);
   const [screenId, setScreenId] = useState<string>("narrative");
   const top = useRef<HTMLDivElement>(null);
+  /** 화면을 옮긴 뒤 스크롤할 칸(7단계 "채우기" → 6단계의 그 항목 카드) */
+  const anchor = useRef<string | null>(null);
 
   // 처음 한 번 불러오기(서버 렌더링에는 localStorage가 없으므로 화면에 붙은 뒤에)
   useEffect(() => {
@@ -56,6 +58,10 @@ export function Wizard() {
   }, [claim]);
   useEffect(() => {
     saveProgress({ screenId });
+    if (anchor.current) {
+      document.getElementById(anchor.current)?.scrollIntoView({ block: "start" });
+      anchor.current = null;
+    }
   }, [screenId]);
 
   const screens = useMemo(() => (claim ? screensFor(claim) : []), [claim]);
@@ -70,6 +76,12 @@ export function Wizard() {
     },
     [screens],
   );
+
+  const goTo = (id: string, target?: string) => {
+    anchor.current = target ?? null;
+    setScreenId(id);
+    if (!target) top.current?.scrollIntoView({ block: "start" });
+  };
 
   if (!claim || !screen) return <p className="p-6 font-bold">불러오는 중…</p>;
 
@@ -108,7 +120,7 @@ export function Wizard() {
         <h1 className="text-2xl font-bold leading-snug">{screen.title}</h1>
         {screen.hint && <p className="mt-2 font-semibold text-ink-soft">{screen.hint}</p>}
         <div className="mt-5">
-          <Body screen={screen} claim={claim} update={update} />
+          <Body screen={screen} claim={claim} update={update} goTo={goTo} />
         </div>
         {screen.skippable && (
           <div className="mt-6">

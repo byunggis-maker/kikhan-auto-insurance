@@ -1,6 +1,6 @@
 import { STANDARDS_EDITION, editionFor, latestEdition } from "@/lib/claim/editions";
 import { paymentLabel } from "@/lib/claim/payer";
-import { ACCIDENT_BURDEN, BASIS_TEXT, COMPULSORY, STANDARDS_AS_OF, compulsoryRuleItems } from "@/lib/claim/standards";
+import { ACCIDENT_BURDEN, BASIS_TEXT, COMPULSORY, STANDARDS_AS_OF, compulsoryRuleItems, dailyWageFor } from "@/lib/claim/standards";
 import type { Claim, Coverage, InsuranceStatus, Limit, Policy, PolicyCoverage, Property, Victim } from "@/lib/claim/types";
 import { allocate, autoInjury, compulsoryBodily, excess, minorInjuryShare, ownDamagePay, propertyLiability, selfInjury, won, type Paid } from "./adjust";
 import { capToLoss } from "./dedupe";
@@ -114,7 +114,11 @@ export function runOnce(claim: Claim, faultPercent: number, mode: ValueMode): Ru
 
   // ── 사람 카드 ──
   function person(victim: Victim) {
-    const loss = personLoss(victim, mode);
+    const loss = personLoss(victim, mode, date);
+    if (loss.details.some((d) => d.formula.includes("일용근로자 임금 "))) {
+      const wage = dailyWageFor(date);
+      if (wage) notices.push(`일용근로자 임금 ${wage.value.toLocaleString("ko-KR")}원(${wage.effectiveFrom} 적용, ${wage.source})으로 계산했습니다. 약관 정의는 (공사부문 보통인부임금 + 제조부문 단순노무종사원임금)/2입니다. 공표 원문과 대조가 필요합니다.`);
+    }
     const side: Side = victim.role === "counterparty" ? "counterparty" : "mine";
     cards.push({ cardId: victim.id, label: victim.label, kind: "person", side, actualLoss: loss.actualLoss, missing: loss.missing, notes: loss.notes, details: loss.details });
     const legacy = (fault: number, vehicleDriver: boolean | null): LegacyClaim => ({ person: legacyPerson(victim, fault, vehicleDriver), accidentDate: date, ledger: loss.ledger, rules });

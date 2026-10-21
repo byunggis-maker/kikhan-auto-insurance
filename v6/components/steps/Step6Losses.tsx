@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { COVERAGE_DOCUMENTS, DOCUMENTS, type DocumentId } from "@/lib/claim/lossItems";
+import { dailyWageFor } from "@/lib/claim/standards";
 import { OCCUPATIONS, OCCUPATION_LABELS, type Property, type Victim } from "@/lib/claim/types";
-import { setItem, visibleItems } from "@/lib/ui/flow";
+import { claimDate, setItem, visibleItems } from "@/lib/ui/flow";
 import { Check, Choice, IntInput, MoneyInput, manwon } from "../fields";
 import { LossCard } from "../LossCard";
 import type { ScreenProps } from "./types";
@@ -21,7 +22,16 @@ export function Step6Losses({ screen, claim, update }: ScreenProps) {
   const setVictim = (change: Partial<Victim>) => update((c) => ({ ...c, victims: c.victims.map((v) => (v.id === screen.cardId ? { ...v, ...change } : v)) }));
   const setProperty = (change: Partial<Property>) => update((c) => ({ ...c, properties: c.properties.map((p) => (p.id === screen.cardId ? { ...p, ...change } : p)) }));
 
+  const yesNo = [
+    { value: "yes", label: "예" },
+    { value: "no", label: "아니오" },
+    { value: "unknown", label: "모름" },
+  ] as const;
+  const toChoice = (value: boolean | null) => (value === true ? "yes" : value === false ? "no" : null);
+  const fromChoice = (choice: string) => (choice === "yes" ? true : choice === "no" ? false : null);
+
   if (screen.kind === "facts" && victim) {
+    const wage = dailyWageFor(claimDate(claim));
     return (
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
@@ -34,20 +44,22 @@ export function Step6Losses({ screen, claim, update }: ScreenProps) {
           <p className="mb-2 font-bold">사고 당시 하던 일</p>
           <Choice columns={2} options={OCCUPATIONS.map((o) => ({ value: o, label: OCCUPATION_LABELS[o] }))} value={victim.occupation} onChange={(occupation) => setVictim({ occupation })} />
         </div>
-        {(victim.occupation === "employed" || victim.occupation === null) && <MoneyInput label="월 소득(세금 뗀 금액)" value={victim.monthlyIncome} onChange={(monthlyIncome) => setVictim({ monthlyIncome })} />}
+        {(victim.occupation === "employed" || victim.occupation === null) && (
+          <>
+            <MoneyInput label="월 소득(세금 뗀 금액)" value={victim.monthlyIncome} onChange={(monthlyIncome) => setVictim({ monthlyIncome })} />
+            <div>
+              <p className="mb-2 font-bold">월 소득 금액을 세금 서류로 증명할 수 있나요?</p>
+              <p className="mb-2 text-sm font-semibold text-ink-soft">
+                원천징수영수증·소득금액증명 등. 증명하기 어려우면 일용근로자 임금{wage ? `(1일 ${wage.value.toLocaleString("ko-KR")}원)` : ""}으로 계산합니다(약관 별표1, 인쇄 74쪽).
+              </p>
+              <Choice columns={3} options={[...yesNo]} value={toChoice(victim.incomeAmountProven)} onChange={(choice) => setVictim({ incomeAmountProven: fromChoice(choice) })} />
+            </div>
+          </>
+        )}
         <div>
-          <p className="mb-2 font-bold">소득과 일하지 못한 사실을 서류로 증명할 수 있나요?</p>
-          <p className="mb-2 text-sm font-semibold text-ink-soft">휴업손해는 증명할 수 있을 때만 받습니다(약관 별표1).</p>
-          <Choice
-            columns={3}
-            options={[
-              { value: "yes", label: "예" },
-              { value: "no", label: "아니오" },
-              { value: "unknown", label: "모름" },
-            ]}
-            value={victim.incomeProven === true ? "yes" : victim.incomeProven === false ? "no" : null}
-            onChange={(choice) => setVictim({ incomeProven: choice === "yes" ? true : choice === "no" ? false : null })}
-          />
+          <p className="mb-2 font-bold">일하지 못해 수입이 줄었다는 사실을 서류로 증명할 수 있나요?</p>
+          <p className="mb-2 text-sm font-semibold text-ink-soft">휴업손해는 수입 감소를 증명할 수 있을 때만 받습니다(약관 별표1 나. 3. 가., 인쇄 76쪽).</p>
+          <Choice columns={3} options={[...yesNo]} value={toChoice(victim.incomeProven)} onChange={(choice) => setVictim({ incomeProven: fromChoice(choice) })} />
         </div>
       </div>
     );
@@ -65,7 +77,7 @@ export function Step6Losses({ screen, claim, update }: ScreenProps) {
     <div className="space-y-3">
       {property?.role === "my_vehicle" && <Check label="사업용 차(택시·화물 등)" hint="렌트비 대신 휴차료로 계산합니다" checked={property.commercialUse === true} onChange={(commercialUse) => setProperty({ commercialUse })} />}
       {items.map((def) => (
-        <LossCard key={def.code} def={def} item={card.losses.find((i) => i.code === def.code)} victim={victim} onChange={(change) => update((c) => setItem(c, card.id, def.code, change))} />
+        <LossCard key={def.code} date={claimDate(claim)} def={def} item={card.losses.find((i) => i.code === def.code)} victim={victim} onChange={(change) => update((c) => setItem(c, card.id, def.code, change))} />
       ))}
       {hidden > 0 && (
         <button type="button" className="min-h-12 w-full rounded-xl border-2 border-line bg-white font-bold" onClick={() => setMore(true)}>
