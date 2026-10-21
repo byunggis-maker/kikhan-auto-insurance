@@ -1,0 +1,8 @@
+# 배포에 올리지 않는 것(라운드 8). Vercel이 서버에서 npm install·next build를 한다.
+.tmp
+tmp-test
+.next
+node_modules
+.env*
+!.env.example
+tsconfig.tsbuildinfo
