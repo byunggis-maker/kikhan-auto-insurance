@@ -7,7 +7,8 @@ import { ACCIDENT_DATE, RULE_ITEMS, at, expectOk, injuryClaim, line, person } fr
 // 치료관계비 하한과 경상(12~14급) 구상. 사례와 기대값은 compass/tests/person-coverage.test.ts의 손 검산을 그대로 옮겼다
 // (원본 줄: 14급 60–77, 9급 30% 112–123, 9급 70% 125–134, 12급 146–166, 원 미만 219–228, 사망 95% 266–274, 무보험 5급 204–217).
 // 원본은 V2 손해 산정으로 장부를 만들지만, 여기서는 그 결과 금액(치료관계비와 그 밖의 손해)으로 장부를 직접 만든다.
-// 금액 기준은 현대해상 개인용 약관 2025-11-26 개정 별표4·시행령 별표1(대인Ⅰ 급별 한도)이다.
+// 금액 기준은 이식 규칙(compass가 2025-11-26 개정 개인용 약관에서 읽은 fault.json)과 시행령 별표1(대인Ⅰ 급별 한도)이다.
+// 별표4 문구는 data/raw/policies/의 2026-10-25 개정판에서도 같다(MASTER.md 3부).
 
 /** 대인배상Ⅱ(가입금액 무한). 원본 liability-bodily-2.ts와 같은 호출 */
 function bodily2(claim: Claim, limit: number | "unlimited" = "unlimited") {

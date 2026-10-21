@@ -44,6 +44,11 @@ describe("자료 구조(MASTER.md 4장)", () => {
       disabilityGrade: null,
       died: false,
       rideAlongReductionPercent: 0,
+      hospitalDays: null,
+      outpatientDays: null,
+      mealsNotProvided: null,
+      daysOffWork: null,
+      monthlyIncome: null,
       losses: [],
       userTotal: 3_000_000,
     };

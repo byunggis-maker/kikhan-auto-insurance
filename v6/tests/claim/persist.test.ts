@@ -43,6 +43,14 @@ describe("저장 데이터 버전 변환", () => {
     expect(result.claim.accident.violations.driverRelation).toBeNull();
   });
 
+  it("v2 저장값(사람 카드에 일수·소득 없음)을 v3으로 올리면 그 칸은 '모름'(null)", () => {
+    const v3 = emptyClaim();
+    const v2victim = { id: "나", role: "driver", label: "나", relationToNamedInsured: "self", vehicleDriver: true, age: 40, injuryGrade: 14, disabilityGrade: null, died: false, rideAlongReductionPercent: 0, losses: [], userTotal: null };
+    const result = migrate({ version: 2, data: { ...v3, victims: [v2victim] } });
+    expect(result.status).toBe("migrated");
+    expect(result.claim.victims[0]).toMatchObject({ hospitalDays: null, outpatientDays: null, mealsNotProvided: null, daysOffWork: null, monthlyIncome: null });
+  });
+
   it("한 단계씩 변환한다: v1 저장값을 v3까지 올린다", () => {
     const migrations = {
       1: (data: unknown) => ({ ...(data as object), skipped: [] }),

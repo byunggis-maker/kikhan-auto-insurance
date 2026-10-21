@@ -41,7 +41,8 @@ export function reportMarkdown(cases: Case[], results: Map<number, Result>): str
       out.push(`| ${l.cardLabel} | ${l.label} | ${PAYER_LABELS[l.payer]} | ${won(l.confirmed)} | ${won(l.withEstimates)} | ${won(l.estimatePart)} | ${cell(status + l.formula + flags + alt)} | ${cell(l.basis)} |`);
     }
     for (const b of r.burdens) out.push(`| 내가 낼 돈 | ${cell(b.label)} | - | ${won(b.confirmed)} | ${won(b.withEstimates)} | ${won(b.estimatePart)} | ${cell(b.formula)} | ${cell(b.basis)} |`);
-    for (const n of r.notes) out.push(`| ${n.cardId} | ${n.label}(합계 제외) | - | ${won(n.confirmed)} | ${won(n.withEstimates)} | ${won(n.estimatePart)} | ${cell(n.text)} | ${cell(n.basis)} |`);
+    for (const n of r.notes) out.push(`| ${n.cardId} | ${n.label}(합계 제외) | - | ${won(n.confirmed)} | ${won(n.withEstimates)} | (비움) | ${cell(n.text)} | ${cell(n.basis)} |`);
+    for (const card of r.cards) for (const d of card.details) if (d.source !== "서류") out.push(`| ${card.label} | 손해 항목 ${d.label}(${d.source}) | - | ${won(d.confirmed)} | ${won(d.withEstimates)} | ${won(d.estimatePart)} | ${cell(d.formula)} | - |`);
     for (const card of r.cards) out.push(`| ${card.label} | 실제손해 / 지급 합계 / 보상 안 되는 손해 | - | ${won(card.actualLoss.confirmed)} / ${won(card.paid.confirmed)} / ${won(card.uncovered.confirmed)} | ${won(card.actualLoss.withEstimates)} / ${won(card.paid.withEstimates)} / ${won(card.uncovered.withEstimates)} | - | ${cell(card.notes.join(" "))} | - |`);
     if (r.notices.length) out.push("", `안내: ${r.notices.join(" / ")}`);
     out.push("");

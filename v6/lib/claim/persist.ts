@@ -5,7 +5,7 @@ import { claimSchema, emptyClaim, type Claim } from "./types";
 // 어떤 이유로든 읽지 못하면(없음·깨짐·모르는 버전·변환 실패·모양 불일치) 앱을 멈추지 않고 빈 입력으로 새로 시작한다.
 
 export const STORAGE_KEY = "claim";
-export const CURRENT_VERSION = 2;
+export const CURRENT_VERSION = 3;
 
 /** 저장하는 모양: 버전과 데이터를 함께 둔다 */
 export type Saved = { version: number; data: unknown };
@@ -17,6 +17,12 @@ export const MIGRATIONS: Record<number, Migration> = {
   1: (data) => {
     const claim = data as { accident?: { violations?: Record<string, unknown> } };
     return { ...claim, accident: { ...claim.accident, violations: { ...claim.accident?.violations, driverRelation: null } } };
+  },
+  // v2 → v3(라운드 3): 사람 카드에 입원·통원·휴업일수, 식사 끼니 수, 월소득을 더했다. 예전 저장값은 "모름"(null)으로 채운다.
+  2: (data) => {
+    const claim = data as { victims?: Record<string, unknown>[] };
+    const fill = { hospitalDays: null, outpatientDays: null, mealsNotProvided: null, daysOffWork: null, monthlyIncome: null };
+    return { ...claim, victims: (claim.victims ?? []).map((victim) => ({ ...fill, ...victim })) };
   },
 };
 

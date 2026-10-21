@@ -1,7 +1,7 @@
 import { paymentLabel } from "@/lib/claim/payer";
-import { ACCIDENT_BURDEN, ASSUMPTIONS, BASIS_TEXT, COMPULSORY, STANDARDS_AS_OF, compulsoryRuleItems } from "@/lib/claim/standards";
+import { ACCIDENT_BURDEN, BASIS_TEXT, COMPULSORY, POLICY_EDITION, STANDARDS_AS_OF, compulsoryRuleItems } from "@/lib/claim/standards";
 import type { Claim, Coverage, InsuranceStatus, Limit, Policy, PolicyCoverage, Property, Victim } from "@/lib/claim/types";
-import { allocate, autoInjury, compulsoryBodily, excess, minorInjuryShare, ownDamagePay, propertyLiability, won, type Paid } from "./adjust";
+import { allocate, autoInjury, compulsoryBodily, excess, minorInjuryShare, ownDamagePay, propertyLiability, selfInjury, won, type Paid } from "./adjust";
 import { capToLoss } from "./dedupe";
 import { checkExclusions, type Exclusions } from "./exclusions";
 import faultFile from "./legacy/data/fault.json";
@@ -57,7 +57,8 @@ export function runOnce(claim: Claim, faultPercent: number, mode: ValueMode): Ru
   const notices: string[] = [];
   if (claim.accident.occurredAt === null) notices.push(`사고일을 몰라 약관 ${STANDARDS_AS_OF} 개정 기준으로 계산했습니다.`);
   if (my.productLine === null) notices.push("내 보험 종류를 몰라 개인용 약관 기준으로 계산했습니다.");
-  if (ex.outsideScope && ASSUMPTIONS.driverScopePropertyMandatory.value) notices.push(ASSUMPTIONS.driverScopePropertyMandatory.label);
+  if (claim.accident.occurredAt !== null && date < POLICY_EDITION)
+    notices.push(`사고일(${date})이 이 앱의 약관 판(${POLICY_EDITION} 개정) 이전입니다. 사고 당시 약관 판과 대조가 필요합니다(금액은 ${POLICY_EDITION} 판 기준).`);
 
   // 내가 낸 사고부담금·배상책임의 합계를 위해 내 보험 지급액을 모은다.
   let myBodily1Total = 0;
@@ -109,7 +110,7 @@ export function runOnce(claim: Claim, faultPercent: number, mode: ValueMode): Ru
   function person(victim: Victim) {
     const loss = personLoss(victim, mode);
     const side: Side = victim.role === "counterparty" ? "counterparty" : "mine";
-    cards.push({ cardId: victim.id, label: victim.label, kind: "person", side, actualLoss: loss.actualLoss, missing: loss.missing, notes: loss.notes });
+    cards.push({ cardId: victim.id, label: victim.label, kind: "person", side, actualLoss: loss.actualLoss, missing: loss.missing, notes: loss.notes, details: loss.details });
     const legacy = (fault: number, vehicleDriver: boolean | null): LegacyClaim => ({ person: legacyPerson(victim, fault, vehicleDriver), accidentDate: date, ledger: loss.ledger, rules });
     const out: RunLine[] = [];
     const id = victim.id;
@@ -162,7 +163,7 @@ export function runOnce(claim: Claim, faultPercent: number, mode: ValueMode): Ru
       else if (cpStatus === "unknown") out.push(makeLine(id, "liability_bodily_1", "counterparty", "needs_input", 0, "상대 차량의 보험 가입 여부를 입력하면 계산됩니다", BASIS_TEXT.bodily1Fault));
       else {
         bodily1Raw = compulsoryBodily(c);
-        out.push(fromPaid(id, "liability_bodily_1", "counterparty", bodily1Raw.paid, BASIS_TEXT.bodily1Fault, victim.role === "other_passenger" ? ["어느 한쪽 보험사에 전액 청구할 수 있습니다(공동 배상)"] : []));
+        out.push(fromPaid(id, "liability_bodily_1", "counterparty", bodily1Raw.paid, BASIS_TEXT.bodily1Fault, victim.role === "other_passenger" ? ["어느 한쪽 보험사에 전액 청구할 수 있습니다(공동 배상)"] : victim.role === "family_passenger" ? ["상대 보험에 전액 청구할 수 있습니다(이 경우 내 보험 대인 지급 기록 없음)"] : []));
         if (cpStatus === "full") {
           const b2Limit: Limit = coverageOf(cp, "liability_bodily_2")?.limit ?? "unlimited";
           bodily2Raw = excess(c, bodily1Raw.at, b2Limit, 0, "상대 대인배상Ⅱ 가입금액");
@@ -225,37 +226,42 @@ export function runOnce(claim: Claim, faultPercent: number, mode: ValueMode): Ru
     // ④ 내 자동차상해(대인배상Ⅱ의 피보험자와 그 부모·배우자·자녀) 또는 자기신체사고
     const auto = coverageOf(my, "auto_injury");
     const self = coverageOf(my, "self_injury");
+    // 자동차상해·자기신체사고가 함께 쓰는 공제액(자동차상해 특별약관 2.(2)③, 보통약관 제16조①3호: 같은 항목)
+    const deductionAmounts = (): ByCategory => {
+      if (isDriver) {
+        // 앞 순위 공제액: legacy makeDeduction(compass coordinate.ts deductionFor)
+        const noLiableParty = !hasCounterparty ? "상대 차량이 없는 사고입니다" : f === 100 ? "내 과실이 100%입니다" : null;
+        const { deductionFor } = makeDeduction({
+          claim: c,
+          liable: { status: toLegacyStatus(cpStatus), bodily2Limit: coverageOf(cp, "liability_bodily_2")?.limit ?? (cpStatus === "full" ? "unlimited" : null) },
+          noLiableParty,
+          uninsuredApplies,
+          ownUninsured: uninsuredCoverage ? { limit: uninsuredCoverage.limit ?? "unlimited" } : null,
+          bodily1: bodily1Raw?.raw ?? null,
+          bodily2: bodily2Raw?.raw ?? null,
+          uninsured: uninsuredRaw?.raw ?? null,
+        });
+        return deductionFor("expected").amounts;
+      }
+      // 동승자: 상대 보험 + 내 대인배상 지급액을 구분 순서대로 공제
+      return allocate(lossByCategory(loss.ledger, "expected"), counterpartyPaid + myBodilyPaid);
+    };
     if (familyInsured && auto) {
       if (ex.outsideScope) out.push(makeLine(id, "auto_injury", "mine", "excluded", 0, SCOPE_EXCLUDED, BASIS_TEXT.driverScope));
       else {
         const injuryLimit = auto.injuryLimit ?? auto.limit;
         const deathLimit = auto.deathLimit ?? auto.disabilityLimit ?? auto.limit;
         if (injuryLimit === null || deathLimit === null) out.push(makeLine(id, "auto_injury", "mine", "needs_input", 0, "자동차상해 가입금액을 입력하면 계산됩니다", BASIS_TEXT.autoInjury));
-        else {
-          let deduction: ByCategory;
-          if (isDriver) {
-            // 앞 순위 공제액: legacy makeDeduction(compass coordinate.ts deductionFor)
-            const noLiableParty = !hasCounterparty ? "상대 차량이 없는 사고입니다" : f === 100 ? "내 과실이 100%입니다" : null;
-            const { deductionFor } = makeDeduction({
-              claim: c,
-              liable: { status: toLegacyStatus(cpStatus), bodily2Limit: coverageOf(cp, "liability_bodily_2")?.limit ?? (cpStatus === "full" ? "unlimited" : null) },
-              noLiableParty,
-              uninsuredApplies,
-              ownUninsured: uninsuredCoverage ? { limit: uninsuredCoverage.limit ?? "unlimited" } : null,
-              bodily1: bodily1Raw?.raw ?? null,
-              bodily2: bodily2Raw?.raw ?? null,
-              uninsured: uninsuredRaw?.raw ?? null,
-            });
-            deduction = deductionFor("expected").amounts;
-          } else {
-            // 동승자: 상대 보험 + 내 대인배상 지급액을 구분 순서대로 공제(같은 규칙: 자동차상해 특별약관 2.(2)③)
-            deduction = allocate(lossByCategory(loss.ledger, "expected"), counterpartyPaid + myBodilyPaid);
-          }
-          out.push(fromPaid(id, "auto_injury", "mine", autoInjury(c, deduction, injuryLimit, deathLimit), BASIS_TEXT.autoInjury));
-        }
+        else out.push(fromPaid(id, "auto_injury", "mine", autoInjury(c, deductionAmounts(), injuryLimit, deathLimit), BASIS_TEXT.autoInjury));
       }
     } else if (familyInsured && self) {
-      out.push(makeLine(id, "self_injury", "mine", "not_implemented", 0, "자기신체사고 급별 한도표(별표3) 계산은 아직 넣지 않았습니다. 금액 없이 표시만 합니다", "별표3 자기신체사고 보험금 지급기준"));
+      if (ex.outsideScope) out.push(makeLine(id, "self_injury", "mine", "excluded", 0, SCOPE_EXCLUDED, BASIS_TEXT.driverScope));
+      else if (typeof self.injuryLimit !== "number") out.push(makeLine(id, "self_injury", "mine", "needs_input", 0, "자기신체사고 부상 가입금액(1,500만·3,000만·5,000만원)을 입력하면 계산됩니다", BASIS_TEXT.selfInjury));
+      else {
+        const num = (value: Limit | null) => (typeof value === "number" ? value : null);
+        const paid = selfInjury(c, deductionAmounts(), { injury: self.injuryLimit, death: num(self.deathLimit), disability: num(self.disabilityLimit) }, { injury: victim.injuryGrade, disability: victim.disabilityGrade });
+        out.push(fromPaid(id, "self_injury", "mine", paid, BASIS_TEXT.selfInjury));
+      }
     }
 
     const capped = capToLoss(out, loss.actualLoss);
@@ -268,7 +274,7 @@ export function runOnce(claim: Claim, faultPercent: number, mode: ValueMode): Ru
   function property(item: Property) {
     const loss = propertyLoss(item, mode);
     const side: Side = item.role === "my_vehicle" ? "mine" : "counterparty";
-    cards.push({ cardId: item.id, label: item.label, kind: "property", side, actualLoss: loss.total, missing: loss.missing, notes: loss.notes });
+    cards.push({ cardId: item.id, label: item.label, kind: "property", side, actualLoss: loss.total, missing: loss.missing, notes: loss.notes, details: loss.details });
     const id = item.id;
     const out: RunLine[] = [];
 
@@ -320,28 +326,19 @@ export function runOnce(claim: Claim, faultPercent: number, mode: ValueMode): Ru
     else {
       const used: string[] = [];
       const offset = afterFault(rules, used, loss.total, 100 - f) ?? 0;
-      let limit = coverage.limit;
-      const flags: string[] = [];
-      let alternative: RunLine["alternative"];
       if (ex.outsideScope) {
-        limit = ASSUMPTIONS.driverScopePropertyMandatory.value ? Math.min(limit, COMPULSORY.propertyLimit.value) : 0;
-        flags.push(ASSUMPTIONS.driverScopePropertyMandatory.label);
-        alternative = { label: "약관 문구대로(운전자 범위 위반 시 대인배상Ⅰ만 보상)", amount: 0 };
+        // 운전자 범위 위반: 약관대로 대인배상Ⅰ만 보상하고 대물배상은 0원(결정 기록 D-15). 배상책임 전액이 내게 남는다.
+        out.push(makeLine(id, "liability_property", "mine", "excluded", 0, SCOPE_EXCLUDED, BASIS_TEXT.driverScope));
+        if (offset > 0)
+          burdens.push({ key: `${id}:property_uncovered`, label: `${item.label}: 대물로 보상 안 되는 배상책임`, amount: offset, formula: `손해액 ${won(loss.total)} × (100 − ${100 - f})% = ${won(offset)}`, basis: BASIS_TEXT.driverScope });
+      } else {
+        const paid = propertyLiability(rules, loss.total, 100 - f, coverage.limit);
+        out.push(fromPaid(id, "liability_property", "mine", paid, BASIS_TEXT.property));
+        const amount = paid.ok ? paid.amount : 0;
+        myPropertyTotal += amount;
+        if (offset > amount)
+          burdens.push({ key: `${id}:property_over_limit`, label: `${item.label}: 대물배상 한도를 넘는 배상책임`, amount: offset - amount, formula: `과실상계 후 ${won(offset)} − 대물배상 지급 ${won(amount)}`, basis: BASIS_TEXT.property });
       }
-      const paid = propertyLiability(rules, loss.total, 100 - f, limit);
-      let line = fromPaid(id, "liability_property", "mine", paid, ex.outsideScope ? `${BASIS_TEXT.property} / ${BASIS_TEXT.driverScope}` : BASIS_TEXT.property, flags);
-      if (alternative) line = { ...line, alternative };
-      out.push(line);
-      const amount = paid.ok ? paid.amount : 0;
-      myPropertyTotal += amount;
-      if (offset > amount)
-        burdens.push({
-          key: `${id}:property_over_limit`,
-          label: `${item.label}: ${ex.outsideScope ? "운전자 범위 위반으로 " : ""}대물배상 한도를 넘는 배상책임`,
-          amount: offset - amount,
-          formula: `과실상계 후 ${won(offset)} − 대물배상 지급 ${won(amount)}`,
-          basis: ex.outsideScope ? BASIS_TEXT.driverScope : BASIS_TEXT.property,
-        });
     }
     lines.push(...capToLoss(out, loss.total));
   }

@@ -4,7 +4,8 @@ import { calculate } from "@/lib/engine/dual-run";
 import { calculateScenarios } from "@/lib/engine/fault-scenarios";
 import type { Result } from "@/lib/engine/types";
 import { CASES } from "./cases";
-import { claim, item, victim } from "./fixtures";
+import { policySchema } from "@/lib/claim/types";
+import { claim, item, myPolicy, selfInjuryPolicy, victim } from "./fixtures";
 import { reportMarkdown } from "./report";
 
 // 라운드 2 사례 (1)~(15)와 자기검사. REPORT=1이면 .tmp/round2-cases.md에 입력값 표와 결과 표를 쓴다.
@@ -86,10 +87,49 @@ describe("사례별 추가 자기검사", () => {
     expect(r.cards[0].uncovered).toEqual({ confirmed: 750_000, withEstimates: 3_388_360, estimatePart: 2_638_360 });
   });
 
-  it("사례 6: 운전자 범위 위반 대물은 '약관과 다르게 가정' 표시와 약관 문구대로의 금액(0원)을 함께 낸다", () => {
-    const l = results.get(6)!.lines.find((x) => x.key === "상대차:liability_property:own_insurer")!;
-    expect(l.flags.join()).toContain("약관과 다르게 가정");
-    expect(l.alternative).toMatchObject({ confirmed: 0, withEstimates: 0 });
+  it("사례 6: 운전자 범위 위반 — 대물 0원(약관대로), 대물 손해 전액 25,000,000이 '대물로 보상 안 되는 배상책임'", () => {
+    const r = results.get(6)!;
+    const l = r.lines.find((x) => x.key === "상대차:liability_property:own_insurer")!;
+    expect([l.status, l.confirmed, l.withEstimates, l.alternative]).toEqual(["excluded", 0, 0, undefined]);
+    expect(l.basis).toContain("운전자 한정운전 특별약관");
+    const burden = r.burdens.find((b) => b.key === "상대차:property_uncovered")!;
+    expect([burden.label, burden.confirmed]).toEqual(["상대차: 대물로 보상 안 되는 배상책임", 25_000_000]);
+    expect(r.totals.burden.confirmed).toBe(25_530_000);
+  });
+
+  it("안내 줄(합계 제외)은 추정분을 비운다: 사례 3 경상 본인 부담분 확정 540,000 / 추정 포함 333,000 / 추정분 없음", () => {
+    const note = results.get(3)!.notes.find((n) => n.key === "상대운전자:minor_share")!;
+    expect([note.confirmed, note.withEstimates, note.estimatePart]).toEqual([540_000, 333_000, null]);
+  });
+
+  it("가족 동승자에게도 '상대 보험에 전액 청구할 수 있습니다(이 경우 내 보험 대인 지급 기록 없음)'을 남 동승자와 같은 형식으로", () => {
+    const family = results.get(10)!.lines.find((l) => l.key === "자녀:liability_bodily_1:counterparty_insurer")!;
+    expect(family.flags).toContain("상대 보험에 전액 청구할 수 있습니다(이 경우 내 보험 대인 지급 기록 없음)");
+    const other = results.get(11)!.lines.find((l) => l.key === "동료:liability_bodily_1:counterparty_insurer")!;
+    expect(other.flags).toContain("어느 한쪽 보험사에 전액 청구할 수 있습니다(공동 배상)");
+  });
+
+  it("약관 기준 자동 산정(사례 20): 계산식에 근거 쪽이 붙고, 사용자가 금액을 넣으면 그 값이 우선", () => {
+    const card = results.get(20)!.cards[0];
+    const detail = (code: string) => card.details.find((d) => d.code === code)!;
+    expect([detail("lost_income").confirmed, detail("lost_income").withEstimates]).toEqual([0, 850_000]);
+    expect(detail("lost_income").formula).toBe("월소득 3,000,000원 ÷ 30일 × 휴업 10일 × 85% = 850,000원 (별표1 나. 부상 3. 휴업손해, 인쇄 76쪽; 월 30일은 앱 가정, 원 미만 버림)");
+    expect(detail("other_injury").withEstimates).toBe(80_000);
+    expect(detail("other_injury").formula).toContain("인쇄 78쪽");
+    expect(detail("solatium_injury").formula).toContain("인쇄 76쪽");
+    // 사용자가 휴업손해 추정 금액을 직접 넣으면 그 값을 쓴다
+    const base = CASES.find((c) => c.no === 20)!.claim;
+    const typed = { ...base, victims: base.victims.map((v) => ({ ...v, losses: v.losses.map((i) => (i.code === "lost_income" ? { ...i, estimated: 500_000, source: { confirmed: null, estimated: "user_estimate" as const } } : i)) })) };
+    expect(calculate(typed, 30).cards[0].details.find((d) => d.code === "lost_income")?.withEstimates).toBe(500_000);
+    // 입원 식대: 병원 식사를 받지 않은 끼니 수로 계산. 입원일수만 있으면 끼니 수를 물어본다
+    const meals = { ...base, victims: base.victims.map((v) => ({ ...v, outpatientDays: null, mealsNotProvided: 12 })) };
+    expect(calculate(meals, 30).cards[0].details.find((d) => d.code === "other_injury")?.withEstimates).toBe(48_360);
+    const daysOnly = { ...base, victims: base.victims.map((v) => ({ ...v, outpatientDays: null, hospitalDays: 5 })) };
+    expect(calculate(daysOnly, 30).cards[0].notes.join()).toContain("병원 식사를 받지 않은 끼니 수를 넣으면 계산합니다");
+  });
+
+  it("사고일이 약관 판(2026-10-25 개정)보다 앞이면 대조 필요 안내를 붙인다", () => {
+    expect(results.get(1)!.notices.join()).toContain("사고일(2026-09-01)이 이 앱의 약관 판(2026-10-25 개정) 이전입니다");
   });
 
   it("사례 7: 미분류 합계에는 치료관계비 하한을 쓰지 않고 '항목을 나누면 더 정확해집니다'를 안내", () => {
@@ -122,6 +162,57 @@ describe("사례별 추가 자기검사", () => {
     const r = calculate({ ...base, accident: { ...base.accident, violations: { ...base.accident.violations, intentional: true } } }, 30);
     expect(r.blocked).toContain("고의");
     expect(r.lines).toEqual([]);
+  });
+});
+
+describe("상대 대인Ⅱ 가입 여부 모름(라운드 2 결정 4)", () => {
+  // 운전자 14급, 내 과실 0%, 손해 1,030,000. 상대는 보험에 들었지만 대인Ⅱ 가입 여부를 모른다.
+  const base = claim({ myFault: 0, victims: [victim({ id: "나", role: "driver", relationToNamedInsured: "self", vehicleDriver: true, injuryGrade: 14, losses: [item("treatment", { c: 800_000 }), item("solatium_injury", { c: 150_000 }), item("other_injury", { c: 80_000 })] })] });
+  const unknown = { ...base, counterpartyPolicy: { ...base.counterpartyPolicy!, hasBodily2: null } };
+  const r = calculate(unknown, 0);
+
+  it("'상대 대인Ⅱ 있음 / 없음' 두 시나리오를 함께 낸다", () => {
+    expect(r.bodily2Scenarios).not.toBeNull();
+    const { withBodily2, withoutBodily2 } = r.bodily2Scenarios!;
+    const amount = (x: typeof r, key: string) => x.lines.find((l) => l.key === key)?.withEstimates ?? 0;
+    // 있음: 상대 대인Ⅰ 500,000 + 상대 대인Ⅱ 530,000, 내 보험 0
+    expect([amount(withBodily2, "나:liability_bodily_1:counterparty_insurer"), amount(withBodily2, "나:liability_bodily_2:counterparty_insurer"), withBodily2.totals.byPayer.own_insurer.withEstimates]).toEqual([500_000, 530_000, 0]);
+    // 없음(책임보험만): 상대 대인Ⅰ 500,000 + 내 무보험차상해 530,000(공제 후 자동차상해 0)
+    expect([amount(withoutBodily2, "나:liability_bodily_1:counterparty_insurer"), amount(withoutBodily2, "나:uninsured:own_insurer"), amount(withoutBodily2, "나:auto_injury:own_insurer")]).toEqual([500_000, 530_000, 0]);
+    expect(r.notices.join()).toContain("상대 대인Ⅱ 있음: 받을 돈 1,030,000원 / 상대 대인Ⅱ 없음: 받을 돈 1,030,000원");
+  });
+
+  it("두 경우의 받는 총액은 같다(1,030,000), 받을 곳만 다르다", () => {
+    const { withBodily2, withoutBodily2 } = r.bodily2Scenarios!;
+    expect(withBodily2.totals.receive).toEqual(withoutBodily2.totals.receive);
+    expect(withBodily2.totals.receive.withEstimates).toBe(1_030_000);
+    expect(withBodily2.totals.byPayer.counterparty_insurer.withEstimates).toBe(1_030_000);
+    expect(withoutBodily2.totals.byPayer.counterparty_insurer.withEstimates).toBe(500_000);
+  });
+
+  it("무보험차상해가 없는 내 보험이면 '없음' 시나리오에서는 자동차상해가 530,000을 준다", () => {
+    const noUninsured = { ...unknown, myPolicy: { ...unknown.myPolicy, coverages: unknown.myPolicy.coverages.filter((c) => c.coverage !== "uninsured") } };
+    const without = calculate(noUninsured, 0).bodily2Scenarios!.withoutBodily2;
+    expect(without.lines.find((l) => l.key === "나:auto_injury:own_insurer")?.withEstimates).toBe(530_000);
+    expect(without.totals.receive.withEstimates).toBe(1_030_000);
+  });
+});
+
+describe("입력 검증", () => {
+  it("자동차상해와 자기신체사고는 둘 중 하나만 가입할 수 있다", () => {
+    const both = myPolicy({ add: [{ coverage: "self_injury", limit: null, injuryLimit: 30_000_000, deathLimit: 30_000_000, disabilityLimit: 30_000_000 }] });
+    const result = policySchema.safeParse(both);
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0].message).toBe("자동차상해와 자기신체사고는 둘 중 하나만 가입할 수 있습니다");
+    expect(policySchema.safeParse(selfInjuryPolicy()).success).toBe(true);
+  });
+
+  it("자기신체사고 부상 가입금액이 별표3 표에 없으면 '입력 필요'", () => {
+    const base = CASES.find((c) => c.no === 16)!.claim;
+    const odd = { ...base, myPolicy: { ...base.myPolicy, coverages: base.myPolicy.coverages.map((c) => (c.coverage === "self_injury" ? { ...c, injuryLimit: 20_000_000 } : c)) } };
+    const l = calculate(odd, 30).lines.find((x) => x.coverage === "self_injury")!;
+    expect(l.status).toBe("needs_input");
+    expect(l.formula).toContain("별표3 부상 가입금액표에 없는 금액");
   });
 });
 

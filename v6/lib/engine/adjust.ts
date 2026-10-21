@@ -1,4 +1,4 @@
-import { OWN_DAMAGE_TERMS } from "@/lib/claim/standards";
+import { OWN_DAMAGE_TERMS, SELF_INJURY } from "@/lib/claim/standards";
 import type { Deductible, Limit } from "@/lib/claim/types";
 import { ownDamage } from "./legacy/coverages/own-damage";
 import { liabilityBodily1 } from "./legacy/coverages/liability-bodily-1";
@@ -97,6 +97,46 @@ export function autoInjury(claim: LegacyClaim, deduction: ByCategory, injuryLimi
     ruleIds: [],
     flags: [],
   };
+}
+
+/**
+ * 자기신체사고(보통약관 제15조·제16조, 별표3). 구분별로 따로 계산한다.
+ * - 공제액이 있으면: 실제손해액(별표1 기준, 과실상계 전) − 공제액을 한도까지. 부상 한도 = 별표3 1) 가입금액·상해급수, 후유장애 한도 = 별표3 2) 가입금액·장애급수, 사망 한도 = 사망 가입금액.
+ * - 공제액이 없으면(제16조①4호): 사망은 사망 가입금액, 부상은 실제로 지출한 치료비(급별 한도 이내), 후유장애는 급별 보험금액.
+ * - 사망보험금에서 이미 지급한 후유장애보험금을 뺀다(제16조②): 사망이면 후유장애를 따로 주지 않는다.
+ */
+export function selfInjury(claim: LegacyClaim, deduction: ByCategory, limits: { injury: number; death: number | null; disability: number | null }, grades: { injury: number | null; disability: number | null }): Paid {
+  const loss = lossByCategory(claim.ledger, "expected");
+  const injuryTable = SELF_INJURY.injuryLimits[limits.injury];
+  if (!injuryTable) return { ok: false, reason: `별표3 부상 가입금액표에 없는 금액입니다(${won(limits.injury)}). 1,500만·3,000만·5,000만원 중 하나여야 합니다`, missing: true };
+  if (loss.injury > 0 && grades.injury === null) return { ok: false, reason: "상해급수를 입력하면 자기신체사고 부상 한도를 알 수 있습니다", missing: true };
+  const injuryCap = grades.injury === null ? 0 : injuryTable[grades.injury];
+  const disabilityTable = limits.disability === null ? undefined : SELF_INJURY.disabilityAmounts[limits.disability];
+  if (loss.disability > 0 && (grades.disability === null || !disabilityTable)) return { ok: false, reason: "후유장애 급수와 별표3 후유장애 가입금액(1,500만·3,000만·5,000만·1억원)을 입력하면 계산됩니다", missing: true };
+  const disabilityCap = grades.disability !== null && disabilityTable ? disabilityTable[grades.disability] : 0;
+  if (loss.death > 0 && limits.death === null) return { ok: false, reason: "자기신체사고 사망 가입금액을 입력하면 계산됩니다", missing: true };
+  const deathCap = limits.death ?? 0;
+  const noDeduction = total(deduction) === 0;
+  const died = loss.death > 0;
+
+  let injury: number;
+  let disability: number;
+  let death: number;
+  let formula: string;
+  if (noDeduction) {
+    const medical = medicalCost(claim.ledger, "expected");
+    injury = Math.min(medical, injuryCap);
+    disability = died || loss.disability === 0 ? 0 : disabilityCap;
+    death = died ? deathCap : 0;
+    formula = `공제액 없음(제16조①4호): 부상 실제 치료비 ${won(medical)} → ${grades.injury ?? "-"}급 한도 ${won(injuryCap)} 이내 ${won(injury)}${disability ? ` + 후유장애 ${grades.disability}급 보험금액 ${won(disability)}` : ""}${death ? ` + 사망 가입금액 ${won(death)}` : ""}`;
+  } else {
+    injury = Math.min(injuryCap, Math.max(0, loss.injury - deduction.injury));
+    disability = died ? 0 : Math.min(disabilityCap, Math.max(0, loss.disability - deduction.disability));
+    death = Math.min(deathCap, Math.max(0, loss.death - deduction.death));
+    formula = `실제손해액 ${won(total(loss))}(과실상계 없음) − 공제액 ${won(total(deduction))}: 부상 ${won(Math.max(0, loss.injury - deduction.injury))} → ${grades.injury ?? "-"}급 한도 ${won(injuryCap)} 이내 ${won(injury)}${loss.disability ? `, 후유장애 → ${grades.disability}급 ${won(disabilityCap)} 이내 ${won(disability)}` : ""}${loss.death ? `, 사망 → 가입금액 ${won(deathCap)} 이내 ${won(death)}` : ""}`;
+  }
+  if (died && loss.disability > 0) formula += " (사망보험금에서 후유장애보험금을 뺀다, 제16조②)";
+  return { ok: true, amount: injury + disability + death, byCategory: { injury, disability, death }, formula, ruleIds: [], flags: [] };
 }
 
 /** 대물배상: 손해액 × (100 − 피해자 측 과실)% → 가입금액 한도. 과실상계는 legacy afterFault */

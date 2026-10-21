@@ -9,6 +9,7 @@ export type Money = z.infer<typeof moneySchema>;
 
 const percentSchema = z.number().int().min(0).max(100);
 const gradeSchema = z.number().int().min(1).max(14);
+const daysSchema = z.number().int().min(0).max(36_500);
 
 // ── 지급처 ──
 export const PAYERS = ["counterparty_insurer", "own_insurer", "government"] as const;
@@ -117,7 +118,12 @@ export const policySchema = z.object({
   deductible: deductibleSchema.nullable(),
   /** 대인배상Ⅱ 가입 여부. 모르면 null */
   hasBodily2: z.boolean().nullable(),
-});
+})
+  // 자동차상해 특별약관은 보통약관 「자기신체사고」를 대체하므로 둘 중 하나만 가입한다(자동차상해 특별약관 머리말·1., 개인용 인쇄 119쪽)
+  .refine((policy) => !(policy.coverages.some((c) => c.coverage === "auto_injury") && policy.coverages.some((c) => c.coverage === "self_injury")), {
+    message: "자동차상해와 자기신체사고는 둘 중 하나만 가입할 수 있습니다",
+    path: ["coverages"],
+  });
 export type Policy = z.infer<typeof policySchema>;
 
 // ── 손해 항목 ──
@@ -162,6 +168,14 @@ export const victimSchema = z.object({
   died: z.boolean().nullable(),
   /** 호의동승 감액률. 자동 감액하지 않는다: 기본 0, 사용자가 고르면 적용하고 '검토 필요' 표시 */
   rideAlongReductionPercent: percentSchema,
+  // 약관 기준 자동 산정에 쓰는 사실(별표1 나. 부상 3. 휴업손해·5. 그 밖의 손해배상금). 모르면 null
+  hospitalDays: daysSchema.nullable(),
+  outpatientDays: daysSchema.nullable(),
+  /** 입원 중 병원 식사를 받지 않은 끼니 수(1끼 4,030원) */
+  mealsNotProvided: z.number().int().min(0).max(109_500).nullable(),
+  daysOffWork: daysSchema.nullable(),
+  /** 월 현실소득액(세법상 관계 서류로 증명할 수 있는 금액) */
+  monthlyIncome: moneySchema.nullable(),
   losses: z.array(lossItemSchema),
   /** 사용자가 직접 넣는 이 사람 손해 합계 추정 */
   userTotal: moneySchema.nullable(),

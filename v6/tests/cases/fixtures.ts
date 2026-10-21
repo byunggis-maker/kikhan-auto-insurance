@@ -17,7 +17,7 @@ export function item(code: string, value: { c?: number; e?: number }): LossItem 
 }
 
 export function victim(change: Partial<Victim> & Pick<Victim, "id" | "role">): Victim {
-  return { label: change.id, relationToNamedInsured: null, vehicleDriver: null, age: 40, injuryGrade: null, disabilityGrade: null, died: false, rideAlongReductionPercent: 0, losses: [], userTotal: null, ...change };
+  return { label: change.id, relationToNamedInsured: null, vehicleDriver: null, age: 40, injuryGrade: null, disabilityGrade: null, died: false, rideAlongReductionPercent: 0, hospitalDays: null, outpatientDays: null, mealsNotProvided: null, daysOffWork: null, monthlyIncome: null, losses: [], userTotal: null, ...change };
 }
 
 export function property(change: Partial<Property> & Pick<Property, "id" | "role">): Property {
@@ -29,7 +29,7 @@ function coverage(key: Coverage, change: Partial<PolicyCoverage> = {}): PolicyCo
 }
 
 /** 내 보험 기본: 개인용, 대인Ⅰ·대인Ⅱ 무한·대물 1억·자동차상해(부상 3천만·사망/후유장애 2억)·무보험차상해 2억·자기차량손해 2,500만(20%, 20만~50만) */
-export function myPolicy(change: { without?: Coverage[]; set?: Partial<Record<Coverage, Partial<PolicyCoverage>>> } = {}): Policy {
+export function myPolicy(change: { without?: Coverage[]; set?: Partial<Record<Coverage, Partial<PolicyCoverage>>>; add?: PolicyCoverage[] } = {}): Policy {
   const all: PolicyCoverage[] = [
     coverage("liability_bodily_1"),
     coverage("liability_bodily_2", { limit: "unlimited" }),
@@ -43,11 +43,16 @@ export function myPolicy(change: { without?: Coverage[]; set?: Partial<Record<Co
     productLine: "personal",
     insurer: "가상 보험사",
     status: "full",
-    coverages: all.filter((c) => !change.without?.includes(c.coverage)).map((c) => ({ ...c, ...change.set?.[c.coverage] })),
+    coverages: [...all.filter((c) => !change.without?.includes(c.coverage)).map((c) => ({ ...c, ...change.set?.[c.coverage] })), ...(change.add ?? [])],
     driverScope: "family",
     deductible: { type: "rate", ratePercent: 20, min: 200_000, max: 500_000 },
     hasBodily2: true,
   };
+}
+
+/** 자기신체사고 가입(자동차상해 대신): 부상·사망·후유장애 가입금액 3천만원 */
+export function selfInjuryPolicy(): Policy {
+  return myPolicy({ without: ["auto_injury"], add: [coverage("self_injury", { injuryLimit: 30_000_000, deathLimit: 30_000_000, disabilityLimit: 30_000_000 })] });
 }
 
 /** 상대 보험: 종합보험(대인Ⅱ 무한·대물 1억) 또는 지정한 상태 */
