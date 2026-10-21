@@ -5,7 +5,7 @@ import { claimSchema, emptyClaim, type Claim } from "./types";
 // 어떤 이유로든 읽지 못하면(없음·깨짐·모르는 버전·변환 실패·모양 불일치) 앱을 멈추지 않고 빈 입력으로 새로 시작한다.
 
 export const STORAGE_KEY = "claim";
-export const CURRENT_VERSION = 6;
+export const CURRENT_VERSION = 7;
 
 /** 저장하는 모양: 버전과 데이터를 함께 둔다 */
 export type Saved = { version: number; data: unknown };
@@ -39,6 +39,8 @@ export const MIGRATIONS: Record<number, Migration> = {
     const claim = data as { victims?: Record<string, unknown>[] };
     return { ...claim, victims: (claim.victims ?? []).map((victim) => ({ incomeAmountProven: null, ...victim })) };
   },
+  // v6 → v7(라운드 7): 확인을 기다리는 서류 인식값과 음성 경위를 더했다. 예전 저장값은 빈 목록·없음
+  6: (data) => ({ recognized: [], pendingNarrative: null, ...(data as object) }),
 };
 
 export type LoadResult =

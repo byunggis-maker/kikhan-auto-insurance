@@ -5,6 +5,9 @@ import { COVERAGE_DOCUMENTS, DOCUMENTS, type DocumentId } from "@/lib/claim/loss
 import { dailyWageFor } from "@/lib/claim/standards";
 import { OCCUPATIONS, OCCUPATION_LABELS, type Property, type Victim } from "@/lib/claim/types";
 import { claimDate, setItem, visibleItems } from "@/lib/ui/flow";
+import { addRecognitions, claimRecognitions, randomId } from "@/lib/ui/recognize";
+import { DocumentUpload } from "../ai/DocumentUpload";
+import { RecognizedList } from "../ai/Recognized";
 import { Check, Choice, IntInput, MoneyInput, manwon } from "../fields";
 import { LossCard } from "../LossCard";
 import type { ScreenProps } from "./types";
@@ -30,10 +33,14 @@ export function Step6Losses({ screen, claim, update }: ScreenProps) {
   const toChoice = (value: boolean | null) => (value === true ? "yes" : value === false ? "no" : null);
   const fromChoice = (choice: string) => (choice === "yes" ? true : choice === "no" ? false : null);
 
+  const pending = claim.recognized.filter((r) => (r.kind === "loss" || r.kind === "fact") && r.cardId === screen.cardId);
+  const pendingFacts = pending.filter((r) => r.kind === "fact");
+
   if (screen.kind === "facts" && victim) {
     const wage = dailyWageFor(claimDate(claim));
     return (
       <div className="space-y-4">
+        <RecognizedList title="서류에서 읽은 치료·소득 정보" items={pendingFacts} update={update} />
         <div className="grid grid-cols-2 gap-3">
           <IntInput label="입원일수" unit="일" value={victim.hospitalDays} onChange={(hospitalDays) => setVictim({ hospitalDays })} />
           <IntInput label="통원일수" unit="일" value={victim.outpatientDays} onChange={(outpatientDays) => setVictim({ outpatientDays })} />
@@ -68,16 +75,30 @@ export function Step6Losses({ screen, claim, update }: ScreenProps) {
   const card = victim ?? property;
   if (!card) return null;
   const all = visibleItems(claim, card.id);
-  const hasValue = (code: string) => card.losses.some((i) => i.code === code);
+  const hasValue = (code: string) => card.losses.some((i) => i.code === code) || pending.some((r) => r.kind === "loss" && r.code === code);
   const items = all.filter((def) => more || !RARE.has(def.code) || hasValue(def.code));
   const hidden = all.length - items.length;
   const common = [...new Set(all.flatMap((def) => def.coverages).filter((c) => claim.myPolicy.coverages.some((x) => x.coverage === c) || c === "liability_bodily_1" || c === "liability_property").flatMap((c) => COVERAGE_DOCUMENTS[c]))] as DocumentId[];
   const total = card.losses.reduce((sum, item) => sum + (item.confirmed ?? item.estimated ?? 0), 0);
   return (
     <div className="space-y-3">
+      <DocumentUpload
+        kind="claim"
+        target={victim ? "person" : "property"}
+        label={victim ? "영수증·진단서 사진으로 채우기" : "견적서·영수증 사진으로 채우기"}
+        onRead={(result) => {
+          if (result.kind !== "claim") return "";
+          const { recognitions, dropped } = claimRecognitions(claim, card.id, result.reading, randomId);
+          update((c) => addRecognitions(c, recognitions));
+          if (!recognitions.length) return "읽을 금액을 찾지 못했습니다. 직접 입력해 주세요.";
+          const facts = recognitions.filter((r) => r.kind === "fact").length;
+          return `${recognitions.length}개를 읽었습니다. 아래 칸에서 확인해 주세요.${facts ? ` 입원·통원일수 등 ${facts}개는 '치료·휴업 정보'에도 보입니다.` : ""}${dropped ? ` 이 카드에 해당하지 않는 금액 ${dropped}개는 넣지 않았습니다.` : ""}`;
+        }}
+      />
+      <RecognizedList title="서류에서 읽은 치료·소득 정보" items={pendingFacts} update={update} />
       {property?.role === "my_vehicle" && <Check label="사업용 차(택시·화물 등)" hint="렌트비 대신 휴차료로 계산합니다" checked={property.commercialUse === true} onChange={(commercialUse) => setProperty({ commercialUse })} />}
       {items.map((def) => (
-        <LossCard key={def.code} date={claimDate(claim)} def={def} item={card.losses.find((i) => i.code === def.code)} victim={victim} onChange={(change) => update((c) => setItem(c, card.id, def.code, change))} />
+        <LossCard key={def.code} date={claimDate(claim)} pending={pending.find((r) => r.kind === "loss" && r.code === def.code)} update={update} def={def} item={card.losses.find((i) => i.code === def.code)} victim={victim} onChange={(change) => update((c) => setItem(c, card.id, def.code, change))} />
       ))}
       {hidden > 0 && (
         <button type="button" className="min-h-12 w-full rounded-xl border-2 border-line bg-white font-bold" onClick={() => setMore(true)}>

@@ -1,8 +1,10 @@
 import type { NextConfig } from "next";
 
-// compass/next.config.ts를 참고했다. 파일 변환 패키지(OCR·HEIC·PDF) 설정은 그 기능을 만드는 라운드에서 넣는다.
+// compass/next.config.ts를 참고했다.
 const nextConfig: NextConfig = {
   cacheComponents: true,
+  // 아이폰 사진(HEIC) 변환기는 번들에 넣지 않고 서버에서 node_modules 그대로 불러온다(라운드 7 서류 인식)
+  serverExternalPackages: ["heic-convert"],
   partialPrefetching: true,
   turbopack: {
     rules: {

@@ -4,6 +4,7 @@ import { ACCIDENT_TYPE_LABELS, COVERAGE_LABELS, PAYERS, PAYER_LABELS, type Claim
 import type { Amounts, Result } from "@/lib/engine/types";
 import { maskText } from "@/lib/privacy/mask";
 import { checklistKey } from "@/lib/state/checklist";
+import { recognitionLabel } from "@/lib/ui/recognize";
 
 // MASTER.md 8장 보상 검토서의 내용. 화면(7단계)·엑셀·PDF가 모두 이 모델 하나를 쓴다(숫자가 서로 어긋나지 않게).
 // 위에서 결론(세 숫자·받을 곳별), 아래로 근거(카드별 담보·과실 시나리오·입력 필요·필요 서류·다음 할 일).
@@ -98,6 +99,9 @@ function nextSteps(claim: Claim, result: Result, missingCount: number): string[]
 
 function missingList(claim: Claim, result: Result, skippedLabels: string[]): string[] {
   return [
+    // 서류에서 인식했지만 아직 확인하지 않은 값은 계산에 쓰지 않는다
+    ...claim.recognized.map((r) => `확인 필요(서류 인식): ${recognitionLabel(r)}`),
+    ...(claim.pendingNarrative ? ["확인 필요: 음성으로 옮긴 사고 경위"] : []),
     ...skippedLabels.map((label) => `건너뜀: ${label}`),
     ...result.cards.flatMap((card) => card.missing.map((code) => `${card.label}: ${lossItemDef(code)?.label ?? code} 금액(서류)`)),
     ...result.lines.filter((l) => l.status === "needs_input").map((l) => `${l.cardLabel} ${l.label}: ${l.formula}`),

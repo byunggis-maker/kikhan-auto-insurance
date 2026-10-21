@@ -231,6 +231,22 @@ export type Property = z.infer<typeof propertySchema>;
 /** 과실을 알면 내 과실비율, 모르면 0·30·50·70% 시나리오(MASTER.md 6장) */
 export const faultSchema = z.union([z.object({ mode: z.literal("known"), myPercent: percentSchema }), z.object({ mode: z.literal("unknown") })]);
 
+// ── 서류·증권 인식값(라운드 7, MASTER.md 9장) ──
+// 인식값은 바로 입력칸에 들어가지 않는다. "인식된 값 – 확인해 주세요"로 보여 주고, 사용자가 고치거나 확인을 눌러야 들어간다.
+// 개인정보는 서버에서 가린 뒤에만 여기에 온다. 원본 파일은 어디에도 저장하지 않는다.
+export const FACT_FIELDS = ["hospitalDays", "outpatientDays", "monthlyIncome"] as const;
+const recognitionBase = { id: z.string(), source: z.string(), note: z.string() };
+export const recognitionSchema = z.discriminatedUnion("kind", [
+  z.object({ ...recognitionBase, kind: z.literal("loss"), cardId: z.string(), code: z.string(), value: moneySchema }),
+  z.object({ ...recognitionBase, kind: z.literal("fact"), cardId: z.string(), field: z.enum(FACT_FIELDS), value: moneySchema }),
+  z.object({ ...recognitionBase, kind: z.literal("insurer"), value: z.string() }),
+  z.object({ ...recognitionBase, kind: z.literal("productLine"), value: productLineSchema }),
+  z.object({ ...recognitionBase, kind: z.literal("driverScope"), value: z.enum(DRIVER_SCOPES) }),
+  z.object({ ...recognitionBase, kind: z.literal("coverage"), value: policyCoverageSchema }),
+  z.object({ ...recognitionBase, kind: z.literal("deductible"), value: deductibleSchema }),
+]);
+export type Recognition = z.infer<typeof recognitionSchema>;
+
 // ── 한 사고의 입력 전체(localStorage에 이 모양으로 저장한다) ──
 export const claimSchema = z.object({
   accident: accidentSchema,
@@ -241,6 +257,10 @@ export const claimSchema = z.object({
   fault: faultSchema,
   /** "모르면 건너뛰기"로 건너뛴 칸. 검토서의 '입력 필요' 목록에 모은다 */
   skipped: z.array(z.string()),
+  /** 확인을 기다리는 인식값 */
+  recognized: z.array(recognitionSchema),
+  /** 음성에서 옮긴 사고 경위(확인 전). 확인하면 accident.narrative에 들어간다 */
+  pendingNarrative: z.string().nullable(),
 });
 export type Claim = z.infer<typeof claimSchema>;
 
@@ -258,5 +278,7 @@ export function emptyClaim(): Claim {
     properties: [],
     fault: { mode: "unknown" },
     skipped: [],
+    recognized: [],
+    pendingNarrative: null,
   };
 }

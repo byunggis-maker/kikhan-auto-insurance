@@ -65,6 +65,14 @@ describe("저장 데이터 버전 변환", () => {
     expect(result.claim.victims[0]).toMatchObject({ incomeAmountProven: null, occupation: "employed" });
   });
 
+  it("v6 저장값을 v7으로 올리면 확인 대기 인식값은 빈 목록, 음성 경위는 없음", () => {
+    const { recognized: _r, pendingNarrative: _p, ...v6 } = emptyClaim();
+    void [_r, _p];
+    const result = migrate({ version: 6, data: v6 });
+    expect(result.status).toBe("migrated");
+    expect(result.claim).toMatchObject({ recognized: [], pendingNarrative: null });
+  });
+
   it("한 단계씩 변환한다: v1 저장값을 v3까지 올린다", () => {
     const migrations = {
       1: (data: unknown) => ({ ...(data as object), skipped: [] }),

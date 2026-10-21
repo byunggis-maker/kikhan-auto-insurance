@@ -2,10 +2,13 @@
 
 import { COVERAGE_LABELS, PRODUCT_LINES, PRODUCT_LINE_LABELS, type Coverage, type Deductible, type Limit } from "@/lib/claim/types";
 import { setCoverage, toggleCoverage } from "@/lib/ui/flow";
+import { addRecognitions, isPolicyRecognition, policyRecognitions, randomId } from "@/lib/ui/recognize";
+import { DocumentUpload } from "../ai/DocumentUpload";
+import { RecognizedList } from "../ai/Recognized";
 import { Check, Choice } from "../fields";
 import type { ScreenProps } from "./types";
 
-// MASTER.md 7장 3단계 내 보험(직접 입력. 증권 사진 인식은 라운드 7).
+// MASTER.md 7장 3단계 내 보험. 직접 입력하거나 증권 사진·PDF를 읽어 채운다(라운드 7). 읽은 값은 확인해야 들어간다.
 
 const won = (n: number) => (n >= 100_000_000 ? `${n / 100_000_000}억 원` : `${(n / 10_000).toLocaleString("ko-KR")}만 원`);
 const amounts = (values: number[]) => values.map((v) => ({ value: v as number | "unlimited", label: won(v) }));
@@ -28,7 +31,19 @@ export function Step3MyPolicy({ screen, claim, update }: ScreenProps) {
   switch (screen.kind) {
     case "productLine":
       return (
-        <Choice
+        <div className="space-y-4">
+          <DocumentUpload
+            kind="policy"
+            label="증권 사진·PDF로 채우기"
+            onRead={(result) => {
+              if (result.kind !== "policy") return "";
+              const found = policyRecognitions(result.reading, randomId);
+              update((c) => addRecognitions(c, found));
+              return found.length ? `${found.length}개를 읽었습니다. 아래에서 확인해 주세요.` : "자동차보험 증권으로 읽히지 않았습니다. 직접 입력해 주세요.";
+            }}
+          />
+          <RecognizedList title="증권에서 읽은 값" items={claim.recognized.filter(isPolicyRecognition)} update={update} />
+          <Choice
           options={PRODUCT_LINES.map((p) => ({ value: p, label: PRODUCT_LINE_LABELS[p], hint: p === "personal" ? "자가용 승용차 대부분" : p === "business" ? "법인·업무용 차" : p === "commercial" ? "택시·버스·화물 등 영업용" : "오토바이" }))}
           value={policy.productLine}
           onChange={(productLine) =>
@@ -40,6 +55,7 @@ export function Step3MyPolicy({ screen, claim, update }: ScreenProps) {
             }))
           }
         />
+        </div>
       );
     case "coverages": {
       const personal = has("auto_injury") ? "auto_injury" : has("self_injury") ? "self_injury" : "none";

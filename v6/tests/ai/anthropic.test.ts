@@ -18,7 +18,7 @@ describe("API 키 원칙", () => {
     ["음성", speech],
     ["서류 인식", readDocument],
   ])("%s 라우트는 503과 '준비 중' 안내를 돌려준다(예외 없이)", async (_name, route) => {
-    const response = await route();
+    const response = await route(new Request("http://localhost/api", { method: "POST" }));
     expect(response.status).toBe(503);
     expect(await response.json()).toEqual({ ok: false, reason: "unavailable", message: AI_UNAVAILABLE_MESSAGE });
   });
