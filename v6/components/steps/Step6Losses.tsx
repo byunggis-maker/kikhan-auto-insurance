@@ -1,2 +1,92 @@
-// MASTER.md 7장 6 손해 입력(가입담보만, 항목 하나 = 카드 하나, 확정·추정 두 칸) 화면.
-export {};
+"use client";
+
+import { useState } from "react";
+import { COVERAGE_DOCUMENTS, DOCUMENTS, type DocumentId } from "@/lib/claim/lossItems";
+import { OCCUPATIONS, OCCUPATION_LABELS, type Property, type Victim } from "@/lib/claim/types";
+import { setItem, visibleItems } from "@/lib/ui/flow";
+import { Check, Choice, IntInput, MoneyInput, manwon } from "../fields";
+import { LossCard } from "../LossCard";
+import type { ScreenProps } from "./types";
+
+// MASTER.md 7장 6단계 손해 입력. 가입한 담보에 해당하는 항목만, 항목마다 확정·추정 두 칸, 카드 맨 아래 합계 칸.
+// "치료·휴업 정보"는 사람마다 한 화면에 묶었다(질문 7개를 7화면으로 나누면 너무 길다).
+
+/** 자주 쓰지 않는 항목. 값을 넣지 않았으면 "다른 항목 더 보기" 아래에 접어 둔다 */
+const RARE = new Set(["rescue_cost", "future_treatment", "nursing", "home_nursing", "business_loss", "depreciation", "towing", "replacement_value"]);
+
+export function Step6Losses({ screen, claim, update }: ScreenProps) {
+  const [more, setMore] = useState(false);
+  const victim = claim.victims.find((v) => v.id === screen.cardId);
+  const property = claim.properties.find((p) => p.id === screen.cardId);
+  const setVictim = (change: Partial<Victim>) => update((c) => ({ ...c, victims: c.victims.map((v) => (v.id === screen.cardId ? { ...v, ...change } : v)) }));
+  const setProperty = (change: Partial<Property>) => update((c) => ({ ...c, properties: c.properties.map((p) => (p.id === screen.cardId ? { ...p, ...change } : p)) }));
+
+  if (screen.kind === "facts" && victim) {
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-3">
+          <IntInput label="입원일수" unit="일" value={victim.hospitalDays} onChange={(hospitalDays) => setVictim({ hospitalDays })} />
+          <IntInput label="통원일수" unit="일" value={victim.outpatientDays} onChange={(outpatientDays) => setVictim({ outpatientDays })} />
+          <IntInput label="병원 식사를 받지 않은 끼니" unit="끼" max={109_500} value={victim.mealsNotProvided} onChange={(mealsNotProvided) => setVictim({ mealsNotProvided })} />
+          <IntInput label="일하지 못한 날(휴업일수)" unit="일" value={victim.daysOffWork} onChange={(daysOffWork) => setVictim({ daysOffWork })} />
+        </div>
+        <div>
+          <p className="mb-2 font-bold">사고 당시 하던 일</p>
+          <Choice columns={2} options={OCCUPATIONS.map((o) => ({ value: o, label: OCCUPATION_LABELS[o] }))} value={victim.occupation} onChange={(occupation) => setVictim({ occupation })} />
+        </div>
+        {(victim.occupation === "employed" || victim.occupation === null) && <MoneyInput label="월 소득(세금 뗀 금액)" value={victim.monthlyIncome} onChange={(monthlyIncome) => setVictim({ monthlyIncome })} />}
+        <div>
+          <p className="mb-2 font-bold">소득과 일하지 못한 사실을 서류로 증명할 수 있나요?</p>
+          <p className="mb-2 text-sm font-semibold text-ink-soft">휴업손해는 증명할 수 있을 때만 받습니다(약관 별표1).</p>
+          <Choice
+            columns={3}
+            options={[
+              { value: "yes", label: "예" },
+              { value: "no", label: "아니오" },
+              { value: "unknown", label: "모름" },
+            ]}
+            value={victim.incomeProven === true ? "yes" : victim.incomeProven === false ? "no" : null}
+            onChange={(choice) => setVictim({ incomeProven: choice === "yes" ? true : choice === "no" ? false : null })}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  const card = victim ?? property;
+  if (!card) return null;
+  const all = visibleItems(claim, card.id);
+  const hasValue = (code: string) => card.losses.some((i) => i.code === code);
+  const items = all.filter((def) => more || !RARE.has(def.code) || hasValue(def.code));
+  const hidden = all.length - items.length;
+  const common = [...new Set(all.flatMap((def) => def.coverages).filter((c) => claim.myPolicy.coverages.some((x) => x.coverage === c) || c === "liability_bodily_1" || c === "liability_property").flatMap((c) => COVERAGE_DOCUMENTS[c]))] as DocumentId[];
+  const total = card.losses.reduce((sum, item) => sum + (item.confirmed ?? item.estimated ?? 0), 0);
+  return (
+    <div className="space-y-3">
+      {property?.role === "my_vehicle" && <Check label="사업용 차(택시·화물 등)" hint="렌트비 대신 휴차료로 계산합니다" checked={property.commercialUse === true} onChange={(commercialUse) => setProperty({ commercialUse })} />}
+      {items.map((def) => (
+        <LossCard key={def.code} def={def} item={card.losses.find((i) => i.code === def.code)} victim={victim} onChange={(change) => update((c) => setItem(c, card.id, def.code, change))} />
+      ))}
+      {hidden > 0 && (
+        <button type="button" className="min-h-12 w-full rounded-xl border-2 border-line bg-white font-bold" onClick={() => setMore(true)}>
+          다른 항목 {hidden}개 더 보기
+        </button>
+      )}
+      <p className="text-xs font-semibold text-ink-soft">모든 항목 공통 서류(약관 제27조): {common.map((id) => DOCUMENTS[id].label).join(" · ")}</p>
+      <section className="rounded-2xl border-2 border-ink bg-white p-4">
+        <h3 className="text-lg font-bold">합계</h3>
+        <p className="text-sm font-semibold text-ink-soft">항목에 넣은 금액(확정 우선): {manwon(total)}</p>
+        <div className="mt-3">
+          <MoneyInput
+            label="항목을 나누기 어려우면 손해 합계만 대략 넣으세요(추정)"
+            tone="estimate"
+            value={card.userTotal}
+            onChange={(userTotal) => (victim ? setVictim({ userTotal }) : setProperty({ userTotal }))}
+          />
+        </div>
+        {card.userTotal !== null && card.losses.length > 0 && card.userTotal !== total && <p className="mt-2 text-sm font-bold text-estimate-ink">합계 칸과 항목 합계가 {manwon(Math.abs(card.userTotal - total))} 다릅니다. 계산은 항목으로 합니다.</p>}
+        {card.userTotal !== null && card.losses.length === 0 && <p className="mt-2 text-sm font-bold text-estimate-ink">항목 없이 합계만으로 계산합니다(치료관계비 하한은 적용하지 않음). 항목을 나누면 더 정확해집니다.</p>}
+      </section>
+    </div>
+  );
+}
