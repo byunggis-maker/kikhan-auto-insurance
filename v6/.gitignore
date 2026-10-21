@@ -1,0 +1,30 @@
+# dependencies
+/node_modules
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+
+# env files: 키 값은 칸이 Vercel 화면에서 직접 넣는다(MASTER.md 10장)
+.env*
+!.env.example
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts

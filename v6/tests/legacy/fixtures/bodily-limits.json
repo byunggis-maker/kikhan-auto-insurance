@@ -1,0 +1,125 @@
+{
+  "note": "시험용 고정값. compass/data/rules/standard/bodily-limits.json(compass 커밋 e58ffd1)에서 아래 id만 그대로 뽑았다. v6 엔진의 기준값은 lib/claim/standards.ts에 따로 둔다.",
+  "items": [
+    {
+      "id": "liability1.death.limit",
+      "value": 150000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 본문 21쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "자동차보험의 구성 「대인배상Ⅰ, 대인배상Ⅱ」",
+        "clause": "보험금의 종류 및 한도: 사망 보험금 최대 1억 5천만원",
+        "page": 21
+      },
+      "status": "confirmed",
+      "note": "법령상 근거는 자동차손해배상보장법 시행령 제3조제1항제1호. 약관의 안내 쪽에 적힌 금액을 옮겼다."
+    },
+    {
+      "id": "liability1.death.minimum",
+      "value": 20000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 83쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<별표4> 과실상계 등",
+        "clause": "1. 과실상계 가.(2) 상계 후 금액이 2,000만원에 미달하면 2,000만원",
+        "page": 83
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "liability1.injury.limit.grade5",
+      "value": 9000000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 86쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<붙임> 자동차손해배상보장법 시행령 [별표 1]",
+        "clause": "1. 상해 구분별 한도금액 5급",
+        "page": 86
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "liability1.injury.limit.grade9",
+      "value": 2400000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 89쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<붙임> 자동차손해배상보장법 시행령 [별표 1]",
+        "clause": "1. 상해 구분별 한도금액 9급",
+        "page": 89
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "liability1.injury.limit.grade12",
+      "value": 1200000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 90쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<붙임> 자동차손해배상보장법 시행령 [별표 1]",
+        "clause": "1. 상해 구분별 한도금액 12급",
+        "page": 90
+      },
+      "status": "confirmed",
+      "note": ""
+    },
+    {
+      "id": "liability1.injury.limit.grade14",
+      "value": 500000,
+      "unit": "KRW",
+      "productLines": [
+        "personal"
+      ],
+      "effectiveFrom": "2025-11-26",
+      "effectiveTo": null,
+      "basis": {
+        "sourceId": "hi-personal-20251126",
+        "source": "현대해상 개인용 약관 2025-11-26 개정 별표 90쪽",
+        "document": "현대해상 Hicar 개인용자동차보험 약관 (2025-11-26 개정)",
+        "appendix": "<붙임> 자동차손해배상보장법 시행령 [별표 1]",
+        "clause": "1. 상해 구분별 한도금액 14급",
+        "page": 90
+      },
+      "status": "confirmed",
+      "note": ""
+    }
+  ]
+}

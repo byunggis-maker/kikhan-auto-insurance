@@ -215,3 +215,21 @@ V2의 `compass/data/rules/product-check.json`도 업무용·영업용·이륜차
 | 규칙 값 | compass/data/rules/standard/fault.json | `fault.medicalFloor`, `fault.minorInjuryGrades` | — | 현대해상 개인용 약관 2025-11-26 개정 별표4, 83쪽 |
 
 옮길 때 함께 필요한 보조 함수(`guaranteedCost`, `medicalCost`, `lossByCategory`, `scale`, `combine`, `won`)는 위 로직을 돌리는 데 필요한 만큼만 가져오고, 가져온 것은 이 표에 추가한다.
+
+## A-2. v6에 이식한 파일 (라운드 0 뼈대, 아직 엔진에 연결하지 않음)
+
+위치: `v6/lib/engine/legacy/`. 각 파일 맨 위 주석에 원본 경로·줄 번호를 적었다. 원본과 비교한 결과, 출처 주석과 import 경로를 빼면 모두 글자 단위로 같다(deduction.ts는 함수 본문이 같다).
+
+| v6 파일 | 원본 (compass 커밋 e58ffd1) | 줄 | 바꾼 것 |
+|---|---|---|---|
+| fault.ts | lib/engine/fault.ts | 1–108 전체 | import 경로 |
+| coverages/liability-bodily-1.ts | lib/engine/coverages/liability-bodily-1.ts | 1–78 전체 | 없음 |
+| coverages/own-damage.ts | lib/engine/coverages/own-damage.ts | 1–47 전체 | import 경로 |
+| deduction.ts | lib/engine/coordinate.ts 34, 86–88, 131–162 / coverages/auto-injury.ts 14 / coverages/liability-bodily-2.ts 9 | 일부 | 클로저를 `makeDeduction(context)`로 감쌈. 본문 그대로 |
+| loss-ledger.ts | lib/engine/loss-ledger.ts | 53–90만 | 1–51행(buildLedger·mergeSolatium, V2 손해 산정) 제외 |
+| rules.ts · decimal.ts · range.ts · steps.ts · types.ts | lib/engine/ 같은 이름 | 전체 | import 경로(rules·types) |
+| schemas/person-claim.ts · vehicle-claim.ts · rules.ts | lib/schemas/ 같은 이름 | 전체 | 없음 |
+| data/fault.json | data/rules/standard/fault.json | 전체 | 없음(바이트 동일) |
+| verification.ts | — (v6 새 코드) | — | 다른 보험 종류에서 쓰면 "미검증: 해당 약관 대조 필요" |
+
+옮긴 테스트: `v6/tests/legacy/`. 원본 compass/tests/person-coverage.test.ts·vehicle-coverage.test.ts는 V2 전체 엔진(calculatePersonCoverages·calculateAccident)을 거치므로 그대로 옮기지 않았다. 대신 같은 사례의 손 검산 숫자를 이식 함수에 직접 넣어 시험한다. 원본 사례의 줄 번호는 각 테스트 파일 머리 주석에 적었다. 대인Ⅰ 한도값은 compass/data/rules/standard/bodily-limits.json에서 필요한 6개 항목만 `tests/legacy/fixtures/bodily-limits.json`에 그대로 옮긴 시험용 고정값이다.
