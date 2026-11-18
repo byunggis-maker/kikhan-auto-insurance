@@ -4,26 +4,32 @@ import { useId, useState } from "react";
 
 // 입력 화면이 함께 쓰는 입력 도구. 모바일 우선: 누르는 곳은 48px 이상, 숫자는 숫자 자판.
 
-export function Choice<T extends string | number>({ options, value, onChange, columns = 1 }: { options: { value: T; label: string; hint?: string }[]; value: T | null; onChange: (value: T) => void; columns?: 1 | 2 | 3 }) {
+/**
+ * 드롭다운(라운드 9). 선택형 질문은 버튼 격자 대신 이것을 쓴다. 첫 항목은 '모름'(값 null).
+ * unknown을 null로 주면 '모름' 항목이 없다.
+ */
+export function Select<T extends string | number>({ label, value, options, onChange, unknown = "모름", name }: { label: string; value: T | null; options: { value: T; label: string }[]; onChange: (value: T | null) => void; unknown?: string | null; name?: string }) {
+  const id = useId();
+  const index = value === null ? -1 : options.findIndex((o) => o.value === value);
   return (
-    <div className={`grid gap-2 ${columns === 3 ? "grid-cols-3" : columns === 2 ? "grid-cols-2" : "grid-cols-1"}`} role="radiogroup">
-      {options.map((option) => {
-        const selected = option.value === value;
-        return (
-          <button
-            key={String(option.value)}
-            type="button"
-            role="radio"
-            aria-checked={selected}
-            onClick={() => onChange(option.value)}
-            className={`min-h-12 rounded-xl border-2 px-4 py-3 text-left font-bold ${selected ? "border-ink bg-ink text-white" : "border-line bg-white text-ink"}`}
-          >
-            {option.label}
-            {option.hint && <span className={`mt-0.5 block text-sm font-semibold ${selected ? "text-white/80" : "text-ink-soft"}`}>{option.hint}</span>}
-          </button>
-        );
-      })}
-    </div>
+    <label htmlFor={id} className="block">
+      <span className="text-sm font-bold">{label}</span>
+      <select
+        id={id}
+        name={name}
+        aria-label={label}
+        className="mt-1 min-h-12 w-full rounded-xl border-2 border-line bg-white px-3 text-base font-bold text-ink outline-none focus:border-ink"
+        value={index === -1 ? "" : String(index)}
+        onChange={(e) => onChange(e.target.value === "" ? null : options[Number(e.target.value)].value)}
+      >
+        {(unknown !== null || index === -1) && <option value="">{unknown ?? "고르세요"}</option>}
+        {options.map((o, i) => (
+          <option key={String(o.value)} value={String(i)}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 
@@ -114,10 +120,10 @@ export function IntInput({ label, value, onChange, unit, max = 36_500 }: { label
 /** − n + 개수 고르기 */
 export function Counter({ label, hint, value, onChange, max = 9 }: { label: string; hint?: string; value: number; onChange: (value: number) => void; max?: number }) {
   return (
-    <div className="flex min-h-12 items-center justify-between gap-3 rounded-xl border-2 border-line bg-white px-4 py-2">
+    <div className="flex min-h-12 items-center justify-between gap-3 rounded-xl border-2 border-line bg-white px-4 py-1">
       <span className="font-bold">
         {label}
-        {hint && <span className="block text-sm font-semibold text-ink-soft">{hint}</span>}
+        {hint && <span className="block text-xs font-semibold text-ink-soft">{hint}</span>}
       </span>
       <span className="flex items-center gap-2">
         <button type="button" aria-label={`${label} 빼기`} className="size-11 rounded-full border-2 border-line text-xl font-bold disabled:opacity-30" disabled={value === 0} onClick={() => onChange(value - 1)}>

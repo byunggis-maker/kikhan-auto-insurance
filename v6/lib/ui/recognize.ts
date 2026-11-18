@@ -1,13 +1,12 @@
 import type { ClaimReading, PolicyReading } from "@/lib/ai/documents";
 import { lossItemDef } from "@/lib/claim/lossItems";
 import { SALARY_INCOME_PERIOD } from "@/lib/claim/standards";
-import { COVERAGE_LABELS, FACT_FIELDS, PRODUCT_LINE_LABELS, type Claim, type FactReading, type Limit, type Period, type Recognition } from "@/lib/claim/types";
+import { COVERAGE_LABELS, DRIVER_SCOPE_LABELS, FACT_FIELDS, PRODUCT_LINE_LABELS, type Claim, type FactReading, type Limit, type Period, type Recognition } from "@/lib/claim/types";
 import { setCoverage, setItem, toggleCoverage, visibleItems } from "./flow";
 
 // 서류·증권 인식값을 "확인을 기다리는 값"으로 만들고, 사용자가 고치거나 확인·지우는 상태 변경(라운드 7, MASTER.md 9장).
 // React와 분리해 테스트한다(tests/ui/recognize.test.ts). 확인하기 전의 값은 계산에 쓰지 않는다.
 
-const DRIVER_SCOPE_LABELS = { anyone: "누구나", named_only: "기명피보험자 1인", couple: "부부", family: "가족", named_plus_one: "기명 1인 + 지정 1인", employees: "임직원", other: "그 밖" } as const;
 const FACT_LABELS = { hospitalDays: "입원일수", outpatientDays: "통원일수", daysOffWork: "휴업일수", monthlyIncome: "월 소득" } as const;
 
 const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
@@ -27,9 +26,49 @@ export function targetKey(r: Recognition): string {
   }
 }
 
+/** 증권 표에 쓰는 짧은 금액: 200,000,000 → "2억 원", 21,000,000 → "2,100만 원" */
+const short = (n: number) => (n >= 100_000_000 && n % 10_000_000 === 0 ? `${(n / 100_000_000).toLocaleString("ko-KR")}억 원` : n >= 10_000 && n % 10_000 === 0 ? `${(n / 10_000).toLocaleString("ko-KR")}만 원` : won(n));
+const shortLimit = (limit: Limit | null) => (limit === null ? "모름" : limit === "unlimited" ? "무한" : short(limit));
+
+/** 증권 표의 한 줄: 담보(칸 이름) | 가입금액(읽은 값). 라운드 9 */
+export function recognitionRow(r: Recognition): { name: string; value: string } {
+  switch (r.kind) {
+    case "insurer":
+      return { name: "보험회사", value: r.value };
+    case "productLine":
+      return { name: "보험 종류", value: PRODUCT_LINE_LABELS[r.value] };
+    case "driverScope":
+      return { name: "운전자 범위", value: DRIVER_SCOPE_LABELS[r.value] };
+    case "ageLimit":
+      return { name: "연령 한정", value: r.value };
+    case "period":
+      return { name: "보험기간", value: `${r.value.start} ~ ${r.value.end}` };
+    case "vehicle":
+      return { name: "차종·연식", value: [r.value.model, r.value.year ? `${r.value.year}년식` : null, r.value.value !== null ? `차량가액 ${short(r.value.value)}` : null].filter(Boolean).join(", ") };
+    case "deductible":
+      return { name: "자기부담금", value: r.value.type === "rate" ? `${r.value.ratePercent}%(${short(r.value.min).replace(" 원", "")}~${short(r.value.max)})` : short(r.value.amount) };
+    case "coverage": {
+      const c = r.value;
+      const split = c.injuryLimit !== null || c.deathLimit !== null || c.disabilityLimit !== null;
+      const value = c.coverage === "liability_bodily_1" && c.limit === null ? "의무보험" : split ? (c.deathLimit === c.disabilityLimit ? `부상 ${shortLimit(c.injuryLimit)} / 사망·후유장애 ${shortLimit(c.deathLimit)}` : `부상 ${shortLimit(c.injuryLimit)} · 사망 ${shortLimit(c.deathLimit)} · 후유장애 ${shortLimit(c.disabilityLimit)}`) : shortLimit(c.limit);
+      return { name: COVERAGE_LABELS[c.coverage], value };
+    }
+    default: {
+      const label = recognitionLabel(r);
+      return { name: label, value: "" };
+    }
+  }
+}
+
 /** 화면·검토서에 쓰는 한 줄 설명 */
 export function recognitionLabel(r: Recognition): string {
   switch (r.kind) {
+    case "period":
+    case "ageLimit":
+    case "vehicle": {
+      const row = recognitionRow(r);
+      return `${row.name} ${row.value}`;
+    }
     case "loss":
       return `${lossItemDef(r.code)?.label ?? r.code} ${won(r.value)}`;
     case "fact":
@@ -55,7 +94,7 @@ export type MakeId = () => string;
 /** 화면에서 쓰는 id(같은 순간 여러 개를 만들어도 겹치지 않게) */
 export const randomId: MakeId = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 
-const POLICY_KINDS = new Set<Recognition["kind"]>(["insurer", "productLine", "driverScope", "coverage", "deductible"]);
+const POLICY_KINDS = new Set<Recognition["kind"]>(["insurer", "productLine", "driverScope", "coverage", "deductible", "period", "ageLimit", "vehicle"]);
 export const isPolicyRecognition = (r: Recognition) => POLICY_KINDS.has(r.kind);
 
 /** 보상 서류 인식 결과 → 이 카드의 확인 대기 값. 이 카드에 보이지 않는 항목은 넣지 않고 그 수를 알려 준다 */
@@ -102,6 +141,15 @@ export function policyRecognitions(reading: PolicyReading, makeId: MakeId): Reco
     out.push({ id: makeId(), kind: "coverage", value, source, note: c.text });
   }
   if (reading.ownDamageDeductible) out.push({ id: makeId(), kind: "deductible", value: { type: "rate", ...reading.ownDamageDeductible }, source, note: "" });
+  // 라운드 9: 보험기간·연령 한정특약·차종·연식·차량가액. 날짜 모양이 아니면 버린다
+  const day = (text: string | null | undefined) => (text && /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : null);
+  const start = day(reading.periodStart);
+  const end = day(reading.periodEnd);
+  if (start && end) out.push({ id: makeId(), kind: "period", value: { start, end }, source, note: "" });
+  if (reading.ageLimit) out.push({ id: makeId(), kind: "ageLimit", value: reading.ageLimit, source, note: "" });
+  const year = reading.vehicleYear ?? null;
+  const vehicleValue = reading.vehicleValue ?? null;
+  if (reading.vehicleModel || year !== null || vehicleValue !== null) out.push({ id: makeId(), kind: "vehicle", value: { model: reading.vehicleModel || null, year, value: vehicleValue }, source, note: "" });
   return out;
 }
 
@@ -266,9 +314,56 @@ export function dismissRecognition(claim: Claim, id: string): Claim {
 export function confirmRecognition(claim: Claim, id: string): Claim {
   const r = claim.recognized.find((x) => x.id === id);
   if (!r) return claim;
-  const rest = dismissRecognition(claim, id);
+  const confirmed = applyRecognition(dismissRecognition(claim, id), r);
+  // 라운드 9: 증권에서 읽어 확인한 칸을 적어 둔다. 그 칸의 질문 화면은 건너뛴다(lib/ui/flow.ts)
+  const keys = policyKeys(r);
+  return keys.length ? { ...confirmed, policyRead: [...new Set([...(confirmed.policyRead ?? []), ...keys])] } : confirmed;
+}
+
+/** 확인한 증권 값이 채우는 칸(lib/ui/flow.ts가 이 칸의 질문을 건너뛴다) */
+export function policyKeys(r: Recognition): string[] {
+  switch (r.kind) {
+    case "insurer":
+    case "productLine":
+    case "driverScope":
+    case "deductible":
+    case "period":
+    case "ageLimit":
+      return [r.kind];
+    case "vehicle":
+      return r.value.value !== null ? ["vehicleValue"] : [];
+    case "coverage": {
+      const c = r.value;
+      const keys = ["coverages"];
+      if (c.limit !== null) keys.push(`limit:${c.coverage}`);
+      if (c.injuryLimit !== null) keys.push(`injury:${c.coverage}`);
+      if (c.deathLimit !== null) keys.push(`death:${c.coverage}`);
+      return keys;
+    }
+    default:
+      return [];
+  }
+}
+
+/** 증권 표의 [모두 확인]: 체크한 줄은 넣고, 체크를 뺀 줄은 지운다(라운드 9) */
+export function confirmPolicy(claim: Claim, keepIds: string[]): Claim {
+  const rows = claim.recognized.filter(isPolicyRecognition);
+  return rows.reduce((c, r) => (keepIds.includes(r.id) ? confirmRecognition(c, r.id) : dismissRecognition(c, r.id)), claim);
+}
+
+function applyRecognition(rest: Claim, r: Recognition): Claim {
   const policy = (change: Partial<Claim["myPolicy"]>) => ({ ...rest, myPolicy: { ...rest.myPolicy, ...change } });
   switch (r.kind) {
+    case "period":
+      return policy({ periodStart: r.value.start, periodEnd: r.value.end });
+    case "ageLimit":
+      return policy({ ageLimit: r.value });
+    case "vehicle": {
+      const next = policy({ vehicleModel: r.value.model, vehicleYear: r.value.year, vehicleValue: r.value.value });
+      const value = r.value.value;
+      // 내 차의 사고 직전 가액은 증권의 차량가액을 쓴다
+      return value === null ? next : { ...next, properties: next.properties.map((p) => (p.role === "my_vehicle" ? { ...p, valueAtAccident: value, valueSource: "policy" as const } : p)) };
+    }
     case "loss":
       return setItem(rest, r.cardId, r.code, { confirmed: r.value, evidence: `서류 인식 확인: ${r.source}` });
     case "fact":

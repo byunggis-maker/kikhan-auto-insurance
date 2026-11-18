@@ -102,6 +102,12 @@ describe("증권 인식값", () => {
       { coverage: "liability_property", unlimited: false, limit: 200_000_000, injuryLimit: null, deathLimit: null, disabilityLimit: null, text: "1사고당 2억원" },
       { coverage: "self_injury", unlimited: false, limit: null, injuryLimit: 15_000_000, deathLimit: 15_000_000, disabilityLimit: 15_000_000, text: "" },
     ],
+    periodStart: null,
+    periodEnd: null,
+    ageLimit: null,
+    vehicleModel: null,
+    vehicleYear: null,
+    vehicleValue: null,
     ownDamageDeductible: { ratePercent: 20, min: 200_000, max: 500_000 },
     note: "",
   };

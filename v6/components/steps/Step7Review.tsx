@@ -5,7 +5,9 @@ import type { Claim } from "@/lib/claim/types";
 import { calculateScenarios } from "@/lib/engine/fault-scenarios";
 import { buildReview, type Review } from "@/lib/report/review";
 import { clearChecked, loadChecked, saveChecked } from "@/lib/state/checklist";
-import { skippedLabels, standardFillable } from "@/lib/ui/flow";
+import { askFacts } from "@/lib/ui/askFacts";
+import { ASSUMPTION_TEXT, standardFillable, unknownLabels, withAssumptions } from "@/lib/ui/flow";
+import { AskTerms } from "../ai/AskTerms";
 import { manwon } from "../fields";
 
 // MASTER.md 8장 보상 검토서(7단계). 위에서 결론(세 숫자·받을 곳별), 아래로 근거(담보·시나리오·입력 필요·서류·다음 할 일).
@@ -39,6 +41,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 const box = "rounded-2xl border-2 border-line bg-white";
 
 /** 담보 한 줄: 금액 세 칸은 나란히(390px에서도 숫자가 꺾이지 않게), 계산식·조항은 펼쳐 본다. 면책 사유는 늘 보인다 */
+/** 라운드 9: 0원이고 사유도 없는 지급 줄은 숨긴다(보여 줄 내용이 없다) */
+const emptyLine = (line: Review["cards"][number]["lines"][number]) => line.status === "지급" && !line.exclusion && line.confirmed === 0 && line.withEstimates === 0;
+
 function Line({ line }: { line: Review["cards"][number]["lines"][number] }) {
   return (
     <li className="py-3">
@@ -110,13 +115,15 @@ async function saveReview(review: Review, kind: "xlsx" | "pdf") {
   download(await reviewToPdf(review, { regular, bold }), `${name}.pdf`, "application/pdf");
 }
 
-export function Step7Review({ claim, goTo }: { claim: Claim; goTo: (screenId: string, anchor?: string) => void }) {
+export function Step7Review({ claim: input, goTo }: { claim: Claim; goTo: (screenId: string, anchor?: string) => void }) {
+  // 상대 차량 보험의 '모름'은 일반적 가입 기준으로 채워 계산한다(입력값은 그대로, 라운드 9)
+  const { claim, assumptions } = useMemo(() => withAssumptions(input), [input]);
   const results = useMemo(() => calculateScenarios(claim), [claim]);
   const [index, setIndex] = useState(0);
   // 이 화면은 브라우저에서만 그려진다(Wizard가 localStorage를 읽은 뒤). 그래서 처음 값으로 바로 읽어도 된다
   const [checked, setChecked] = useState<string[]>(() => loadChecked());
   const [checkSaved, setCheckSaved] = useState(true);
-  const review = useMemo(() => buildReview(claim, results, index, skippedLabels(claim), checked), [claim, results, index, checked]);
+  const review = useMemo(() => buildReview(claim, results, index, unknownLabels(claim), checked, assumptions.map((k) => ASSUMPTION_TEXT[k])), [claim, results, index, checked, assumptions]);
   const toggle = (key: string, on: boolean) => {
     const next = on ? [...checked.filter((k) => k !== key), key] : checked.filter((k) => k !== key);
     setChecked(next);
@@ -158,19 +165,19 @@ export function Step7Review({ claim, goTo }: { claim: Claim; goTo: (screenId: st
       ) : (
         <div className="space-y-2">
           <Big label="확정 기준 받을 돈" value={review.top.receiveConfirmed} sub="서류로 확인한 금액만" />
-          <Big label="추정 포함 받을 돈" value={review.top.receiveWithEstimates} sub={`추정분 ${manwon(review.top.receiveEstimatePart)}`} tone="estimate" />
-          <Big label="내가 낼 돈" value={review.top.burdenWithEstimates} sub={`확정 기준 ${manwon(review.top.burdenConfirmed)}`} tone="burden" />
+          <Big label="추정 포함 받을 돈" value={review.top.receiveWithEstimates} sub={review.top.receiveEstimatePart ? `추정분 ${manwon(review.top.receiveEstimatePart)}` : undefined} tone="estimate" />
+          <Big label="내가 낼 돈" value={review.top.burdenWithEstimates} sub={review.top.burdenConfirmed !== review.top.burdenWithEstimates ? `확정 기준 ${manwon(review.top.burdenConfirmed)}` : undefined} tone="burden" />
           {review.top.toCounterparty > 0 && <p className="text-sm font-bold">내 보험이 상대방에게 줄 돈(추정 포함): {manwon(review.top.toCounterparty)}</p>}
         </div>
       )}
 
-      {/* 약관 기준으로 채울 수 있는 칸(라운드 5 보완 B) */}
+      {/* 지급기준으로 채울 수 있는 칸(라운드 5 보완 B) */}
       {fillable.length > 0 && (
         <div className="rounded-2xl border-2 border-estimate-line bg-estimate p-4 text-estimate-ink">
-          <p className="font-bold">약관 기준으로 채울 수 있는 칸이 {fillable.length}개 있어요</p>
+          <p className="font-bold">지급기준으로 채울 수 있는 칸이 {fillable.length}개 있어요</p>
           <p className="mt-1 text-sm font-semibold">{fillable.map((f) => f.label).join(" · ")}</p>
           <button type="button" className="mt-3 min-h-11 rounded-xl bg-estimate-ink px-4 font-bold text-white" onClick={() => goTo(fillable[0].screenId, `loss-${fillable[0].code}`)}>
-            채우기
+            지급기준으로 채우기
           </button>
         </div>
       )}
@@ -220,10 +227,12 @@ export function Step7Review({ claim, goTo }: { claim: Claim; goTo: (screenId: st
             <section key={card.label} className={`${box} p-4`} data-card={card.label}>
               <h4 className="text-lg font-bold">{card.label}</h4>
               <p className="text-sm font-semibold text-ink-soft">
-                실제손해 {manwon(card.actualLoss.confirmed)} <span className="text-estimate-ink">/ {manwon(card.actualLoss.withEstimates)}</span> · 보상 안 되는 손해 {manwon(card.uncovered.withEstimates)}
+                실제손해 {manwon(card.actualLoss.confirmed)}
+                {card.actualLoss.withEstimates !== card.actualLoss.confirmed && <span className="text-estimate-ink"> / {manwon(card.actualLoss.withEstimates)}</span>}
+                {card.uncovered.withEstimates > 0 && ` · 보상 안 되는 손해 ${manwon(card.uncovered.withEstimates)}`}
               </p>
               <ul className="mt-1 divide-y-2 divide-line">
-                {card.lines.map((line) => (
+                {card.lines.filter((line) => !emptyLine(line)).map((line) => (
                   <Line key={`${line.label}:${line.payer}`} line={line} />
                 ))}
               </ul>
@@ -329,6 +338,8 @@ export function Step7Review({ claim, goTo }: { claim: Claim; goTo: (screenId: st
           ))}
         </ol>
       </Section>
+
+      <AskTerms facts={askFacts(claim, assumptions, review)} productLine={claim.myPolicy.productLine} />
 
       {review.notices.length > 0 && (
         <section className="space-y-1 text-sm font-semibold text-ink-soft">

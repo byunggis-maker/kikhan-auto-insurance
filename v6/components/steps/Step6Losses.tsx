@@ -3,12 +3,13 @@
 import { useState } from "react";
 import { COVERAGE_DOCUMENTS, DOCUMENTS, type DocumentId } from "@/lib/claim/lossItems";
 import { dailyWageFor } from "@/lib/claim/standards";
-import { OCCUPATIONS, OCCUPATION_LABELS, type Property, type Victim } from "@/lib/claim/types";
+import { OCCUPATIONS, OCCUPATION_LABELS, VEHICLE_CLASSES, VEHICLE_CLASS_LABELS, type Property, type Victim } from "@/lib/claim/types";
+import { estimateVehicleValue, modelYears } from "@/lib/claim/vehicleValue";
 import { claimDate, setItem, visibleItems } from "@/lib/ui/flow";
 import { addRecognitions, claimRecognitions, lossGroup, randomId } from "@/lib/ui/recognize";
 import { DocumentUpload } from "../ai/DocumentUpload";
 import { RecognizedList } from "../ai/Recognized";
-import { Check, Choice, IntInput, MoneyInput, manwon } from "../fields";
+import { Check, IntInput, MoneyInput, Select, manwon } from "../fields";
 import { LossCard } from "../LossCard";
 import type { ScreenProps } from "./types";
 
@@ -26,12 +27,11 @@ export function Step6Losses({ screen, claim, update }: ScreenProps) {
   const setProperty = (change: Partial<Property>) => update((c) => ({ ...c, properties: c.properties.map((p) => (p.id === screen.cardId ? { ...p, ...change } : p)) }));
 
   const yesNo = [
-    { value: "yes", label: "예" },
-    { value: "no", label: "아니오" },
-    { value: "unknown", label: "모름" },
-  ] as const;
+    { value: "yes" as const, label: "예" },
+    { value: "no" as const, label: "아니오" },
+  ];
   const toChoice = (value: boolean | null) => (value === true ? "yes" : value === false ? "no" : null);
-  const fromChoice = (choice: string) => (choice === "yes" ? true : choice === "no" ? false : null);
+  const fromChoice = (choice: string | null) => (choice === "yes" ? true : choice === "no" ? false : null);
 
   const pending = claim.recognized.filter((r) => (r.kind === "loss" || r.kind === "fact") && r.cardId === screen.cardId);
   const pendingFacts = pending.filter((r) => r.kind === "fact");
@@ -47,10 +47,7 @@ export function Step6Losses({ screen, claim, update }: ScreenProps) {
           <IntInput label="병원 식사를 받지 않은 끼니" unit="끼" max={109_500} value={victim.mealsNotProvided} onChange={(mealsNotProvided) => setVictim({ mealsNotProvided })} />
           <IntInput label="일하지 못한 날(휴업일수)" unit="일" value={victim.daysOffWork} onChange={(daysOffWork) => setVictim({ daysOffWork })} />
         </div>
-        <div>
-          <p className="mb-2 font-bold">사고 당시 하던 일</p>
-          <Choice columns={2} options={OCCUPATIONS.map((o) => ({ value: o, label: OCCUPATION_LABELS[o] }))} value={victim.occupation} onChange={(occupation) => setVictim({ occupation })} />
-        </div>
+        <Select label="사고 당시 하던 일" options={OCCUPATIONS.map((o) => ({ value: o, label: OCCUPATION_LABELS[o] }))} value={victim.occupation} onChange={(occupation) => setVictim({ occupation })} />
         {(victim.occupation === "employed" || victim.occupation === null) && (
           <>
             <div>
@@ -61,18 +58,16 @@ export function Step6Losses({ screen, claim, update }: ScreenProps) {
               </p>
             </div>
             <div>
-              <p className="mb-2 font-bold">월 소득 금액을 세금 서류로 증명할 수 있나요?</p>
-              <p className="mb-2 text-sm font-semibold text-ink-soft">
+              <Select label="월 소득 금액을 세금 서류로 증명할 수 있나요?" options={yesNo} value={toChoice(victim.incomeAmountProven)} onChange={(choice) => setVictim({ incomeAmountProven: fromChoice(choice) })} />
+              <p className="mt-1 text-sm font-semibold text-ink-soft">
                 원천징수영수증·소득금액증명 등. 증명하기 어려우면 일용근로자 임금{wage ? `(1일 ${wage.value.toLocaleString("ko-KR")}원)` : ""}으로 계산합니다(약관 별표1, 인쇄 74쪽).
               </p>
-              <Choice columns={3} options={[...yesNo]} value={toChoice(victim.incomeAmountProven)} onChange={(choice) => setVictim({ incomeAmountProven: fromChoice(choice) })} />
             </div>
           </>
         )}
         <div>
-          <p className="mb-2 font-bold">일하지 못해 수입이 줄었다는 사실을 서류로 증명할 수 있나요?</p>
-          <p className="mb-2 text-sm font-semibold text-ink-soft">휴업손해는 수입 감소를 증명할 수 있을 때만 받습니다(약관 별표1 나. 3. 가., 인쇄 76쪽).</p>
-          <Choice columns={3} options={[...yesNo]} value={toChoice(victim.incomeProven)} onChange={(choice) => setVictim({ incomeProven: fromChoice(choice) })} />
+          <Select label="수입 감소를 서류로 증명할 수 있나요?" options={yesNo} value={toChoice(victim.incomeProven)} onChange={(choice) => setVictim({ incomeProven: fromChoice(choice) })} />
+          <p className="mt-1 text-sm font-semibold text-ink-soft">휴업손해는 수입 감소를 증명할 수 있을 때만 받습니다(약관 별표1 나. 3. 가., 인쇄 76쪽).</p>
         </div>
       </div>
     );
@@ -102,6 +97,7 @@ export function Step6Losses({ screen, claim, update }: ScreenProps) {
         }}
       />
       <RecognizedList title="서류에서 읽은 치료·소득 정보" items={pendingFacts} update={update} />
+      {property && property.role !== "counterparty_property" && <VehicleValue claim={claim} property={property} setProperty={setProperty} />}
       {property?.role === "my_vehicle" && <Check label="사업용 차(택시·화물 등)" hint="렌트비 대신 휴차료로 계산합니다" checked={property.commercialUse === true} onChange={(commercialUse) => setProperty({ commercialUse })} />}
       {items.map((def) => (
         <LossCard key={def.code} date={claimDate(claim)} pending={lossGroup(claim, card.id, def.code)} update={update} def={def} item={card.losses.find((i) => i.code === def.code)} victim={victim} onChange={(change) => update((c) => setItem(c, card.id, def.code, change))} />
@@ -126,6 +122,34 @@ export function Step6Losses({ screen, claim, update }: ScreenProps) {
         {card.userTotal !== null && card.losses.length > 0 && card.userTotal !== total && <p className="mt-2 text-sm font-bold text-estimate-ink">합계 칸과 항목 합계가 {manwon(Math.abs(card.userTotal - total))} 다릅니다. 계산은 항목으로 합니다.</p>}
         {card.userTotal !== null && card.losses.length === 0 && <p className="mt-2 text-sm font-bold text-estimate-ink">항목 없이 합계만으로 계산합니다(치료관계비 하한은 적용하지 않음). 항목을 나누면 더 정확해집니다.</p>}
       </section>
+    </div>
+  );
+}
+
+/**
+ * 라운드 9: 사고 직전 가액을 묻지 않는다. 내 차는 증권의 차량가액을 쓰고, 그 밖의 차는 차종 등급·연식 드롭다운으로 앱이 추정한다.
+ * 수리비용 한도(사고 직전 가액의 120%) 판단은 계산이 한다(lib/engine/losses.ts repairCap).
+ */
+function VehicleValue({ claim, property, setProperty }: { claim: ScreenProps["claim"]; property: Property; setProperty: (change: Partial<Property>) => void }) {
+  if (property.valueSource === "policy" && property.valueAtAccident !== null)
+    return <p className="text-sm font-bold" data-vehicle-value="policy">사고 직전 가액: 증권 차량가액 {manwon(property.valueAtAccident)}</p>;
+  const year = Number(claimDate(claim).slice(0, 4));
+  const apply = (vehicleClass: Property["vehicleClass"], modelYear: Property["modelYear"]) => {
+    const estimate = vehicleClass && modelYear ? estimateVehicleValue(vehicleClass, modelYear, year) : null;
+    setProperty({ vehicleClass, modelYear, valueAtAccident: estimate?.value ?? null, valueSource: estimate ? "estimate" : null });
+  };
+  const estimate = property.vehicleClass && property.modelYear ? estimateVehicleValue(property.vehicleClass, property.modelYear, year) : null;
+  return (
+    <div className="space-y-2">
+      <div className="grid grid-cols-2 gap-3">
+        <Select label="차종 등급" options={VEHICLE_CLASSES.map((c) => ({ value: c, label: VEHICLE_CLASS_LABELS[c] }))} value={property.vehicleClass ?? null} onChange={(c) => apply(c, property.modelYear ?? null)} />
+        <Select label="연식" options={modelYears(year).map((y) => ({ value: y, label: `${y}년식` }))} value={property.modelYear ?? null} onChange={(y) => apply(property.vehicleClass ?? null, y)} />
+      </div>
+      {estimate && (
+        <p className="rounded-xl border-2 border-estimate-line bg-estimate p-2 text-sm font-bold text-estimate-ink" data-vehicle-value="estimate">
+          사고 직전 가액(추정) {manwon(estimate.value)} · {estimate.formula}
+        </p>
+      )}
     </div>
   );
 }

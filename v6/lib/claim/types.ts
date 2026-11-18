@@ -10,6 +10,7 @@ export type Money = z.infer<typeof moneySchema>;
 const percentSchema = z.number().int().min(0).max(100);
 const gradeSchema = z.number().int().min(1).max(14);
 const daysSchema = z.number().int().min(0).max(36_500);
+const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
 // ── 지급처 ──
 export const PAYERS = ["counterparty_insurer", "own_insurer", "government"] as const;
@@ -100,6 +101,16 @@ export const deductibleSchema = z.union([
 export type Deductible = z.infer<typeof deductibleSchema>;
 
 export const DRIVER_SCOPES = ["anyone", "named_only", "couple", "family", "named_plus_one", "employees", "other"] as const;
+/** 운전자 범위 한정특약(약관 용어) */
+export const DRIVER_SCOPE_LABELS: Record<(typeof DRIVER_SCOPES)[number], string> = {
+  anyone: "누구나(한정 없음)",
+  family: "가족한정",
+  couple: "부부한정",
+  named_only: "기명피보험자 1인 한정",
+  named_plus_one: "기명피보험자 1인 및 지정 1인 한정",
+  employees: "임직원 한정",
+  other: "그 밖의 한정",
+};
 
 /** 상대 차량의 보험 상태. 대인Ⅰ의 지급처를 정한다(lib/claim/payer.ts) */
 export const INSURANCE_STATUSES = ["full", "mandatory_only", "uninsured", "hit_and_run", "no_counterparty", "unknown"] as const;
@@ -118,6 +129,17 @@ export const policySchema = z.object({
   deductible: deductibleSchema.nullable(),
   /** 대인배상Ⅱ 가입 여부. 모르면 null */
   hasBodily2: z.boolean().nullable(),
+  // 라운드 9: 증권에서 읽는 칸(모두 선택. 예전 저장값도 그대로 읽힌다)
+  /** 보험기간 시작·끝(YYYY-MM-DD) */
+  periodStart: dateSchema.nullable().optional(),
+  periodEnd: dateSchema.nullable().optional(),
+  /** 운전자 연령 한정특약(증권 표기 그대로. 예: "만 26세 이상") */
+  ageLimit: z.string().nullable().optional(),
+  /** 차종·연식(증권 표기 그대로) */
+  vehicleModel: z.string().nullable().optional(),
+  vehicleYear: z.number().int().min(1950).max(2100).nullable().optional(),
+  /** 차량가액(차량가입금액). 내 차의 사고 직전 가액으로 쓴다 */
+  vehicleValue: moneySchema.nullable().optional(),
 })
   // 자동차상해 특별약관은 보통약관 「자기신체사고」를 대체하므로 둘 중 하나만 가입한다(자동차상해 특별약관 머리말·1., 개인용 인쇄 119쪽)
   .refine((policy) => !(policy.coverages.some((c) => c.coverage === "auto_injury") && policy.coverages.some((c) => c.coverage === "self_injury")), {
@@ -129,7 +151,7 @@ export type Policy = z.infer<typeof policySchema>;
 // ── 손해 항목 ──
 /** 확정 금액은 서류, 추정 금액은 약관 기준·사용자 추정·앱 기본값 중 하나에서 온다 */
 export const ESTIMATE_SOURCES = ["policy_standard", "user_estimate", "app_default"] as const;
-export const LOSS_SOURCE_LABELS = { document: "서류", policy_standard: "약관 기준", user_estimate: "사용자 추정", app_default: "앱 기본값" } as const;
+export const LOSS_SOURCE_LABELS = { document: "서류", policy_standard: "지급기준", user_estimate: "사용자 추정", app_default: "앱 기본값" } as const;
 
 export const lossItemSchema = z
   .object({
@@ -151,7 +173,7 @@ export type LossItem = z.infer<typeof lossItemSchema>;
 
 // ── 사람 카드 ──
 export const VICTIM_ROLES = ["driver", "family_passenger", "other_passenger", "counterparty"] as const;
-export const VICTIM_ROLE_LABELS: Record<(typeof VICTIM_ROLES)[number], string> = { driver: "운전자 본인", family_passenger: "가족 동승자", other_passenger: "남 동승자", counterparty: "상대방" };
+export const VICTIM_ROLE_LABELS: Record<(typeof VICTIM_ROLES)[number], string> = { driver: "피보험자(나)", family_passenger: "가족 동승자", other_passenger: "남 동승자", counterparty: "상대방" };
 /** 기명피보험자와의 관계. 부모·배우자·자녀는 내 대인Ⅱ 면책(MASTER.md 6장 (1)) */
 export const RELATIONS = ["self", "spouse", "parent", "child", "other_family", "none"] as const;
 
@@ -208,7 +230,11 @@ export type Victim = z.infer<typeof victimSchema>;
 
 // ── 물건 카드 ──
 export const PROPERTY_ROLES = ["my_vehicle", "counterparty_vehicle", "counterparty_property"] as const;
-export const PROPERTY_ROLE_LABELS: Record<(typeof PROPERTY_ROLES)[number], string> = { my_vehicle: "내 차", counterparty_vehicle: "상대 차", counterparty_property: "상대 물건" };
+export const PROPERTY_ROLE_LABELS: Record<(typeof PROPERTY_ROLES)[number], string> = { my_vehicle: "내 차", counterparty_vehicle: "상대 차량", counterparty_property: "상대 물건" };
+
+/** 차종 등급(라운드 9). 사고 직전 가액을 묻지 않고 등급·연식으로 추정한다(lib/claim/vehicleValue.ts) */
+export const VEHICLE_CLASSES = ["light", "small", "mid", "large", "suv", "imported"] as const;
+export const VEHICLE_CLASS_LABELS: Record<(typeof VEHICLE_CLASSES)[number], string> = { light: "경차", small: "소형", mid: "중형", large: "대형", suv: "SUV", imported: "수입차" };
 
 export const propertySchema = z.object({
   id: z.string().min(1),
@@ -224,6 +250,10 @@ export const propertySchema = z.object({
   commercialUse: z.boolean().nullable(),
   losses: z.array(lossItemSchema),
   userTotal: moneySchema.nullable(),
+  // 라운드 9: 사고 직전 가액의 출처. policy = 증권의 차량가액, estimate = 차종 등급·연식으로 앱이 추정
+  vehicleClass: z.enum(VEHICLE_CLASSES).nullable().optional(),
+  modelYear: z.number().int().min(1950).max(2100).nullable().optional(),
+  valueSource: z.enum(["policy", "estimate"]).nullable().optional(),
 });
 export type Property = z.infer<typeof propertySchema>;
 
@@ -276,6 +306,10 @@ export const recognitionSchema = z.discriminatedUnion("kind", [
   z.object({ ...recognitionBase, kind: z.literal("driverScope"), value: z.enum(DRIVER_SCOPES) }),
   z.object({ ...recognitionBase, kind: z.literal("coverage"), value: policyCoverageSchema }),
   z.object({ ...recognitionBase, kind: z.literal("deductible"), value: deductibleSchema }),
+  // 라운드 9: 보험기간, 연령 한정특약, 차종·연식·차량가액
+  z.object({ ...recognitionBase, kind: z.literal("period"), value: z.object({ start: dateSchema, end: dateSchema }) }),
+  z.object({ ...recognitionBase, kind: z.literal("ageLimit"), value: z.string() }),
+  z.object({ ...recognitionBase, kind: z.literal("vehicle"), value: z.object({ model: z.string().nullable(), year: z.number().int().min(1950).max(2100).nullable(), value: moneySchema.nullable() }) }),
 ]);
 export type Recognition = z.infer<typeof recognitionSchema>;
 
@@ -293,6 +327,8 @@ export const claimSchema = z.object({
   recognized: z.array(recognitionSchema),
   /** 음성에서 옮긴 사고 경위(확인 전). 확인하면 accident.narrative에 들어간다 */
   pendingNarrative: z.string().nullable(),
+  /** 라운드 9: 증권에서 읽어 확인한 칸(lib/ui/flow.ts POLICY_KEYS). 이 칸의 질문은 건너뛴다 */
+  policyRead: z.array(z.string()).optional(),
 });
 export type Claim = z.infer<typeof claimSchema>;
 
@@ -312,5 +348,6 @@ export function emptyClaim(): Claim {
     skipped: [],
     recognized: [],
     pendingNarrative: null,
+    policyRead: [],
   };
 }

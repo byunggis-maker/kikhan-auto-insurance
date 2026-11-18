@@ -97,12 +97,12 @@ function nextSteps(claim: Claim, result: Result, missingCount: number): string[]
   return steps;
 }
 
-function missingList(claim: Claim, result: Result, skippedLabels: string[]): string[] {
+function missingList(claim: Claim, result: Result, unknownLabels: string[]): string[] {
   return [
     // 서류에서 인식했지만 아직 확인하지 않은 값은 계산에 쓰지 않는다
     ...claim.recognized.map((r) => `확인 필요(서류 인식): ${recognitionLabel(r)}${r.kind === "loss" && r.excluded ? " (뺀 서류)" : ""}`),
     ...(claim.pendingNarrative ? ["확인 필요: 음성으로 옮긴 사고 경위"] : []),
-    ...skippedLabels.map((label) => `건너뜀: ${label}`),
+    ...unknownLabels.map((label) => `모름: ${label}`),
     ...result.cards.flatMap((card) => card.missing.map((code) => `${card.label}: ${lossItemDef(code)?.label ?? code} 금액(서류)`)),
     ...result.lines.filter((l) => l.status === "needs_input").map((l) => `${l.cardLabel} ${l.label}: ${l.formula}`),
   ];
@@ -143,10 +143,13 @@ function deepMask<T>(value: T): T {
   return value;
 }
 
-/** checked: 사용자가 체크한 서류 키(lib/state/checklist.ts). 화면·엑셀·PDF에 같은 체크 상태가 나온다 */
-export function buildReview(claim: Claim, results: Result[], index: number, skippedLabels: string[] = [], checked: string[] = []): Review {
+/**
+ * checked: 사용자가 체크한 서류 키(lib/state/checklist.ts). 화면·엑셀·PDF에 같은 체크 상태가 나온다.
+ * unknownLabels: '모름'으로 둔 칸(lib/ui/flow.ts unknownLabels). assumptionNotes: '모름'을 일반적 가입 기준으로 채운 안내(라운드 9)
+ */
+export function buildReview(claim: Claim, results: Result[], index: number, unknownLabels: string[] = [], checked: string[] = [], assumptionNotes: string[] = []): Review {
   const result = results[Math.min(index, results.length - 1)];
-  const missing = missingList(claim, result, skippedLabels);
+  const missing = missingList(claim, result, unknownLabels);
   const review: Review = {
     notice: ESTIMATE_NOTICE,
     accident: {
@@ -195,7 +198,7 @@ export function buildReview(claim: Claim, results: Result[], index: number, skip
     checklist: checklist(claim, result, checked),
     nextSteps: nextSteps(claim, result, missing.length),
     // 같은 안내가 사람마다 반복되지 않게 한 번씩만. 일용근로자 임금 안내는 위 standards에 있다
-    notices: [...new Set(result.notices)].filter((n) => !n.startsWith(WAGE_USED)),
+    notices: [...assumptionNotes, ...[...new Set(result.notices)].filter((n) => !n.startsWith(WAGE_USED))],
     blocked: result.blocked,
   };
   return deepMask(review);

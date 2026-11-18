@@ -5,33 +5,39 @@ import { loadClaim, saveClaim } from "@/lib/claim/persist";
 import { emptyClaim, type Claim } from "@/lib/claim/types";
 import { clearChecked } from "@/lib/state/checklist";
 import { loadProgress, saveProgress } from "@/lib/state/progress";
-import { STEP_TITLES, screensFor, skip, unskip, type Screen } from "@/lib/ui/flow";
-import { SkipButton } from "./SkipButton";
-import { Step1Accident } from "./steps/Step1Accident";
-import { Step2People } from "./steps/Step2People";
-import { Step3MyPolicy } from "./steps/Step3MyPolicy";
-import { Step4OtherPolicy } from "./steps/Step4OtherPolicy";
-import { Step5FaultExclusion } from "./steps/Step5FaultExclusion";
+import { STEP_TITLES, screensFor, type Screen } from "@/lib/ui/flow";
 import { Step6Losses } from "./steps/Step6Losses";
 import { Step7Review } from "./steps/Step7Review";
+import { StepAccident } from "./steps/StepAccident";
+import { StepCounterparty } from "./steps/StepCounterparty";
+import { StepFault } from "./steps/StepFault";
+import { StepPeople } from "./steps/StepPeople";
+import { StepPolicy } from "./steps/StepPolicy";
 import type { ScreenProps } from "./steps/types";
 
-// 입력 7단계(MASTER.md 7장). 한 화면에 질문 하나, 아래에 이전·다음과 "모르면 건너뛰기".
+// 입력 7단계(MASTER.md 7장). 라운드 9: 증권을 먼저 읽고 못 읽은 것만 묻는다. 선택형 질문은 한 화면에 드롭다운 여러 개.
 // 입력값과 진행 위치는 이 브라우저의 localStorage에만 저장한다(새로고침해도 이어서 입력).
 
 function Body(props: ScreenProps & { goTo: (screenId: string, anchor?: string) => void }) {
-  switch (props.screen.step) {
-    case 1:
-      return <Step1Accident {...props} />;
-    case 2:
-      return <Step2People {...props} />;
-    case 3:
-      return <Step3MyPolicy {...props} />;
-    case 4:
-      return <Step4OtherPolicy {...props} />;
-    case 5:
-      return <Step5FaultExclusion {...props} />;
-    case 6:
+  switch (props.screen.kind) {
+    case "policy":
+    case "date":
+    case "myPolicy":
+    case "coverages":
+    case "limits":
+      return <StepPolicy {...props} />;
+    case "situation":
+      return <StepAccident {...props} />;
+    case "parties":
+    case "person":
+      return <StepPeople {...props} />;
+    case "counterparty":
+      return <StepCounterparty {...props} />;
+    case "fault":
+      return <StepFault {...props} />;
+    case "facts":
+    case "losses":
+    case "propertyLosses":
       return <Step6Losses {...props} />;
     default:
       return <Step7Review claim={props.claim} goTo={props.goTo} />;
@@ -40,7 +46,7 @@ function Body(props: ScreenProps & { goTo: (screenId: string, anchor?: string) =
 
 export function Wizard() {
   const [claim, setClaim] = useState<Claim | null>(null);
-  const [screenId, setScreenId] = useState<string>("narrative");
+  const [screenId, setScreenId] = useState<string>("policy");
   const top = useRef<HTMLDivElement>(null);
   /** 화면을 옮긴 뒤 스크롤할 칸(7단계 "채우기" → 6단계의 그 항목 카드) */
   const anchor = useRef<string | null>(null);
@@ -86,8 +92,7 @@ export function Wizard() {
 
   if (!claim || !screen) return <p className="p-6 font-bold">불러오는 중…</p>;
 
-  const update = (change: (claim: Claim) => Claim) => setClaim((current) => (current ? unskip(change(current), screen.id) : current));
-  const skipped = claim.skipped.includes(screen.id);
+  const update = (change: (claim: Claim) => Claim) => setClaim((current) => (current ? change(current) : current));
   const isLast = index === screens.length - 1;
 
   return (
@@ -104,7 +109,7 @@ export function Wizard() {
               if (window.confirm("입력한 내용을 모두 지우고 처음부터 할까요?")) {
                 setClaim(emptyClaim());
                 clearChecked();
-                setScreenId("narrative");
+                setScreenId("policy");
               }
             }}
           >
@@ -122,22 +127,13 @@ export function Wizard() {
         <h1 className="text-2xl font-bold leading-snug">{screen.title}</h1>
         {screen.hint && <p className="mt-2 font-semibold text-ink-soft">{screen.hint}</p>}
         <div className="mt-5">
-          <Body screen={screen} claim={claim} update={update} goTo={goTo} />
+          <Body screen={screen} claim={claim} update={update} goTo={goTo} next={() => go(index + 1)} />
         </div>
-        {screen.skippable && (
-          <div className="mt-6">
-            <SkipButton
-              skipped={skipped}
-              onSkip={() => {
-                setClaim(skip(claim, screen));
-                go(index + 1);
-              }}
-            />
-          </div>
-        )}
       </main>
 
       {/* 내용 끝에 붙어 있다가 화면 아래에 닿으면 멈춘다(sticky). 고정(fixed)하면 긴 화면의 내용을 가린다 */}
+      {/* 증권 화면은 화면 안의 버튼([모두 확인]·[없으면 직접 입력]·[다음])으로 넘어간다(라운드 9) */}
+      {screen.kind !== "policy" && (
       <nav className="sticky bottom-0 -mx-4 mt-6 border-t-2 border-line bg-surface/95 px-4 py-3 backdrop-blur">
         <div className="flex gap-2">
           <button type="button" className="min-h-14 flex-1 rounded-xl border-2 border-line bg-white text-lg font-bold disabled:opacity-40" disabled={index === 0} onClick={() => go(index - 1)}>
@@ -150,6 +146,7 @@ export function Wizard() {
           )}
         </div>
       </nav>
+      )}
     </div>
   );
 }

@@ -5,7 +5,7 @@ import { claimSchema, emptyClaim, type Claim } from "./types";
 // 어떤 이유로든 읽지 못하면(없음·깨짐·모르는 버전·변환 실패·모양 불일치) 앱을 멈추지 않고 빈 입력으로 새로 시작한다.
 
 export const STORAGE_KEY = "claim";
-export const CURRENT_VERSION = 7;
+export const CURRENT_VERSION = 8;
 
 /** 저장하는 모양: 버전과 데이터를 함께 둔다 */
 export type Saved = { version: number; data: unknown };
@@ -41,6 +41,16 @@ export const MIGRATIONS: Record<number, Migration> = {
   },
   // v6 → v7(라운드 7): 확인을 기다리는 서류 인식값과 음성 경위를 더했다. 예전 저장값은 빈 목록·없음
   6: (data) => ({ recognized: [], pendingNarrative: null, ...(data as object) }),
+  // v7 → v8(라운드 9): 이름을 지급기준 용어로 바꿨다('나(운전자)' → '피보험자(나)', '상대 차 1' → '상대 차량 1'). 새 칸(증권에서 읽은 칸 등)은 선택이라 빈 목록
+  7: (data) => {
+    const claim = data as { victims?: { label?: string }[]; properties?: { label?: string }[] };
+    return {
+      policyRead: [],
+      ...claim,
+      victims: (claim.victims ?? []).map((v) => (v.label === "나(운전자)" ? { ...v, label: "피보험자(나)" } : v)),
+      properties: (claim.properties ?? []).map((p) => (typeof p.label === "string" && /^상대 차 \d+$/.test(p.label) ? { ...p, label: p.label.replace("상대 차 ", "상대 차량 ") } : p)),
+    };
+  },
 };
 
 export type LoadResult =

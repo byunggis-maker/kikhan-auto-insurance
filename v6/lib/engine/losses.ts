@@ -169,6 +169,30 @@ export function propertyLoss(property: Property, mode: ValueMode): PropertyLoss 
     details.push({ code: UNCLASSIFIED, label: "항목 미분류 손해(추정)", amount: property.userTotal, source: "사용자 추정", formula: `합계 칸 ${won(property.userTotal)}` });
     notes.push("항목 미분류 손해(추정)로 계산했습니다. 항목을 나누면 더 정확해집니다.");
   }
+  repairCap(property, byCode, notes, details);
   const total = Object.values(byCode).reduce((sum, amount) => sum + amount, 0);
   return { total, byCode, missing, notes, details };
+}
+
+/** 별표2 대물배상 1. 수리비용 나.(3) 한도와 2. 교환가액(개인용 인쇄 80쪽) */
+export const REPAIR_CAP_BASIS = "별표2 대물배상 지급기준 1. 수리비용 나.(3)·2. 교환가액(개인용 인쇄 80쪽)";
+
+/**
+ * 라운드 9: 차량의 수리비용 한도를 앱이 판단한다. 사고 직전 가액(증권의 차량가액 또는 앱 추정)이 있을 때만.
+ * - 수리비용이 사고 직전 가액의 120%를 넘으면 전부손해로 보고 사고 직전 가액으로 계산한다(교환가액).
+ * - 사고 직전 가액은 넘지만 120% 이하이면 금액은 그대로 두고 '전부손해 가능성'만 알린다(수리하지 않고 폐차하면 교환가액).
+ * 130% 한도(내용연수가 지난 차 등)는 판단하지 않는다. 교환가액 항목을 직접 넣었으면 손대지 않는다.
+ */
+function repairCap(property: Property, byCode: Record<string, number>, notes: string[], details: LossDetail[]) {
+  const value = property.valueAtAccident;
+  const repair = byCode.repair;
+  if (property.role === "counterparty_property" || value === null || value <= 0 || repair === undefined || byCode.replacement_value !== undefined) return;
+  const cap = Math.floor((value * 120) / 100);
+  const source = property.valueSource === "estimate" ? "앱 추정" : "증권 차량가액";
+  if (repair > cap) {
+    byCode.repair = value;
+    const detail = details.find((d) => d.code === "repair");
+    if (detail) Object.assign(detail, { amount: value, formula: `수리비용 ${won(repair)} > 사고 직전 가액 ${won(value)}(${source})의 120% ${won(cap)} → 전부손해로 보고 사고 직전 가액 ${won(value)}` });
+    notes.push(`전부손해 가능성: 수리비용이 사고 직전 가액의 120%를 넘어 사고 직전 가액 ${won(value)}(${source})으로 계산했습니다. 근거: ${REPAIR_CAP_BASIS}`);
+  } else if (repair > value) notes.push(`전부손해 가능성: 수리비용 ${won(repair)}이 사고 직전 가액 ${won(value)}(${source})을 넘습니다. 수리하지 않고 폐차하면 교환가액(사고 직전 가액)으로 보상합니다. 근거: ${REPAIR_CAP_BASIS}`);
 }

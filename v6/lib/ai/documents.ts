@@ -109,6 +109,13 @@ export const policyReadingSchema = z.object({
       }),
     )
     .describe("가입한 담보만. 미가입은 넣지 않는다"),
+  // 라운드 9: 보험기간, 연령 한정특약, 차종·연식, 차량가액(차량가입금액)
+  periodStart: z.string().nullable().describe("보험기간 시작일 YYYY-MM-DD. 없으면 null"),
+  periodEnd: z.string().nullable().describe("보험기간 종료일 YYYY-MM-DD. 없으면 null"),
+  ageLimit: z.string().nullable().describe("운전자 연령 한정특약 표기 그대로. 예: '만 26세 이상', '연령 한정 없음'. 없으면 null"),
+  vehicleModel: z.string().nullable().describe("차명·차종 표기 그대로(차량번호는 적지 않는다). 예: '쏘나타 2.0 가솔린'. 없으면 null"),
+  vehicleYear: z.number().int().min(1950).max(2100).nullable().describe("연식(4자리 연도). 없으면 null"),
+  vehicleValue: won.nullable().describe("차량가액 또는 차량가입금액(자기차량손해 가입금액). 원 단위 정수. 없으면 null"),
   ownDamageDeductible: z
     .object({ ratePercent: z.number().int().min(1).max(100), min: won, max: won })
     .nullable()

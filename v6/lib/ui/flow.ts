@@ -4,176 +4,123 @@ import { emptyLossItem, type Claim, type Coverage, type Policy, type PolicyCover
 import { pickValue } from "@/lib/engine/losses";
 
 // MASTER.md 7장 입력 7단계의 화면 순서와 상태 변경. React와 분리해 테스트한다(tests/ui/flow.test.ts).
-// 한 화면에 질문 하나가 원칙이다. 6단계의 "치료·휴업 사실"만 한 화면에 묶었다(사람마다 7개 질문이 되면 너무 길어서, 라운드 5 보고서).
+// 라운드 9: 증권을 먼저 읽고 못 읽은 것만 묻는다. 선택형 질문은 한 화면에 드롭다운 여러 개로 모았다.
+// 같은 정보를 두 번 묻지 않고, 결과를 바꾸지 않는 질문(사고 장소·경위)은 뺐다. '모르면 건너뛰기' 대신 드롭다운 첫 항목 '모름'.
 
-export const STEP_TITLES = ["사고 접수", "사람·물건 정리", "내 보험", "상대 보험", "면책·과실", "손해 입력", "보상 검토서"] as const;
+export const STEP_TITLES = ["증권·사고일", "사고 상황", "사람·물건", "상대 차량", "과실비율", "손해", "보상 검토서"] as const;
 
-export type ScreenKind =
-  | "narrative"
-  | "date"
-  | "place"
-  | "type"
-  | "parties"
-  | "injury"
-  | "outcome"
-  | "relation"
-  | "counterpartyRole"
-  | "vehicleValue"
-  | "productLine"
-  | "coverages"
-  | "propertyLimit"
-  | "personalInjuryLimit"
-  | "uninsuredLimit"
-  | "ownDamage"
-  | "driverScope"
-  | "counterpartyStatus"
-  | "counterpartyBodily2"
-  | "counterpartyProperty"
-  | "violations"
-  | "driverRelation"
-  | "fault"
-  | "facts"
-  | "losses"
-  | "propertyLosses"
-  | "result";
+export type ScreenKind = "policy" | "date" | "myPolicy" | "coverages" | "limits" | "situation" | "parties" | "person" | "counterparty" | "fault" | "facts" | "losses" | "propertyLosses" | "result";
 
-export type Screen = { id: string; step: number; kind: ScreenKind; cardId?: string; title: string; hint?: string; skippable: boolean };
+export type Screen = { id: string; step: number; kind: ScreenKind; cardId?: string; title: string; hint?: string };
 
 const hasCoverage = (policy: Policy, coverage: Coverage) => policy.coverages.some((c) => c.coverage === coverage);
-const counterpartyVehicle = (claim: Claim) => claim.accident.type === null || claim.accident.type === "car_car" || claim.accident.type === "hit_and_run_or_uninsured";
+export const counterpartyVehicle = (claim: Claim) => claim.accident.type === null || claim.accident.type === "car_car" || claim.accident.type === "hit_and_run_or_uninsured";
+
+/** 증권에서 읽어 확인한 칸인지(lib/ui/recognize.ts policyKeys) */
+export const isRead = (claim: Claim, key: string) => (claim.policyRead ?? []).includes(key);
+
+/** 내 보험의 가입금액 드롭다운 중 이 화면에 보일 것(증권에서 읽은 칸은 빼고) */
+export type LimitField = "property" | "injury" | "death" | "uninsured" | "deductible";
+export function limitFields(claim: Claim): LimitField[] {
+  const my = claim.myPolicy;
+  const personal: Coverage | null = hasCoverage(my, "auto_injury") ? "auto_injury" : hasCoverage(my, "self_injury") ? "self_injury" : null;
+  const out: LimitField[] = [];
+  if (hasCoverage(my, "liability_property") && !isRead(claim, "limit:liability_property")) out.push("property");
+  if (personal && !isRead(claim, `injury:${personal}`)) out.push("injury");
+  if (personal && !isRead(claim, `death:${personal}`)) out.push("death");
+  if (hasCoverage(my, "uninsured") && !isRead(claim, "limit:uninsured")) out.push("uninsured");
+  if (hasCoverage(my, "own_damage") && !isRead(claim, "deductible")) out.push("deductible");
+  return out;
+}
 
 /** 지금 입력 상태에서 보여 줄 화면 목록(순서대로) */
 export function screensFor(claim: Claim): Screen[] {
   const s: Screen[] = [];
-  const add = (screen: Omit<Screen, "skippable"> & { skippable?: boolean }) => s.push({ skippable: true, ...screen });
+  const add = (screen: Screen) => s.push(screen);
 
-  // 1 사고 접수
-  add({ id: "narrative", step: 1, kind: "narrative", title: "어떤 사고였나요?", hint: "기억나는 대로 적어 주세요. 말로 하려면 키보드의 마이크 버튼을 쓰세요." });
-  add({ id: "type", step: 1, kind: "type", title: "어떤 사고였나요?", hint: "가장 가까운 것을 고르세요." });
-  add({ id: "date", step: 1, kind: "date", title: "언제 일어났나요?", hint: "날짜에 따라 적용되는 약관 판이 달라집니다." });
-  add({ id: "place", step: 1, kind: "place", title: "어디서 일어났나요?" });
+  // 1 증권·사고일: 증권을 먼저 읽고, 사고일을 묻고, 증권에서 못 읽은 것만 묻는다
+  add({ id: "policy", step: 1, kind: "policy", title: "가입증명서·증권 올리기", hint: "증권에서 읽은 항목은 다시 묻지 않습니다." });
+  add({ id: "date", step: 1, kind: "date", title: "사고일은 언제인가요?" });
+  if (!isRead(claim, "productLine") || !isRead(claim, "driverScope")) add({ id: "myPolicy", step: 1, kind: "myPolicy", title: "내 보험" });
+  if (!isRead(claim, "coverages")) add({ id: "coverages", step: 1, kind: "coverages", title: "가입담보", hint: "대인배상Ⅰ은 의무보험이라 항상 있습니다." });
+  if (limitFields(claim).length) add({ id: "limits", step: 1, kind: "limits", title: "가입금액" });
 
-  // 2 사람·물건 정리
-  add({ id: "parties", step: 2, kind: "parties", title: "누가 다치고, 무엇이 부서졌나요?", hint: "사람·물건마다 카드가 하나씩 생깁니다.", skippable: false });
-  for (const v of claim.victims) {
-    if (v.role === "family_passenger") add({ id: `relation:${v.id}`, step: 2, kind: "relation", cardId: v.id, title: `${v.label}은(는) 보험에 적힌 분(기명피보험자)과 어떤 관계인가요?` });
-    if (v.role === "counterparty") add({ id: `counterpartyRole:${v.id}`, step: 2, kind: "counterpartyRole", cardId: v.id, title: `${v.label}은(는) 사고 때 무엇을 하고 있었나요?` });
-    add({ id: `injury:${v.id}`, step: 2, kind: "injury", cardId: v.id, title: `${v.label}의 상해급수는 몇 급인가요?`, hint: "진단서나 보험사 안내에 적힌 급수(1급이 가장 무겁고 14급이 가장 가볍습니다)." });
-    add({ id: `outcome:${v.id}`, step: 2, kind: "outcome", cardId: v.id, title: `${v.label}은(는) 치료 뒤 어떻게 되었나요?` });
-  }
-  for (const p of claim.properties) if (p.role === "my_vehicle") add({ id: `vehicleValue:${p.id}`, step: 2, kind: "vehicleValue", cardId: p.id, title: "내 차의 사고 직전 차량가액은 얼마인가요?", hint: "보험증권의 차량가액이나 시세. 전손·시세하락 계산에 씁니다." });
+  // 2 사고 상황
+  add({ id: "situation", step: 2, kind: "situation", title: "사고 당시 상황" });
 
-  // 3 내 보험
-  add({ id: "productLine", step: 3, kind: "productLine", title: "내 자동차보험은 어떤 종류인가요?" });
-  add({ id: "coverages", step: 3, kind: "coverages", title: "내 보험에 가입한 담보를 골라 주세요", hint: "증권의 '가입담보' 칸을 보세요. 대인배상Ⅰ은 의무보험이라 항상 있습니다.", skippable: false });
-  const my = claim.myPolicy;
-  if (hasCoverage(my, "liability_property")) add({ id: "propertyLimit", step: 3, kind: "propertyLimit", title: "대물배상 가입금액은 얼마인가요?" });
-  if (hasCoverage(my, "auto_injury") || hasCoverage(my, "self_injury"))
-    add({ id: "personalInjuryLimit", step: 3, kind: "personalInjuryLimit", title: hasCoverage(my, "auto_injury") ? "자동차상해 가입금액은 얼마인가요?" : "자기신체사고 가입금액은 얼마인가요?" });
-  if (hasCoverage(my, "uninsured")) add({ id: "uninsuredLimit", step: 3, kind: "uninsuredLimit", title: "무보험차상해 가입금액은 얼마인가요?" });
-  if (hasCoverage(my, "own_damage")) add({ id: "ownDamage", step: 3, kind: "ownDamage", title: "자기차량손해의 자기부담금은 어떻게 되나요?" });
-  add({ id: "driverScope", step: 3, kind: "driverScope", title: "운전할 수 있는 사람의 범위는 어떻게 되나요?", hint: "증권의 '운전자 한정' 특약." });
+  // 3 사람·물건
+  add({ id: "parties", step: 3, kind: "parties", title: "다친 사람과 부서진 물건" });
+  for (const v of claim.victims) add({ id: `person:${v.id}`, step: 3, kind: "person", cardId: v.id, title: `${v.label}의 상해` });
 
-  // 4 상대 보험(상대 차량이 있는 사고만)
-  if (counterpartyVehicle(claim)) {
-    add({ id: "counterpartyStatus", step: 4, kind: "counterpartyStatus", title: "상대 차는 어떤 보험에 들어 있나요?", hint: "모르면 '모름'을 고르세요. 보험사가 확인해 줍니다." });
-    const cp = claim.counterpartyPolicy;
-    // 대인Ⅱ 가입 여부를 모르면(hasBodily2 = null) 금액은 묻지 않고 "있음/없음" 두 시나리오로 계산한다(결정 기록 D-19)
-    if (cp && cp.status === "full" && cp.hasBodily2 === true) add({ id: "counterpartyBodily2", step: 4, kind: "counterpartyBodily2", title: "상대 차의 대인배상Ⅱ 가입금액은 얼마인가요?" });
-    if (cp && cp.status === "full") add({ id: "counterpartyProperty", step: 4, kind: "counterpartyProperty", title: "상대 차의 대물배상 가입금액은 얼마인가요?" });
-  }
+  // 4 상대 차량 보험(상대 차량이 있는 사고만)
+  if (counterpartyVehicle(claim)) add({ id: "counterparty", step: 4, kind: "counterparty", title: "상대 차량 보험" });
 
-  // 5 면책·과실
-  add({ id: "violations", step: 5, kind: "violations", title: "사고 당시 해당하는 것이 있나요?", hint: "보상 범위와 내가 낼 돈(사고부담금)이 달라집니다. 솔직하게 고를수록 정확합니다." });
-  const v = claim.accident.violations;
-  if (v.drunk || v.unlicensed || v.drugs) add({ id: "driverRelation", step: 5, kind: "driverRelation", title: "운전한 사람은 이 보험과 어떤 관계인가요?", hint: "자기차량손해 보상 여부가 이 관계로 정해집니다(약관 제23조 14호)." });
-  add({ id: "fault", step: 5, kind: "fault", title: "내 과실은 몇 %인가요?", hint: "모르면 '모름'을 고르세요. 0·30·50·70% 네 경우를 모두 계산해 보여 드립니다." });
+  // 5 과실비율
+  add({ id: "fault", step: 5, kind: "fault", title: "과실비율" });
 
-  // 6 손해 입력
+  // 6 손해
   for (const victim of claim.victims) {
-    add({ id: `facts:${victim.id}`, step: 6, kind: "facts", cardId: victim.id, title: `${victim.label}의 치료·휴업 정보`, hint: "아는 칸만 넣으세요. 넣은 값으로 약관 기준 금액을 계산합니다." });
+    add({ id: `facts:${victim.id}`, step: 6, kind: "facts", cardId: victim.id, title: `${victim.label}의 치료·휴업 정보`, hint: "아는 칸만 넣으세요. 넣은 값으로 지급기준 금액을 계산합니다." });
     add({ id: `losses:${victim.id}`, step: 6, kind: "losses", cardId: victim.id, title: `${victim.label}의 손해`, hint: "서류로 확인한 금액과 대략 생각하는 금액을 따로 적으세요." });
   }
   for (const p of claim.properties) add({ id: `propertyLosses:${p.id}`, step: 6, kind: "propertyLosses", cardId: p.id, title: `${p.label}의 손해`, hint: "서류로 확인한 금액과 대략 생각하는 금액을 따로 적으세요." });
 
-  // 7 결과 미리보기
-  add({ id: "result", step: 7, kind: "result", title: "보상 검토서", skippable: false });
+  // 7 보상 검토서
+  add({ id: "result", step: 7, kind: "result", title: "보상 검토서" });
   return s;
 }
 
-// ── 건너뛰기 ──
-/** 건너뛴 칸을 기록한다. 값은 비운다(모름) */
-export function skip(claim: Claim, screen: Screen): Claim {
-  const skipped = claim.skipped.includes(screen.id) ? claim.skipped : [...claim.skipped, screen.id];
-  return { ...clearFor(claim, screen), skipped };
+/** 보험기간 점검(라운드 9). 증권의 보험기간과 사고일을 비교한다. 둘 중 하나를 모르면 null */
+export function periodCheck(claim: Claim): "inside" | "outside" | null {
+  const { periodStart, periodEnd } = claim.myPolicy;
+  const date = claim.accident.occurredAt?.slice(0, 10);
+  if (!periodStart || !periodEnd || !date) return null;
+  return date >= periodStart && date <= periodEnd ? "inside" : "outside";
 }
 
-/** 값을 넣으면 "건너뜀" 표시를 지운다 */
-export function unskip(claim: Claim, screenId: string): Claim {
-  return claim.skipped.includes(screenId) ? { ...claim, skipped: claim.skipped.filter((id) => id !== screenId) } : claim;
+// ── '모름'이면 일반적 가입 기준으로 추정(라운드 9) ──
+/** 상대 차량 보험을 모를 때 쓰는 일반적 가입 기준 */
+export const TYPICAL_COUNTERPARTY = { property: 200_000_000 } as const;
+export const ASSUMPTION_TEXT = {
+  cp_status: "상대 차량 보험을 몰라 일반적 가입 기준(대인배상Ⅰ, 대인배상Ⅱ 무한, 대물배상 2억 원)으로 추정했습니다.",
+  cp_bodily2: "상대 차량 대인배상Ⅱ 가입금액을 몰라 일반적 가입 기준(무한)으로 추정했습니다.",
+  cp_property: "상대 차량 대물배상 가입금액을 몰라 일반적 가입 기준(2억 원)으로 추정했습니다.",
+} as const;
+
+/**
+ * 계산에 넣기 전에 상대 차량 보험의 '모름'을 일반적 가입 기준으로 채운다. 입력값(저장값)은 바꾸지 않는다.
+ * 뺑소니·무보험 사고 유형이면 채우지 않는다(무보험을 종합보험으로 추정하면 안 되므로).
+ */
+export function withAssumptions(claim: Claim): { claim: Claim; assumptions: (keyof typeof ASSUMPTION_TEXT)[] } {
+  if (!counterpartyVehicle(claim) || claim.accident.type === "hit_and_run_or_uninsured") return { claim, assumptions: [] };
+  const cp = claim.counterpartyPolicy;
+  const fill = (policy: Policy, keys: (keyof typeof ASSUMPTION_TEXT)[]) => {
+    const coverages = policy.coverages.map((c) => (c.coverage === "liability_bodily_2" && c.limit === null ? { ...c, limit: "unlimited" as const } : c.coverage === "liability_property" && c.limit === null ? { ...c, limit: TYPICAL_COUNTERPARTY.property } : c));
+    return { claim: { ...claim, counterpartyPolicy: { ...policy, coverages } }, assumptions: keys };
+  };
+  if (cp === null || cp.status === "unknown") return fill(counterpartyOf({ ...claim, counterpartyPolicy: null }, "full", true), ["cp_status"]);
+  if (cp.status !== "full") return { claim, assumptions: [] };
+  const limit = (coverage: Coverage) => cp.coverages.find((c) => c.coverage === coverage)?.limit;
+  const keys: (keyof typeof ASSUMPTION_TEXT)[] = [];
+  if (limit("liability_bodily_2") === null) keys.push("cp_bodily2");
+  if (limit("liability_property") === null) keys.push("cp_property");
+  return keys.length ? fill(cp, keys) : { claim, assumptions: [] };
 }
 
-function updateVictim(claim: Claim, id: string | undefined, change: Partial<Victim>): Claim {
-  return { ...claim, victims: claim.victims.map((v) => (v.id === id ? { ...v, ...change } : v)) };
-}
-
-function clearFor(claim: Claim, screen: Screen): Claim {
-  const a = claim.accident;
-  switch (screen.kind) {
-    case "narrative":
-      return { ...claim, accident: { ...a, narrative: "" } };
-    case "date":
-      return { ...claim, accident: { ...a, occurredAt: null } };
-    case "place":
-      return { ...claim, accident: { ...a, place: "" } };
-    case "type":
-      return { ...claim, accident: { ...a, type: null } };
-    case "injury":
-      return updateVictim(claim, screen.cardId, { injuryGrade: null });
-    case "outcome":
-      return updateVictim(claim, screen.cardId, { died: null, disabilityGrade: null });
-    case "relation":
-      return updateVictim(claim, screen.cardId, { relationToNamedInsured: null });
-    case "counterpartyRole":
-      return updateVictim(claim, screen.cardId, { vehicleDriver: null });
-    case "facts":
-      return updateVictim(claim, screen.cardId, { hospitalDays: null, outpatientDays: null, mealsNotProvided: null, daysOffWork: null, monthlyIncome: null, incomeProven: null, occupation: null, incomeAmountProven: null });
-    case "vehicleValue":
-      return { ...claim, properties: claim.properties.map((p) => (p.id === screen.cardId ? { ...p, valueAtAccident: null } : p)) };
-    case "productLine":
-      return { ...claim, myPolicy: { ...claim.myPolicy, productLine: null } };
-    case "propertyLimit":
-      return setCoverage(claim, "liability_property", { limit: null });
-    case "personalInjuryLimit": {
-      const key = hasCoverage(claim.myPolicy, "auto_injury") ? "auto_injury" : "self_injury";
-      return setCoverage(claim, key, { injuryLimit: null, deathLimit: null, disabilityLimit: null });
-    }
-    case "uninsuredLimit":
-      return setCoverage(claim, "uninsured", { limit: null });
-    case "ownDamage":
-      return { ...claim, myPolicy: { ...claim.myPolicy, deductible: null } };
-    case "driverScope":
-      return { ...claim, myPolicy: { ...claim.myPolicy, driverScope: null } };
-    case "counterpartyStatus":
-      return { ...claim, counterpartyPolicy: counterpartyOf(claim, "unknown") };
-    case "counterpartyBodily2":
-      return claim.counterpartyPolicy ? { ...claim, counterpartyPolicy: { ...claim.counterpartyPolicy, coverages: claim.counterpartyPolicy.coverages.map((c) => (c.coverage === "liability_bodily_2" ? { ...c, limit: null } : c)) } } : claim;
-    case "counterpartyProperty":
-      return claim.counterpartyPolicy ? { ...claim, counterpartyPolicy: { ...claim.counterpartyPolicy, coverages: claim.counterpartyPolicy.coverages.map((c) => (c.coverage === "liability_property" ? { ...c, limit: null } : c)) } } : claim;
-    case "violations":
-      return { ...claim, accident: { ...a, violations: { ...a.violations, drunk: null, unlicensed: null, drugs: null, fledScene: null, outsideDriverScope: null, intentional: null } } };
-    case "driverRelation":
-      return { ...claim, accident: { ...a, violations: { ...a.violations, driverRelation: null } } };
-    case "fault":
-      return { ...claim, fault: { mode: "unknown" } };
-    default:
-      return claim;
-  }
+/** 검토서의 '입력 필요'에 모을 '모름' 칸 */
+export function unknownLabels(claim: Claim): string[] {
+  const out: string[] = [];
+  if (!claim.accident.occurredAt) out.push("사고일");
+  if (!claim.myPolicy.productLine) out.push("보험 종류");
+  if (!claim.myPolicy.driverScope) out.push("운전자 범위 한정특약");
+  if (!claim.accident.type) out.push("사고 유형");
+  for (const v of claim.victims) if (v.injuryGrade === null && v.died !== true) out.push(`${v.label}: 상해 급별`);
+  return out;
 }
 
 // ── 사람·물건 카드 ──
-const VICTIM_LABEL: Record<Victim["role"], string> = { driver: "나(운전자)", family_passenger: "가족 동승자", other_passenger: "남 동승자", counterparty: "상대방" };
-const PROPERTY_LABEL: Record<Property["role"], string> = { my_vehicle: "내 차", counterparty_vehicle: "상대 차", counterparty_property: "상대 물건" };
+const VICTIM_LABEL: Record<Victim["role"], string> = { driver: "피보험자(나)", family_passenger: "가족 동승자", other_passenger: "남 동승자", counterparty: "상대방" };
+const PROPERTY_LABEL: Record<Property["role"], string> = { my_vehicle: "내 차", counterparty_vehicle: "상대 차량", counterparty_property: "상대 물건" };
 
 export function newVictim(role: Victim["role"], n: number, claim: Claim): Victim {
   const label = role === "driver" ? VICTIM_LABEL.driver : `${VICTIM_LABEL[role]} ${n}`;
@@ -202,8 +149,20 @@ export function newVictim(role: Victim["role"], n: number, claim: Claim): Victim
   };
 }
 
-export function newProperty(role: Property["role"], n: number): Property {
-  return { id: `${role}-${n}`, role, label: role === "my_vehicle" ? PROPERTY_LABEL.my_vehicle : `${PROPERTY_LABEL[role]} ${n}`, valueAtAccident: null, firstRegisteredOn: null, commercialUse: false, losses: [], userTotal: null };
+export function newProperty(role: Property["role"], n: number, claim?: Claim): Property {
+  // 내 차의 사고 직전 가액은 증권의 차량가액(차량가입금액)을 쓴다(라운드 9)
+  const policyValue = role === "my_vehicle" ? (claim?.myPolicy.vehicleValue ?? null) : null;
+  return {
+    id: `${role}-${n}`,
+    role,
+    label: role === "my_vehicle" ? PROPERTY_LABEL.my_vehicle : `${PROPERTY_LABEL[role]} ${n}`,
+    valueAtAccident: policyValue,
+    valueSource: policyValue === null ? null : "policy",
+    firstRegisteredOn: null,
+    commercialUse: false,
+    losses: [],
+    userTotal: null,
+  };
 }
 
 /** 역할별 사람 수를 맞춘다. 줄일 때는 뒤에서부터 지운다(입력한 손해도 함께) */
@@ -220,7 +179,7 @@ export function setPropertyCount(claim: Claim, role: Property["role"], count: nu
   const same = claim.properties.filter((p) => p.role === role);
   const others = claim.properties.filter((p) => p.role !== role);
   const kept = same.slice(0, count);
-  for (let n = kept.length + 1; n <= count; n++) kept.push(newProperty(role, n));
+  for (let n = kept.length + 1; n <= count; n++) kept.push(newProperty(role, n, claim));
   const order: Property["role"][] = ["my_vehicle", "counterparty_vehicle", "counterparty_property"];
   return { ...claim, properties: [...others, ...kept].sort((a, b) => order.indexOf(a.role) - order.indexOf(b.role)) };
 }
@@ -271,7 +230,8 @@ export function visibleItems(claim: Claim, cardId: string): LossItemDef[] {
   const coverages: Coverage[] = [];
   if (property.role === "my_vehicle") {
     const cp = claim.counterpartyPolicy;
-    if (counterpartyVehicle(claim) && cp && cp.status !== "uninsured" && cp.status !== "hit_and_run") coverages.push("liability_property");
+    // 상대 차량 보험을 모르면(null) 일반적 가입 기준으로 계산하므로(withAssumptions) 대물배상 항목을 보인다
+    if (counterpartyVehicle(claim) && (!cp || (cp.status !== "uninsured" && cp.status !== "hit_and_run"))) coverages.push("liability_property");
     if (hasCoverage(claim.myPolicy, "own_damage")) coverages.push("own_damage");
   } else coverages.push("liability_property");
   return itemsFor("property", coverages).filter((item) => (item.code === "idle" ? property.commercialUse === true : item.code === "rental" ? property.commercialUse !== true : item.code === "business_loss" ? property.role === "counterparty_property" : true));
@@ -326,10 +286,4 @@ export function standardFillable(claim: Claim): { cardId: string; code: string; 
       .filter((def) => (pickValue(emptyLossItem(def.code, []), "with_estimates", victim, date)?.amount ?? 0) > 0)
       .map((def) => ({ cardId: victim.id, code: def.code, label: `${victim.label}: ${def.label}`, screenId: `losses:${victim.id}` })),
   );
-}
-
-// ── 7단계 "입력 필요" 목록 ──
-export function skippedLabels(claim: Claim): string[] {
-  const screens = screensFor(claim);
-  return claim.skipped.map((id) => screens.find((s) => s.id === id)?.title ?? id);
 }

@@ -7,7 +7,7 @@ import { RecognizedLossGroup, RecognizedRow } from "./ai/Recognized";
 import { MoneyInput } from "./fields";
 
 // MASTER.md 7장: 손해 항목 하나 = 카드 하나. 이름·한 줄 설명·확정 칸·추정 칸·작은 글씨의 필요 서류.
-// 약관이 금액이나 산식을 정한 항목(위자료·휴업손해·그 밖의 손해배상금·장례비)은 "약관 기준 금액 쓰기"를 누르면
+// 약관이 금액이나 산식을 정한 항목(위자료·휴업손해·그 밖의 손해배상금·장례비)은 "지급기준으로 채우기"를 누르면
 // 빈 칸으로 두고 엔진이 계산한다(결정 기록 D-18). 누르지 않으면 항목이 없는 것으로 본다(합계 칸만 쓰는 경우를 지키기 위해).
 
 type Props = {
@@ -38,11 +38,20 @@ export function LossCard({ date, def, item, victim, pending, update, onChange }:
       </div>
       {standard && (
         <div className="mt-3 rounded-xl border-2 border-estimate-line bg-estimate p-3 text-estimate-ink">
-          <p className="text-sm font-bold">약관 기준 {standard.amount.toLocaleString("ko-KR")}원</p>
+          <p className="text-sm font-bold">지급기준 {standard.amount.toLocaleString("ko-KR")}원</p>
           <p className="text-xs font-semibold">{standard.formula}</p>
-          <button type="button" className={`mt-2 min-h-11 rounded-lg border-2 px-3 text-sm font-bold ${usingStandard ? "border-estimate-ink bg-estimate-ink text-white" : "border-estimate-line bg-white"}`} onClick={() => onChange({ standard: !usingStandard })}>
-            {usingStandard ? "약관 기준 금액 쓰는 중(누르면 끔)" : "약관 기준 금액 쓰기"}
-          </button>
+          {usingStandard ? (
+            <p className="mt-2 flex min-h-11 items-center gap-2 text-sm font-bold">
+              지급기준 적용됨 ·
+              <button type="button" className="min-h-11 px-1 underline" onClick={() => onChange({ standard: false })}>
+                해제
+              </button>
+            </p>
+          ) : (
+            <button type="button" className="mt-2 min-h-11 rounded-lg border-2 border-estimate-line bg-white px-3 text-sm font-bold" onClick={() => onChange({ standard: true })}>
+              지급기준으로 채우기
+            </button>
+          )}
         </div>
       )}
       <p className="mt-3 text-xs font-semibold text-ink-soft">
