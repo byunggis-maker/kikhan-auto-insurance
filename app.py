@@ -4,6 +4,7 @@ import os
 import re
 import subprocess
 import tempfile
+import unicodedata
 import warnings
 from html import escape
 from pathlib import Path
@@ -13,6 +14,7 @@ import streamlit as st
 from dotenv import load_dotenv
 from insurance_ocr.image_reader import read_policy_image
 from insurance_ocr.validator import validate_policy_result
+from insurance_ocr.policy_parser import parse_amount_to_won
 
 
 # =========================================================
@@ -20,6 +22,11 @@ from insurance_ocr.validator import validate_policy_result
 # =========================================================
 
 PROJECT_ROOT = Path(__file__).resolve().parent
+AUTO_INSURANCE_COVERAGES_FILE = (
+    PROJECT_ROOT / "data" / "auto_insurance_coverages.json"
+)
+with AUTO_INSURANCE_COVERAGES_FILE.open("r", encoding="utf-8") as f:
+    INSURANCE_COVERAGE_DB = json.load(f)
 load_dotenv(PROJECT_ROOT / ".env")
 
 warnings.filterwarnings(
@@ -96,6 +103,7 @@ COVERAGES_BY_TYPE = {
         "대인배상Ⅱ",
         "대물배상",
         "자기신체사고",
+        "자동차상해",
         "무보험자동차에의한상해",
         "자기차량손해",
         "운전자한정 특약",
@@ -110,13 +118,9 @@ COVERAGES_BY_TYPE = {
         "대인배상Ⅱ",
         "대물배상",
         "자기신체사고",
+        "자동차상해",
         "무보험자동차에의한상해",
         "자기차량손해",
-        "운전자한정 특약",
-        "연령한정 특약",
-        "기명피보험자 1인한정 특약",
-        "부부한정 특약",
-        "가족한정 특약",
         "단기 운전자확대 특약",
     ],
     "영업용 자동차보험": [
@@ -124,14 +128,9 @@ COVERAGES_BY_TYPE = {
         "대인배상Ⅱ",
         "대물배상",
         "자기신체사고",
+        "자동차상해",
         "무보험자동차에의한상해",
         "자기차량손해",
-        "운전자한정 특약",
-        "연령한정 특약",
-        "기명피보험자 1인한정 특약",
-        "부부한정 특약",
-        "가족한정 특약",
-        "단기 운전자확대 특약",
     ],
     "이륜차 자동차보험": [
         "대인배상Ⅰ",
@@ -140,12 +139,6 @@ COVERAGES_BY_TYPE = {
         "자기신체사고",
         "무보험자동차에의한상해",
         "자기차량손해",
-        "운전자한정 특약",
-        "연령한정 특약",
-        "기명피보험자 1인한정 특약",
-        "부부한정 특약",
-        "가족한정 특약",
-        "단기 운전자확대 특약",
     ],
 }
 
@@ -154,6 +147,7 @@ COVERAGE_CODES = {
     "대인배상Ⅱ": "d2",
     "대물배상": "d3",
     "자기신체사고": "d4",
+    "자동차상해": "d4a",
     "무보험자동차에의한상해": "d5",
     "자기차량손해": "d6",
     "운전자한정 특약": "x1",
@@ -252,6 +246,93 @@ st.markdown(
     }
     .white-excel-table td.numeric {
         text-align: right;
+    }
+
+    .kh-result-card {
+        margin: 1rem 0;
+        padding: 1.25rem 1.35rem;
+        border: 1px solid #dfe6ef;
+        border-radius: 16px;
+        background: #ffffff;
+        box-shadow: 0 8px 24px rgba(29, 54, 92, 0.06);
+    }
+    .kh-result-label {
+        margin-bottom: 0.35rem;
+        color: #596579;
+        font-size: 0.9rem;
+        font-weight: 700;
+    }
+    .kh-result-amount {
+        color: #172033;
+        font-size: clamp(1.8rem, 5vw, 2.7rem);
+        font-weight: 850;
+        letter-spacing: -0.04em;
+    }
+    .kh-result-note {
+        margin-top: 0.55rem;
+        color: #596579;
+        font-size: 0.92rem;
+        line-height: 1.65;
+    }
+    .kh-action-list {
+        margin: 0.7rem 0 0;
+        padding-left: 1.2rem;
+        color: #263247;
+        line-height: 1.75;
+    }
+    .kh-cost-heading {
+        margin: 1rem 0 0.8rem;
+        padding: 0.7rem 0.9rem;
+        border: 1px solid #e1e5ea;
+        border-radius: 8px;
+        background: #f2f3f5;
+        color: #111111;
+        font-weight: 700;
+    }
+    div[data-testid="stDownloadButton"] > button {
+        background: #f2f3f5 !important;
+        color: #111111 !important;
+        border: 1px solid #d7dce2 !important;
+        box-shadow: none !important;
+    }
+    div[data-testid="stDownloadButton"] > button:hover,
+    div[data-testid="stDownloadButton"] > button:focus,
+    div[data-testid="stDownloadButton"] > button:active {
+        background: #e8eaed !important;
+        color: #111111 !important;
+        border-color: #c8ced6 !important;
+    }
+    div[data-testid="stDownloadButton"] > button * {
+        color: #111111 !important;
+    }
+
+    /* Streamlit expander 제목이 마우스를 떼었을 때 검게 바뀌지 않도록 고정 */
+    div[data-testid="stExpander"] details > summary,
+    div[data-testid="stExpander"] details > summary:hover,
+    div[data-testid="stExpander"] details > summary:focus,
+    div[data-testid="stExpander"] details > summary:active {
+        background: #f2f3f5 !important;
+        color: #111111 !important;
+        border: 1px solid #e1e5ea !important;
+        border-radius: 8px !important;
+        box-shadow: none !important;
+    }
+    div[data-testid="stExpander"] details > summary * {
+        color: #111111 !important;
+        fill: #111111 !important;
+    }
+
+    @media (max-width: 720px) {
+        .block-container {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+        }
+        .white-excel-table th,
+        .white-excel-table td {
+            min-width: 132px;
+            padding: 0.5rem 0.58rem;
+            font-size: 0.9rem;
+        }
     }
 
     div[data-testid="stAudioInput"] {
@@ -627,7 +708,7 @@ def infer_related_coverages(selected_coverages, question_text):
     property_keywords = ["물건", "대물", "파손", "창문", "타이어"]
 
     if any(keyword in question for keyword in injury_keywords):
-        candidates = [name for name in selected_names if name in {"대인배상Ⅰ", "대인배상Ⅱ", "자기신체사고", "무보험자동차에의한상해"}]
+        candidates = [name for name in selected_names if name in {"대인배상Ⅰ", "대인배상Ⅱ", "자기신체사고", "자동차상해", "무보험자동차에의한상해"}]
         return candidates or ["관련 담보 확인 필요"]
 
     if any(keyword in question for keyword in vehicle_keywords):
@@ -676,6 +757,11 @@ POLICY_COVERAGE_ALIASES = {
         "자기신체사고",
         "자손",
         "본인 치료비",
+    ],
+    "자동차상해": [
+        "자동차상해",
+        "자동차상해특약",
+        "자상",
     ],
     "무보험자동차에의한상해": [
         "무보험자동차에의한상해",
@@ -908,9 +994,26 @@ def find_policy_original_in_pdfs(
         if normalize_policy_search_text(term)
     ]
 
-    pdf_paths = sorted(
-        PROJECT_ROOT.rglob("*.pdf")
-    )
+    policy_pdf_map = {
+        "개인용 자동차보험": "개인용 약관.pdf",
+        "업무용 자동차보험": "업무용 약관.pdf",
+        "영업용 자동차보험": "영업용 약관.pdf",
+        "이륜차 자동차보험": "이륜차 약관.pdf",
+    }
+
+    target_pdf_name = policy_pdf_map.get(insurance_type)
+
+    if target_pdf_name:
+        pdf_paths = sorted(
+            path
+            for path in PROJECT_ROOT.rglob("*.pdf")
+            if unicodedata.normalize("NFC", path.name)
+            == unicodedata.normalize("NFC", target_pdf_name)
+        )
+    else:
+        pdf_paths = sorted(
+            PROJECT_ROOT.rglob("*.pdf")
+        )
 
     if not pdf_paths:
         return {
@@ -975,8 +1078,7 @@ def find_policy_original_in_pdfs(
             try:
                 try:
                     raw_page_text = page.extract_text(
-                        extraction_mode="layout"
-                    )
+                        extraction_mode="layout"                    )
                 except TypeError:
                     raw_page_text = page.extract_text()
 
@@ -1398,6 +1500,11 @@ def initialize_state():
         "question_stt_error": "",
         "question_force_stt_retry": False,
         "policy_question_answer": None,
+        "policy_ocr_result": None,
+        "policy_ocr_error": "",
+        "policy_ocr_image_hash": "",
+        "policy_ocr_coverage_meta": {},
+        "insurance_type_select": INSURANCE_TYPE_OPTIONS[0],
     }
 
     for key, value in defaults.items():
@@ -1971,7 +2078,6 @@ def render_money_input(label, key, help_text=None):
         on_change=format_currency_widget_value,
         args=(key,),
     )
-
     digits = extract_numeric_digits(input_value)
     if input_value and not digits:
         st.caption("숫자만 입력할 수 있습니다. 천 단위 쉼표는 자동으로 표시됩니다.")
@@ -1981,19 +2087,32 @@ def render_money_input(label, key, help_text=None):
 
 def render_white_table(headers, rows):
     header_html = "".join(
-        f"<th>{escape(str(header))}</th>"
+        f"<th style='white-space:normal; word-break:keep-all; line-height:1.45;'>{escape(str(header))}</th>"
         for header in headers
     )
+
     body_html = []
     for row in rows:
         cells = "".join(
-            f"<td>{escape(str(row.get(header, '')))}</td>"
+            "<td style='white-space:normal; word-break:keep-all; "
+            "overflow-wrap:anywhere; line-height:1.55; vertical-align:top;'>"
+            f"{escape(str(row.get(header, '')))}</td>"
             for header in headers
         )
-        body_html.append(f"<tr>{cells}</tr>")
+
+        is_total = (
+            str(row.get("가입담보명", "")).strip() == "합계"
+            or "예상 보험금 합계" in str(row.get("담보 구분", ""))
+        )
+        row_style = (
+            " style='font-weight:700; background:#f3f6f9;'"
+            if is_total
+            else ""
+        )
+        body_html.append(f"<tr{row_style}>{cells}</tr>")
 
     st.markdown(
-        "<div style='overflow-x:auto'>"
+        "<div style='overflow-x:auto; width:100%;'>"
         "<table class='white-excel-table'>"
         f"<thead><tr>{header_html}</tr></thead>"
         f"<tbody>{''.join(body_html)}</tbody>"
@@ -2007,6 +2126,7 @@ def build_analysis_summary(
     accident_text,
     insurance_type,
     insurer,
+    insurance_product,
     insurance_period,
     injury_grade,
     disability_grade,
@@ -2034,6 +2154,7 @@ def build_analysis_summary(
         "accident_text": accident_text.strip(),
         "insurance_type": insurance_type,
         "insurer": insurer.strip(),
+        "insurance_product": (insurance_product or "").strip(),
         "insurance_period": insurance_period.strip(),
         "injury_grade": injury_grade,
         "disability_grade": disability_grade,
@@ -2071,6 +2192,24 @@ def get_policy_rule(insurance_type, coverage_name):
             and item.get("담보명") == coverage_name
         ):
             return item
+
+    if coverage_name == "자동차상해":
+        auto_injury_sources = {
+            "개인용 자동차보험": ("개인용 약관.pdf", "119-120"),
+            "업무용 자동차보험": ("업무용 약관.pdf", "84-85"),
+            "영업용 자동차보험": ("영업용 약관.pdf", "73-74"),
+        }
+        source = auto_injury_sources.get(insurance_type)
+        if source:
+            return {
+                "보험 종류": insurance_type,
+                "담보명": coverage_name,
+                "계산식": "지급보험금 = 실제손해액 + 비용 - 공제액",
+                "PDF 파일명": source[0],
+                "PDF 페이지": source[1],
+                "조문명": "자동차상해 특별약관 2. 보상하는 손해",
+                "검증 상태": "검증됨",
+            }
     return None
 
 
@@ -2106,29 +2245,66 @@ def get_additional_info_fields(coverage_name):
 
 
 def parse_optional_amount(value):
+    """
+    보험증권의 금액 표현을 원 단위 정수로 변환한다.
+
+    예:
+    차량가액 1,543만원 -> 15,430,000
+    1사고당 10억원 -> 1,000,000,000
+    1인당 2억원 한도 -> 200,000,000
+
+    무한·법정한도처럼 고정 숫자가 아닌 표현은 None으로 둔다.
+    """
     if value is None:
         return None
 
     text = str(value).strip()
-    if text == "":
+
+    if not text:
         return None
 
-    if text.lower() in {"미입력", "none", "null"}:
+    compact = text.replace(",", "").replace(" ", "")
+
+    if "무한" in compact or "법정한도" in compact:
         return None
 
-    digits = re.sub(r"[^0-9-]", "", text)
-    if digits in {"", "-"}:
-        return None
+    # 억원 단위
+    match = re.search(r"(\d+(?:\.\d+)?)억원?", compact)
+    if match:
+        return int(float(match.group(1)) * 100_000_000)
 
-    try:
-        return int(digits)
-    except ValueError:
-        return None
+    # 천만원 단위
+    match = re.search(r"(\d+(?:\.\d+)?)천만원?", compact)
+    if match:
+        return int(float(match.group(1)) * 10_000_000)
+
+    # 만원 단위
+    match = re.search(r"(\d+(?:\.\d+)?)만원?", compact)
+    if match:
+        return int(float(match.group(1)) * 10_000)
+
+    # 원 단위
+    match = re.search(r"(\d+)원", compact)
+    if match:
+        return int(match.group(1))
+
+    # 숫자만 들어온 경우에는 기존 입력값과의 호환을 위해 원 단위로 처리
+    if re.fullmatch(r"\d+", compact):
+        return int(compact)
+
+    return None
 
 
 def get_coverage_cost_fields(coverage_name):
     field_map = {
         "대인배상Ⅰ": [
+            "치료비",
+            "수술비",
+            "입원비",
+            "통원치료비",
+            "휴업손해",
+        ],
+        "대인배상Ⅱ": [
             "치료비",
             "수술비",
             "입원비",
@@ -2148,6 +2324,13 @@ def get_coverage_cost_fields(coverage_name):
             "통원치료비",
             "휴업손해",
         ],
+        "자동차상해": [
+            "치료비",
+            "수술비",
+            "입원비",
+            "통원치료비",
+            "휴업손해",
+        ],
         "무보험자동차에의한상해": [
             "치료비",
             "수술비",
@@ -2158,11 +2341,25 @@ def get_coverage_cost_fields(coverage_name):
         "자기차량손해": [
             "차량수리비",
             "견인비",
-            "대차료 또는 교통비",
-            "기타 재산손해",
         ],
     }
     return field_map.get(coverage_name, [])
+
+
+def get_cost_input_group(coverage_name):
+    if coverage_name in {
+        "대인배상Ⅰ",
+        "대인배상Ⅱ",
+        "자기신체사고",
+        "자동차상해",
+        "무보험자동차에의한상해",
+    }:
+        return "사람피해"
+    if coverage_name == "대물배상":
+        return "상대재산피해"
+    if coverage_name == "자기차량손해":
+        return "내차량피해"
+    return coverage_name
 
 
 def make_widget_key(*parts):
@@ -2170,7 +2367,7 @@ def make_widget_key(*parts):
     for part in parts:
         text = str(part)
         cleaned = re.sub(
-            r"[^0-9A-Za-z]+",
+            r"[^0-9A-Za-z가-힣]+",
             "_",
             text,
         ).strip("_")
@@ -2203,7 +2400,7 @@ def get_field_code(field_name):
 def get_coverage_input_key(coverage_name, field_name, index):
     return make_unique_key(
         "actual_cost",
-        get_coverage_code(coverage_name),
+        make_widget_key(get_cost_input_group(coverage_name)),
         get_field_code(field_name),
         repeat_index=index,
         question_index=0,
@@ -2254,120 +2451,228 @@ def sum_relevant_costs_for_coverage(coverage_name):
         return None
 
     total = 0
-    field_values = {}
     for idx, field_name in enumerate(fields):
         value = parse_optional_amount(
             read_cost_value(coverage_name, field_name, idx)
         )
         if value is not None:
-            field_values[field_name] = value
-
-    if coverage_name in {
-        "대인배상Ⅰ",
-        "자기신체사고",
-        "무보험자동차에의한상해",
-    }:
-        treatment_total = field_values.get("치료비")
-        surgery = field_values.get("수술비")
-        inpatient = field_values.get("입원비")
-        outpatient = field_values.get("통원치료비")
-        income_loss = field_values.get("휴업손해")
-
-        if treatment_total is not None:
-            total += treatment_total
-        else:
-            total += surgery or 0
-            total += inpatient or 0
-            total += outpatient or 0
-
-        if income_loss is not None:
-            total += income_loss
-
-    elif coverage_name in {"대물배상", "자기차량손해"}:
-        for field_name in [
-            "차량수리비",
-            "견인비",
-            "대차료 또는 교통비",
-            "기타 재산손해",
-        ]:
-            total += field_values.get(field_name, 0)
+            total += value
 
     return total if total > 0 else None
+
+
+def get_cost_breakdown_text(coverage_name):
+    parts = []
+    for index, field_name in enumerate(
+        get_coverage_cost_fields(coverage_name)
+    ):
+        value = parse_optional_amount(
+            read_cost_value(coverage_name, field_name, index)
+        )
+        if value is not None and value > 0:
+            parts.append(
+                f"{field_name} {format_currency_value(value)}"
+            )
+    return " + ".join(parts) if parts else "입력 손해액 없음"
+
+
+def get_injury_grade_limit(injury_grade):
+    limits = {
+        "1급": 30_000_000,
+        "2급": 15_000_000,
+        "3급": 12_000_000,
+        "4급": 10_000_000,
+        "5급": 9_000_000,
+        "6급": 7_000_000,
+        "7급": 5_000_000,
+        "8급": 3_000_000,
+        "9급": 2_400_000,
+        "10급": 2_000_000,
+        "11급": 1_600_000,
+        "12급": 1_200_000,
+        "13급": 800_000,
+        "14급": 500_000,
+    }
+    return limits.get(str(injury_grade or "").strip())
+
+
+def sum_treatment_related_costs(coverage_name):
+    """치료관계비 최저보장 검토에 사용할 입력값만 합산한다."""
+    treatment_fields = {
+        "치료비",
+        "수술비",
+        "입원비",
+        "통원치료비",
+    }
+    total = 0
+    has_value = False
+    for index, field_name in enumerate(
+        get_coverage_cost_fields(coverage_name)
+    ):
+        if field_name not in treatment_fields:
+            continue
+        value = parse_optional_amount(
+            read_cost_value(coverage_name, field_name, index)
+        )
+        if value is not None:
+            total += value
+            has_value = True
+    return total if has_value else None
+
+
+SELF_INJURY_GRADE_LIMITS = {
+    15_000_000: {
+        "1급": 15_000_000, "2급": 8_000_000, "3급": 7_500_000,
+        "4급": 7_000_000, "5급": 5_000_000, "6급": 4_000_000,
+        "7급": 2_500_000, "8급": 1_800_000, "9급": 1_400_000,
+        "10급": 1_200_000, "11급": 1_200_000, "12급": 1_200_000,
+        "13급": 800_000, "14급": 500_000,
+    },
+    30_000_000: {
+        "1급": 30_000_000, "2급": 16_000_000, "3급": 15_000_000,
+        "4급": 14_000_000, "5급": 10_000_000, "6급": 8_000_000,
+        "7급": 5_000_000, "8급": 3_600_000, "9급": 2_800_000,
+        "10급": 2_400_000, "11급": 2_000_000, "12급": 1_800_000,
+        "13급": 1_300_000, "14급": 800_000,
+    },
+    50_000_000: {
+        "1급": 50_000_000, "2급": 27_000_000, "3급": 25_000_000,
+        "4급": 23_000_000, "5급": 16_500_000, "6급": 13_000_000,
+        "7급": 8_000_000, "8급": 6_000_000, "9급": 4_500_000,
+        "10급": 4_000_000, "11급": 3_000_000, "12급": 2_900_000,
+        "13급": 2_100_000, "14급": 1_300_000,
+    },
+}
+
+
+def get_self_injury_grade_limit(injury_grade, limit_text):
+    """약관 별표3의 부상 가입금액과 급수별 한도를 찾는다."""
+    text = str(limit_text or "")
+    injury_segment = ""
+    injury_match = re.search(
+        r"부상.{0,30}",
+        text,
+    )
+    if injury_match:
+        injury_segment = injury_match.group(0)
+
+    injury_plan_limit = parse_optional_amount(injury_segment)
+    if injury_plan_limit not in SELF_INJURY_GRADE_LIMITS:
+        return None
+    return SELF_INJURY_GRADE_LIMITS[injury_plan_limit].get(
+        str(injury_grade or "").strip()
+    )
+
+
+def calculate_vehicle_deductible(deductible_text, vehicle_loss):
+    """증권상 정률·최저·최고 자기부담금을 현재 차량손해액에 적용한다."""
+    text = str(deductible_text or "").strip()
+    if not text:
+        return 0, False
+
+    percent_match = re.search(r"(\d+(?:\.\d+)?)\s*%", text)
+    if percent_match:
+        deductible = int(
+            max(vehicle_loss or 0, 0)
+            * float(percent_match.group(1))
+            / 100
+        )
+        minimum_match = re.search(
+            r"최저\s*([0-9.,]+\s*(?:억|천만|만)?원)",
+            text,
+        )
+        maximum_match = re.search(
+            r"최고\s*([0-9.,]+\s*(?:억|천만|만)?원)",
+            text,
+        )
+        if minimum_match:
+            minimum = parse_optional_amount(minimum_match.group(1))
+            if minimum is not None:
+                deductible = max(deductible, minimum)
+        if maximum_match:
+            maximum = parse_optional_amount(maximum_match.group(1))
+            if maximum is not None:
+                deductible = min(deductible, maximum)
+        return deductible, True
+
+    fixed = parse_optional_amount(text)
+    return (fixed or 0), fixed is not None
 
 
 def render_actual_cost_inputs(selected_coverages):
     if not selected_coverages:
         return
 
-    st.subheader("실제 손해·비용 입력")
+    st.subheader("손해액 입력")
     st.caption(
-        "선택한 담보에 필요한 비용만 표시합니다. "
-        "치료비 항목에 포함된 수술비·입원비·통원치료비는 다시 더하지 않습니다."
+        "같은 사람 피해 금액은 한 번만 입력하면 관련 담보 계산에 함께 사용합니다. "
+        "각 칸에는 서로 겹치지 않는 금액을 입력하세요. 치료비가 전체 합계라면 "
+        "수술비·입원비·통원치료비 칸은 0으로 두세요."
     )
 
+    rendered_groups = set()
     for item in selected_coverages:
         coverage_name = item.get("담보명")
+        group_name = get_cost_input_group(coverage_name)
+        if group_name in rendered_groups:
+            continue
         fields = get_coverage_cost_fields(coverage_name)
         if not fields:
             continue
+        rendered_groups.add(group_name)
 
-        with st.expander(f"{coverage_name} 실제 손해·비용", expanded=False):
-            for index, field_name in enumerate(fields):
-                key = get_coverage_input_key(
-                    coverage_name,
-                    field_name,
-                    index,
-                )
+        group_labels = {
+            "사람피해": "사람 피해 금액",
+            "상대재산피해": "상대방 차량·재산 피해 금액",
+            "내차량피해": "내 차량 피해 금액",
+        }
 
-                value = render_money_input(
-                    field_name,
-                    key,
-                    help_text="숫자만 입력하세요. 쉼표는 자동으로 표시됩니다.",
-                )
+        heading = group_labels.get(
+            group_name,
+            f"{coverage_name} 손해 금액",
+        )
+        st.markdown(
+            f'<div class="kh-cost-heading">{escape(heading)}</div>',
+            unsafe_allow_html=True,
+        )
+        for index, field_name in enumerate(fields):
+            key = get_coverage_input_key(
+                coverage_name,
+                field_name,
+                index,
+            )
 
-                st.session_state.setdefault("actual_cost_inputs", {})[key] = value
+            value = render_money_input(
+                field_name,
+                key,
+                help_text="숫자만 입력하세요. 쉼표는 자동으로 표시됩니다.",
+            )
+
+            st.session_state.setdefault("actual_cost_inputs", {})[key] = value
 
 
 def get_total_dedupe_group(coverage_name):
-    if coverage_name in {"대인배상Ⅰ", "자기신체사고", "무보험자동차에의한상해"}:
-        return "상해치료비"
+    if coverage_name in {"자기신체사고", "자동차상해"}:
+        return "본인 상해담보"
     return coverage_name
 
 
 def parse_fault_percentage(fault_rate):
     fault_text = str(fault_rate or "")
-    if (
-        "아직 확인되지 않음" in fault_text
-        or "사용자가 확인하려는 임의 비율" in fault_text
-    ):
-        return None
 
-    match = re.search(r"(?<!\d)(\d{1,3})%", fault_text)
+    match = re.search(
+        r"(?<!\d)(\d{1,3})\s*%",
+        fault_text,
+    )
     if not match:
         return None
+
     percentage = int(match.group(1))
     return percentage if 0 <= percentage <= 100 else None
 
 
 def render_input_review_tables(result):
-    st.subheader("입력정보")
-    preconditions = result.get("preconditions") or {}
-    review_rows = [
-        {"항목": "사용자 입장", "입력값": result.get("position") or "미입력"},
-        {"항목": "보험 종류", "입력값": result.get("insurance_type") or "미입력"},
-        {"항목": "보험회사", "입력값": result.get("insurer") or "미입력"},
-        {"항목": "보험기간", "입력값": result.get("insurance_period") or "미입력"},
-        {"항목": "부상급수", "입력값": result.get("injury_grade") or "미입력"},
-        {"항목": "후유장애급수", "입력값": result.get("disability_grade") or "미입력"},
-        {"항목": "입원일수", "입력값": result.get("hospital_days", 0) if result.get("hospital_days") is not None else "미입력"},
-        {"항목": "적용 과실비율", "입력값": result.get("fault_rate") or "미입력"},
-        {"항목": "사고내용", "입력값": result.get("accident_text") or "미입력"},
-    ]
-    for key, value in sorted(preconditions.items()):
-        review_rows.append({"항목": key, "입력값": value or "확인 필요"})
-    render_white_table(["항목", "입력값"], review_rows)
-
-    st.markdown("#### 선택한 가입담보")
+    st.subheader("자동 입력된 가입내용")
     coverage_rows = []
     for item in result.get("selected_coverages", []):
         coverage_rows.append(
@@ -2375,16 +2680,31 @@ def render_input_review_tables(result):
                 "가입담보명": item.get("담보명", "확인 필요"),
                 "가입한도": item.get("가입금액·보상한도", "미입력"),
                 "자기부담금": item.get("자기부담금", "미입력"),
+                "특약·조건": item.get("특약/비고", "") or "없음",
             }
         )
 
     if coverage_rows:
         render_white_table(
-            ["가입담보명", "가입한도", "자기부담금"],
+            ["가입담보명", "가입한도", "자기부담금", "특약·조건"],
             coverage_rows,
         )
     else:
         st.info("선택한 가입담보가 없습니다.")
+
+    with st.expander("입력한 사고정보 확인", expanded=False):
+        review_rows = [
+            {"항목": "사용자 입장", "입력값": result.get("position") or "미입력"},
+            {"항목": "보험 종류", "입력값": result.get("insurance_type") or "미입력"},
+            {"항목": "보험회사", "입력값": result.get("insurer") or "미입력"},
+            {"항목": "보험기간", "입력값": result.get("insurance_period") or "미입력"},
+            {"항목": "부상급수", "입력값": result.get("injury_grade") or "미입력"},
+            {"항목": "후유장애급수", "입력값": result.get("disability_grade") or "미입력"},
+            {"항목": "입원일수", "입력값": f"{result.get('hospital_days', 0)}일"},
+            {"항목": "과실비율", "입력값": result.get("fault_rate") or "미입력"},
+            {"항목": "사고내용", "입력값": result.get("accident_text") or "미입력"},
+        ]
+        render_white_table(["항목", "입력값"], review_rows)
 
 
 def get_required_policy_inputs(coverage_name):
@@ -2402,116 +2722,431 @@ def build_policy_analysis_rows(result):
         return [], []
 
     insurance_type = result.get("insurance_type")
-    fault_percentage = parse_fault_percentage(result.get("fault_rate"))
+    user_position = result.get("position") or "피해자"
+    fault_rate_text = str(result.get("fault_rate") or "")
+    parsed_fault = parse_fault_percentage(fault_rate_text)
+    applied_fault = parsed_fault if parsed_fault is not None else 0
+    provisional_fault = (
+        parsed_fault is None
+        or any(
+            marker in fault_rate_text
+            for marker in ["임의", "미확정", "아직 확인되지 않음", "아직 정해지지 않음"]
+        )
+    )
+    injury_grade = result.get("injury_grade") or "아직 확인되지 않음"
+    disability_grade = result.get("disability_grade") or "아직 확인되지 않음"
+    hospital_days = result.get("hospital_days")
+    preconditions = result.get("preconditions") or {}
+    injury_grade_limit = get_injury_grade_limit(injury_grade)
     rows = []
     excluded_rows = []
-    total_estimate = 0
-    counted_groups = set()
-    disability_grade = result.get("disability_grade") or "아직 확인되지 않음"
-    injury_grade = result.get("injury_grade") or "아직 확인되지 않음"
-    hospital_days = result.get("hospital_days", 0)
-    preconditions = result.get("preconditions") or {}
+    d1_estimate = 0
 
-    def summarize_preconditions():
-        summary = []
-        for key, value in preconditions.items():
-            if not value or value in {"확인되지 않음", "해당 없음", "아직 정해지지 않음"}:
-                continue
-            summary.append(f"{key}: {value}")
-        return " | ".join(summary)
+    liability_claimant_fault = applied_fault
+    if (
+        parsed_fault is not None
+        and user_position == "사고를 낸 운전자 또는 피보험자"
+        and preconditions.get("상대 차량 보험가입 상태") != "상대 차량 없음"
+    ):
+        liability_claimant_fault = max(0, 100 - applied_fault)
+
+    def apply_limit(amount, limit_value):
+        amount = max(int(amount or 0), 0)
+        return min(amount, limit_value) if limit_value is not None else amount
+
+    d1_item = next(
+        (
+            item for item in selected_coverages
+            if item.get("담보명") == "대인배상Ⅰ"
+        ),
+        None,
+    )
+    shared_injury_loss = sum_relevant_costs_for_coverage("대인배상Ⅰ")
+    shared_treatment_loss = sum_treatment_related_costs("대인배상Ⅰ")
+    if d1_item and shared_injury_loss is not None:
+        d1_limit = parse_optional_amount(
+            d1_item.get("가입금액·보상한도")
+        )
+        available_d1_limits = [
+            value for value in [d1_limit, injury_grade_limit]
+            if value is not None
+        ]
+        d1_limit = min(available_d1_limits) if available_d1_limits else None
+        d1_adjusted = (
+            shared_injury_loss
+            * (100 - liability_claimant_fault)
+            // 100
+        )
+        d1_base = max(
+            d1_adjusted,
+            shared_treatment_loss or 0,
+        )
+        d1_estimate = apply_limit(d1_base, d1_limit)
 
     for item in selected_coverages:
-        coverage_name = item.get("담보명")
+        coverage_name = item.get("담보명") or "담보명 확인 필요"
         rule = get_policy_rule(insurance_type, coverage_name)
-        limit_value = parse_optional_amount(item.get("가입금액·보상한도"))
-        deductible_value = parse_optional_amount(item.get("자기부담금"))
-        uses_actual_cost = coverage_name != "대인배상Ⅱ"
-        actual_total = sum_relevant_costs_for_coverage(coverage_name) if uses_actual_cost else None
-
-        formula = str(rule.get("계산식", "")) if rule else ""
-        missing_values = []
-        if uses_actual_cost and actual_total is None:
-            missing_values.append("실제 손해비용")
-        if deductible_value is None:
-            missing_values.append("자기부담금")
-        if fault_percentage is None:
-            missing_values.append("적용 과실비율")
-        if limit_value is None:
-            missing_values.append("가입한도")
-
-        if coverage_name in {"대인배상Ⅰ", "대인배상Ⅱ", "자기신체사고", "무보험자동차에의한상해"} and injury_grade in {"아직 확인되지 않음", "해당 없음"}:
-            missing_values.append("부상급수")
-        if coverage_name == "자기신체사고" and hospital_days is None:
-            missing_values.append("입원일수")
-
+        limit_text = item.get("가입금액·보상한도", "미입력")
+        limit_value = parse_optional_amount(limit_text)
+        deductible_value = parse_optional_amount(item.get("자기부담금")) or 0
+        actual_total = sum_relevant_costs_for_coverage(coverage_name)
+        treatment_total = sum_treatment_related_costs(coverage_name)
+        cost_breakdown = get_cost_breakdown_text(coverage_name)
+        row_fault_rate = (
+            liability_claimant_fault
+            if coverage_name in {"대인배상Ⅰ", "대인배상Ⅱ", "대물배상"}
+            else applied_fault
+        )
+        adjusted_loss = (
+            actual_total * (100 - row_fault_rate) // 100
+            if actual_total is not None
+            else 0
+        )
         estimated = None
         review_amount = None
-        basis = "산정 보류"
+        detail = ""
+        required = []
 
-        if coverage_name == "대물배상":
-            basis = "대물배상은 부상급수·후유장애급수·입원일수 적용 대상이 아니며, 실제 손해액과 약관 한도 확인 필요"
-        elif not rule or not formula or "확인 필요" in formula:
-            basis = "약관 원문 확인 필요"
-        elif missing_values:
-            basis = f"산정 보류: {', '.join(missing_values)} 확인 필요"
-        elif coverage_name == "자기차량손해":
-            fault_adjusted = actual_total * (100 - fault_percentage) // 100
-            review_amount = min(max(fault_adjusted - deductible_value, 0), limit_value)
-            estimated = review_amount
-            basis = "실제 손해액 × (100%-적용 과실비율) - 자기부담금, 가입한도 이내 적용; 최종 약관·사고조사 확인 필요"
-        elif coverage_name == "대인배상Ⅰ":
-            basis = f"대인배상Ⅰ 지급기준 · 부상급수 {injury_grade} 적용 · 실제 손해액과 보험 한도 검토 · 적용 과실비율 {fault_percentage}% 입력 · 약관 원문 확인 필요"
-            if actual_total and actual_total > 0:
-                review_amount = min(actual_total, limit_value)
-                estimated = review_amount
+        if coverage_name == "대인배상Ⅰ":
+            if actual_total is not None:
+                available_limits = [
+                    value for value in [limit_value, injury_grade_limit]
+                    if value is not None
+                ]
+                effective_limit = min(available_limits) if available_limits else None
+                d1_calculation_base = max(
+                    adjusted_loss,
+                    treatment_total or 0,
+                )
+                estimated = apply_limit(
+                    d1_calculation_base,
+                    effective_limit,
+                )
+                review_amount = estimated
+                d1_estimate = estimated
+                detail = (
+                    f"{cost_breakdown} = 입력 손해액 "
+                    f"{format_currency_value(actual_total)} × "
+                    f"(100%-피해자측 과실 {row_fault_rate}%) = "
+                    f"{format_currency_value(adjusted_loss)}. "
+                    f"약관상 치료관계비 최저보장 검토액 "
+                    f"{format_currency_value(treatment_total or 0)}과 비교 후 "
+                    f"부상급수 {injury_grade}"
+                    + (
+                        f" 법정 한도 {format_currency_value(injury_grade_limit)} 적용. "
+                        if injury_grade_limit is not None
+                        else " 법정 한도 확인 필요. "
+                    )
+                    + f"후유장해급수 {disability_grade}, 입원 {hospital_days or 0}일 입력 반영"
+                )
+                if effective_limit is None:
+                    required.append("부상급수별 대인배상Ⅰ 법정 한도")
+            else:
+                required.append("치료비·휴업손해 등 실제 손해액")
+                detail = "실제 손해액 입력 후 바로 계산"
+
         elif coverage_name == "대인배상Ⅱ":
-            basis = "대인배상Ⅱ는 부상급수만으로 산정하지 않고, 실제 손해액·대인배상Ⅰ 지급액·적용 과실비율·약관 공제 규정을 함께 검토해야 함"
+            if actual_total is not None:
+                fault_adjusted_excess = max(
+                    adjusted_loss - d1_estimate,
+                    0,
+                )
+                treatment_expense_excess = max(
+                    (treatment_total or 0) - d1_estimate,
+                    0,
+                )
+                remaining = max(
+                    fault_adjusted_excess,
+                    treatment_expense_excess,
+                )
+                estimated = apply_limit(remaining, limit_value)
+                review_amount = estimated
+                detail = (
+                    f"{cost_breakdown} = 입력 손해액 "
+                    f"{format_currency_value(actual_total)} × "
+                    f"(100%-피해자측 과실 {row_fault_rate}%) = "
+                    f"{format_currency_value(adjusted_loss)}. "
+                    f"여기서 대인배상Ⅰ 예상액 "
+                    f"{format_currency_value(d1_estimate)}을 뺀 초과손해와 "
+                    f"치료관계비 초과액 {format_currency_value(treatment_expense_excess)}을 "
+                    f"비교해 큰 금액을 현재 예상액으로 반영. "
+                    f"부상급수 {injury_grade}, 후유장해급수 {disability_grade}, "
+                    f"입원 {hospital_days or 0}일 입력 반영"
+                )
+                if d1_estimate == 0:
+                    required.append("대인배상Ⅰ 지급액 또는 법정한도")
+            else:
+                required.append("치료비·휴업손해 등 실제 손해액")
+                required.append("대인배상Ⅰ 지급액")
+                detail = "대인배상Ⅰ 초과손해 확인 후 계산"
+
+        elif coverage_name == "대물배상":
+            if actual_total is not None:
+                estimated = apply_limit(adjusted_loss, limit_value)
+                review_amount = estimated
+                detail = (
+                    f"입력 재산손해 {format_currency_value(actual_total)} × "
+                    f"(100%-피해자측 과실 {row_fault_rate}%), 가입한도 범위"
+                )
+                required.append("교체부품 감가상각 및 약관상 인정기간 확인")
+            else:
+                required.append("수리비·견인비·대차료 등 실제 손해액")
+                detail = "재산손해액 입력 후 바로 계산"
+
+        elif coverage_name == "자기차량손해":
+            if actual_total is not None:
+                vehicle_deductible, deductible_confirmed = (
+                    calculate_vehicle_deductible(
+                        item.get("자기부담금"),
+                        actual_total,
+                    )
+                )
+                estimated = apply_limit(
+                    max(actual_total - vehicle_deductible, 0),
+                    limit_value,
+                )
+                review_amount = estimated
+                detail = (
+                    f"약관상 피보험자동차 손해액 {format_currency_value(actual_total)} - "
+                    f"증권상 자기부담금 {format_currency_value(vehicle_deductible)}. "
+                    "자기차량손해에는 사용자 과실비율을 다시 곱하지 않음"
+                )
+                if not deductible_confirmed:
+                    required.append("증권상 자기부담금")
+                required.append("잔존물가액·주요 부분품 감가상각 발생 여부")
+            else:
+                required.append("수리견적서 또는 확정 수리비")
+                detail = "차량손해액과 자기부담금 입력 후 계산"
+
         elif coverage_name == "자기신체사고":
-            if actual_total and actual_total > 0:
-                review_amount = min(max(actual_total - deductible_value, 0), limit_value)
-                estimated = review_amount
-                basis = f"자기신체사고는 실제 손해액에서 자기부담금을 차감한 범위와 가입한도를 함께 검토하며, 부상급수 {injury_grade}와 입원일수 {hospital_days}일을 함께 반영해야 함"
+            if actual_total is not None:
+                self_injury_limit = get_self_injury_grade_limit(
+                    injury_grade,
+                    limit_text,
+                )
+                current_treatment_amount = treatment_total or 0
+                estimated = apply_limit(
+                    current_treatment_amount,
+                    self_injury_limit or limit_value,
+                )
+                review_amount = estimated
+                detail = (
+                    f"현재 확인된 치료관계비 {format_currency_value(current_treatment_amount)}. "
+                    "약관상 자기신체사고 공제액은 증권의 자기부담금과 다른 개념이므로 "
+                    "증권상 자기부담금을 임의로 차감하지 않음. "
+                    f"부상급수 {injury_grade}, 후유장해급수 {disability_grade}, "
+                    f"입원 {hospital_days or 0}일 입력 반영"
+                )
+                if self_injury_limit is None:
+                    required.append("별표3 부상 가입금액과 급수별 한도 확인")
+                required.append("대인배상·무보험차상해·제3자 보상금 등 약관상 공제액")
+            else:
+                required.append("치료비·휴업손해 등 실제 손해액")
+                detail = "실제 손해액 입력 후 바로 계산"
+            if injury_grade in {"아직 확인되지 않음", "해당 없음"}:
+                required.append("부상급수 확인자료")
+
+        elif coverage_name == "자동차상해":
+            if actual_total is not None:
+                estimated = apply_limit(actual_total, limit_value)
+                review_amount = estimated
+                detail = (
+                    f"{cost_breakdown} = 현재 확인된 실제손해액 "
+                    f"{format_currency_value(actual_total)}. "
+                    "자동차상해 약관의 공제액은 증권상 자기부담금과 다른 개념이므로 "
+                    "증권상 자기부담금을 임의로 차감하지 않음. "
+                    f"부상급수 {injury_grade}, 후유장해급수 {disability_grade}, "
+                    f"입원 {hospital_days or 0}일 입력 반영"
+                )
+                required.append("대인배상·무보험차상해·제3자 보상금 등 약관상 공제액")
+            else:
+                required.append("치료비·휴업손해 등 실제 손해액")
+                detail = "실제 손해액 입력 후 바로 계산"
+            if injury_grade in {"아직 확인되지 않음", "해당 없음"}:
+                required.append("부상급수 확인자료")
+
         elif coverage_name == "무보험자동차에의한상해":
-            if actual_total and actual_total > 0:
-                review_amount = min(max(actual_total - deductible_value, 0), limit_value)
-                estimated = review_amount
-                basis = f"무보험자동차에의한상해는 실제 손해액·부상급수 {injury_grade}·적용 과실비율 {fault_percentage}%를 함께 검토해야 하며, 약관상 한도와 공제액을 반영해야 함"
+            policy_cost_label = (
+                "약관상 비용(손해방지·경감비용 및 권리보전·행사비용)"
+            )
+            deduction_labels = [
+                "공제 1. 대인배상Ⅰ·책임공제·정부보장사업에서 지급될 수 있는 금액",
+                "공제 2. 배상의무자 차량의 대인배상Ⅱ·공제계약에서 지급될 수 있는 금액",
+                "공제 3. 탑승 차량의 대인배상Ⅱ·공제계약에서 지급될 수 있는 금액",
+                "공제 4. 배상의무자에게 이미 받은 손해배상금",
+                "공제 5. 제3자가 부담할 금액 중 이미 받은 금액",
+            ]
+            policy_cost = parse_optional_amount(
+                preconditions.get(policy_cost_label)
+            )
+            deduction_values = [
+                parse_optional_amount(preconditions.get(label))
+                for label in deduction_labels
+            ]
+            verified_policy_formula = (
+                rule is not None
+                and rule.get("검증 상태") == "검증됨"
+                and "보험금지급기준" in str(rule.get("계산식") or "")
+                and "공제액" in str(rule.get("계산식") or "")
+            )
+            required_coverages = {
+                "대인배상Ⅰ",
+                "대인배상Ⅱ",
+                "대물배상",
+                "자기신체사고",
+            }
+            joined_coverages = {
+                selected.get("담보명")
+                for selected in selected_coverages
+            }
+
+            if not verified_policy_formula:
+                required.append("적용 보험종류의 약관 PDF 계산식 검증")
+            if actual_total is None:
+                required.append("치료비·휴업손해 등 약관상 손해액")
+            if preconditions.get("상대 차량 보험가입 상태") != "무보험":
+                required.append("상대 차량이 무보험자동차라는 확인자료")
+            if preconditions.get("무보험자동차상해 적용 검토") != "적용 검토 필요":
+                required.append("무보험자동차상해 적용 대상 확인")
+            if not required_coverages.issubset(joined_coverages):
+                required.append(
+                    "대인배상Ⅰ·Ⅱ, 대물배상, 자기신체사고 가입 확인"
+                )
+            if policy_cost is None:
+                required.append("약관상 비용 금액 확인")
+            for label, value in zip(deduction_labels, deduction_values):
+                if value is None:
+                    required.append(label + " 확인")
+            if provisional_fault:
+                required.append("최종 과실비율")
+
+            if verified_policy_formula and actual_total is not None:
+                reflected_policy_cost = policy_cost or 0
+                reflected_deductions = sum(
+                    value for value in deduction_values
+                    if value is not None
+                )
+                policy_formula_amount = max(
+                    adjusted_loss
+                    + reflected_policy_cost
+                    - reflected_deductions,
+                    0,
+                )
+                estimated = apply_limit(
+                    policy_formula_amount,
+                    limit_value,
+                )
+                review_amount = estimated
+                detail = (
+                    "약관 지급보험금 계산식 적용: "
+                    f"{cost_breakdown} = 입력 사람피해액 "
+                    f"{format_currency_value(actual_total)} × "
+                    f"(100%-피보험자 과실 {row_fault_rate}%) = "
+                    f"{format_currency_value(adjusted_loss)} "
+                    f"+ 현재 확인된 약관상 비용 {format_currency_value(reflected_policy_cost)} "
+                    f"- 현재 확인된 공제액 합계 {format_currency_value(reflected_deductions)} "
+                    f"= {format_currency_value(policy_formula_amount)}. "
+                    "보험증권 가입한도 적용. 빈칸인 비용·공제항목은 0원으로 "
+                    "확정한 것이 아니라 아직 반영하지 않은 변수이므로, 확인 후 "
+                    "입력하면 예상액이 다시 계산됩니다."
+                )
+            else:
+                detail = (
+                    "현재 입력한 사람피해액이 없거나 적용 보험종류의 약관 계산식이 "
+                    "확인되지 않아 이 담보만 계산하지 않았습니다. 손해액 또는 약관 "
+                    "근거가 확인되면 즉시 예상액에 포함됩니다."
+                )
+
         else:
-            basis = "약관의 지급기준·공제액 등 추가 적용값 검토 필요"
+            required.append("해당 특약의 지급요건과 손해자료")
+            detail = "가입내용은 확인됨 · 금액형 담보인지 추가 확인"
 
-        precondition_note = summarize_preconditions()
-        if precondition_note:
-            basis = f"{basis} | 전제조건: {precondition_note}"
+        if provisional_fault and coverage_name in {
+            "대인배상Ⅰ", "대인배상Ⅱ", "대물배상",
+            "무보험자동차에의한상해", "자기차량손해",
+        }:
+            required.append("최종 과실비율")
 
-        if estimated is not None:
-            group_key = get_total_dedupe_group(coverage_name)
-            if group_key not in counted_groups:
-                total_estimate += estimated
-                counted_groups.add(group_key)
+        if coverage_name in {
+            "대인배상Ⅰ", "대인배상Ⅱ", "자기신체사고",
+            "자동차상해", "무보험자동차에의한상해",
+        }:
+            if disability_grade in {"아직 확인되지 않음", "해당 없음"}:
+                required.append("후유장해가 남는 경우 장해진단서")
+            if hospital_days in {None, 0}:
+                required.append("입원한 경우 입·퇴원확인서")
+
+        required = list(dict.fromkeys(required))
+        amount_text = (
+            format_currency_value(review_amount)
+            if review_amount is not None
+            else "계산 보류"
+        )
+        note_parts = [
+            detail,
+            "입력 및 추정 데이터를 바탕으로 산정한 예상 금액이며 최종 확정 금액이 아닙니다.",
+        ]
+        if required:
+            note_parts.append("추가 확인: " + ", ".join(required))
 
         row_values = {
             "가입담보명": coverage_name,
-            "가입한도": item.get("가입금액·보상한도", "미입력"),
-            "실제 손해비용": format_currency_value(actual_total) if actual_total is not None else ("해당 없음" if coverage_name == "대물배상" or coverage_name == "대인배상Ⅱ" else "미입력"),
-            "자기부담금": item.get("자기부담금", "미입력"),
-            "후유장애급수": "해당 없음" if coverage_name == "대물배상" else (disability_grade if coverage_name in {"대인배상Ⅰ", "대인배상Ⅱ", "자기신체사고", "무보험자동차에의한상해"} else "해당 없음"),
-            "부상급수": "해당 없음" if coverage_name == "대물배상" else (injury_grade if coverage_name in {"대인배상Ⅰ", "대인배상Ⅱ", "자기신체사고", "무보험자동차에의한상해"} else "해당 없음"),
-            "입원일수": "해당 없음" if coverage_name == "대물배상" else (str(hospital_days) + "일" if hospital_days is not None else "0일"),
-            "적용 과실비율": result.get("fault_rate", "확인 필요"),
-            "약관상 예상 지급액": format_currency_value(estimated) if estimated is not None else ("약관 확인 필요" if basis == "약관 확인 필요" else "산정 보류"),
-            "청구 검토금액": format_currency_value(review_amount) if review_amount is not None else "산정 보류",
-            "적용 약관 규정 및 산정근거": basis,
+            "가입한도": limit_text or "미입력",
+            "청구 검토금액": amount_text,
+            "비고 및 세부 산정 내역": " | ".join(note_parts),
+            "실제 손해비용": (
+                format_currency_value(actual_total)
+                if actual_total is not None
+                else "미입력"
+            ),
+            "자기부담금": item.get("자기부담금", "미입력") or "미입력",
+            "후유장애급수": disability_grade,
+            "부상급수": injury_grade,
+            "입원일수": f"{hospital_days or 0}일",
+            "적용 과실비율": (
+                f"{row_fault_rate}%"
+                + (" 가정" if provisional_fault else "")
+            ),
+            "약관상 예상 지급액": amount_text,
+            "적용 약관 규정 및 산정근거": detail,
+            "비고": "추가 확인: " + ", ".join(required) if required else "현재 입력값으로 1차 계산",
             "계산가능금액": estimated,
             "검토가능금액": review_amount,
-            "근거 PDF": rule.get("PDF 파일명", "확인 필요") if rule else "확인 필요",
-            "PDF 페이지": rule.get("PDF 페이지", "확인 필요") if rule else "확인 필요",
-            "조문명": rule.get("조문명", "확인 필요") if rule else "확인 필요",
+            "추가 확인": required,
+            "근거 PDF": (
+                "개인용 약관.pdf"
+                if coverage_name == "무보험자동차에의한상해"
+                and insurance_type == "개인용 자동차보험"
+                else rule.get("PDF 파일명", "확인 필요") if rule else "확인 필요"
+            ),
+            "PDF 페이지": (
+                "52-53"
+                if coverage_name == "무보험자동차에의한상해"
+                and insurance_type == "개인용 자동차보험"
+                else rule.get("PDF 페이지", "확인 필요") if rule else "확인 필요"
+            ),
+            "조문명": (
+                "제20조(지급보험금의 계산)"
+                if coverage_name == "무보험자동차에의한상해"
+                and insurance_type == "개인용 자동차보험"
+                else rule.get("조문명", "확인 필요") if rule else "확인 필요"
+            ),
         }
         rows.append(row_values)
 
-        if estimated is None:
-            excluded_rows.append({"담보명": coverage_name, "사유": basis})
+        if review_amount is None:
+            excluded_rows.append({
+                "담보명": coverage_name,
+                "사유": ", ".join(required) or "손해액 입력 필요",
+                "근거 PDF": row_values["근거 PDF"],
+                "PDF 페이지": row_values["PDF 페이지"],
+                "조문명": row_values["조문명"],
+            })
 
+    total_estimate = sum(
+        row.get("검토가능금액") or 0
+        for row in rows
+    )
     st.session_state["policy_analysis_payload"] = {
         "result": result,
         "rows": rows,
@@ -2523,39 +3158,40 @@ def build_policy_analysis_rows(result):
 
 def build_analysis_table(rows):
     visible_headers = [
-        "가입담보명",
-        "가입한도",
-        "실제 손해비용",
-        "자기부담금",
-        "후유장애급수",
-        "부상급수",
-        "입원일수",
-        "적용 과실비율",
-        "약관상 예상 지급액",
-        "청구 검토금액",
-        "적용 약관 규정 및 산정근거",
+        "담보 구분",
+        "가입 한도",
+        "청구 검토 금액 (예상)",
+        "비고 및 세부 산정 내역",
     ]
-    table_rows = [{header: row.get(header, "") for header in visible_headers} for row in rows]
+    table_rows = []
+    amount_by_group = {}
 
-    calculated_values = [row.get("계산가능금액") for row in rows if row.get("계산가능금액") is not None]
-    calculated_reviews = [row.get("검토가능금액") for row in rows if row.get("검토가능금액") is not None]
-    total_estimate = sum(calculated_values)
-    total_review = sum(calculated_reviews)
+    for row in rows:
+        amount = row.get("검토가능금액")
+        group = get_total_dedupe_group(row.get("가입담보명", ""))
+        amount_by_group[group] = max(
+            amount_by_group.get(group, 0),
+            amount or 0,
+        )
+        table_rows.append({
+            "담보 구분": row.get("가입담보명", ""),
+            "가입 한도": row.get("가입한도", ""),
+            "청구 검토 금액 (예상)": row.get("청구 검토금액", "0원"),
+            "비고 및 세부 산정 내역": row.get("비고 및 세부 산정 내역", ""),
+        })
 
-    total_row = {
-        "가입담보명": "합계",
-        "가입한도": "",
-        "실제 손해비용": "",
-        "자기부담금": "",
-        "후유장애급수": "",
-        "부상급수": "",
-        "입원일수": "",
-        "적용 과실비율": "",
-        "약관상 예상 지급액": "산정 보류" if not calculated_values else format_currency_value(total_estimate),
-        "청구 검토금액": "산정 보류" if not calculated_reviews else format_currency_value(total_review),
-        "적용 약관 규정 및 산정근거": "산정 보류 항목은 합계에서 제외함",
-    }
-    table_rows.append(total_row)
+    total_estimate = sum(amount_by_group.values())
+    table_rows.append({
+        "담보 구분": "현재 입력값 기준 예상 보험금 합계",
+        "가입 한도": "",
+        "청구 검토 금액 (예상)": format_currency_value(total_estimate),
+        "비고 및 세부 산정 내역": (
+            "현재 입력값으로 계산한 금액의 합계입니다. 선택 관계인 자기신체사고와 "
+            "자동차상해는 큰 금액 하나만 반영했습니다. "
+            "담보 간 중복보상 제한, 이미 받은 보험금, 면책·공제와 최종 과실비율이 "
+            "확인되면 금액이 달라질 수 있습니다."
+        ),
+    })
     return table_rows, total_estimate
 
 
@@ -2563,7 +3199,8 @@ def build_analysis_excel(result, rows, excluded_rows, total_estimate):
     try:
         from io import BytesIO
         from openpyxl import Workbook
-        from openpyxl.styles import Font, PatternFill, Side, Border
+        from openpyxl.styles import Font, PatternFill, Side, Border, Alignment
+        from openpyxl.utils import get_column_letter
     except ImportError as exc:
         raise RuntimeError("openpyxl이 설치되어 있지 않습니다.") from exc
 
@@ -2581,54 +3218,94 @@ def build_analysis_excel(result, rows, excluded_rows, total_estimate):
     input_sheet.append(["입원일수", result.get("hospital_days", 0)])
     input_sheet.append(["적용 과실비율", result.get("fault_rate", "미입력")])
     input_sheet.append(["사고내용", result.get("accident_text", "미입력")])
+
     for cell in input_sheet["A1:B1"][0]:
         cell.font = Font(bold=True)
 
+    input_sheet.column_dimensions["A"].width = 22
+    input_sheet.column_dimensions["B"].width = 55
+
     policy_rows, _ = build_analysis_table(rows)
     policy_sheet = workbook.create_sheet("보상분석표")
-    policy_headers = [
-        "가입담보명",
-        "가입한도",
-        "실제 손해비용",
-        "자기부담금",
-        "후유장애급수",
-        "부상급수",
-        "입원일수",
-        "적용 과실비율",
-        "약관상 예상 지급액",
-        "청구 검토금액",
-        "적용 약관 규정 및 산정근거",
+
+    policy_columns = [
+        ("담보 구분", "담보 구분"),
+        ("가입 한도", "가입 한도"),
+        ("청구 검토 금액 (예상)", "청구 검토 금액 (예상)"),
+        ("비고 및 세부 산정 내역", "비고 및 세부 산정 내역"),
     ]
-    policy_sheet.append(policy_headers)
+
+    policy_sheet.append([label for label, key in policy_columns])
+
+    for row in policy_rows:
+        policy_sheet.append([
+            row.get(key, "")
+            for label, key in policy_columns
+        ])
+
     title_fill = PatternFill("solid", fgColor="D9E2F3")
+    total_fill = PatternFill("solid", fgColor="F3F6F9")
     thin = Side(style="thin", color="BFBFBF")
     border = Border(left=thin, right=thin, top=thin, bottom=thin)
-    for row in policy_rows:
-        policy_sheet.append([row.get(header, "") for header in policy_headers])
+
     for cell in policy_sheet[1]:
         cell.font = Font(bold=True, color="000000")
         cell.fill = title_fill
         cell.border = border
-    for row_cells in policy_sheet.iter_rows(min_row=2, max_row=policy_sheet.max_row, min_col=1, max_col=len(policy_headers)):
+        cell.alignment = Alignment(
+            horizontal="center",
+            vertical="center",
+            wrap_text=True,
+        )
+
+    for row_cells in policy_sheet.iter_rows(
+        min_row=2,
+        max_row=policy_sheet.max_row,
+        min_col=1,
+        max_col=len(policy_columns),
+    ):
         for cell in row_cells:
             cell.border = border
+            cell.alignment = Alignment(
+                vertical="top",
+                wrap_text=True,
+            )
+
     if policy_sheet.max_row > 1:
         last_row = policy_sheet[policy_sheet.max_row]
         for cell in last_row:
             cell.font = Font(bold=True)
+            cell.fill = total_fill
+
+    widths = [30, 22, 25, 95]
+    for index, width in enumerate(widths, start=1):
+        policy_sheet.column_dimensions[get_column_letter(index)].width = width
+
     policy_sheet.freeze_panes = "A2"
     policy_sheet.print_title_rows = "1:1"
     policy_sheet.page_setup.orientation = "landscape"
     policy_sheet.page_setup.fitToWidth = 1
     policy_sheet.page_setup.fitToHeight = 0
     policy_sheet.sheet_view.showGridLines = True
-    policy_sheet.calculate_dimension()
 
     consultation_sheet = workbook.create_sheet("상담내용")
-    consultation_sheet.append(["번호", "질문", "관련 담보", "약관 답변", "조문", "PDF", "페이지"])
+    consultation_sheet.append([
+        "번호",
+        "질문",
+        "관련 담보",
+        "약관 답변",
+        "조문",
+        "PDF",
+        "페이지",
+    ])
 
     evidence_sheet = workbook.create_sheet("약관근거")
-    evidence_sheet.append(["담보명", "근거 PDF", "PDF 페이지", "조문명"])
+    evidence_sheet.append([
+        "담보명",
+        "근거 PDF",
+        "PDF 페이지",
+        "조문명",
+    ])
     for row in rows:
         evidence_sheet.append([
             row.get("가입담보명", ""),
@@ -2638,7 +3315,13 @@ def build_analysis_excel(result, rows, excluded_rows, total_estimate):
         ])
 
     excluded_sheet = workbook.create_sheet("계산제외항목")
-    excluded_sheet.append(["담보명", "사유", "근거 PDF", "PDF 페이지", "조문명"])
+    excluded_sheet.append([
+        "담보명",
+        "사유",
+        "근거 PDF",
+        "PDF 페이지",
+        "조문명",
+    ])
     for row in excluded_rows:
         excluded_sheet.append([
             row.get("담보명", ""),
@@ -2656,35 +3339,136 @@ def build_analysis_excel(result, rows, excluded_rows, total_estimate):
 def render_policy_analysis_result(result):
     selected_coverages = result.get("selected_coverages", [])
     if not selected_coverages:
-        st.info("선택한 담보가 없어 약관 기준 분석을 시작할 수 없습니다.")
+        st.info("가입담보를 먼저 확인해 주세요.")
         return
 
     rows, excluded_rows = build_policy_analysis_rows(result)
     analysis_table, total_estimate = build_analysis_table(rows)
 
-    st.subheader("약관 기준 보상 분석")
+    st.subheader("입력값 기준 보상금 산정 요약")
     st.caption(
-        "표시된 금액은 입력정보와 확인된 약관에 따른 이론상 예상 범위입니다. "
-        "실제 지급 여부와 금액은 보험증권, 사고조사, 제출서류, 확정 과실률 및 보험회사의 심사에 따라 달라질 수 있습니다. "
-        "이 앱은 합의금을 산정하지 않습니다."
+        "보험증권에서 확인한 가입내용과 현재 입력한 손해액을 기준으로 계산했습니다. "
+        "각 담보의 추가 확인사항을 반영하면 예상 금액이 다시 계산됩니다."
     )
 
-    if analysis_table:
+    render_white_table(
+        [
+            "담보 구분",
+            "가입 한도",
+            "청구 검토 금액 (예상)",
+            "비고 및 세부 산정 내역",
+        ],
+        analysis_table,
+    )
+
+    st.markdown(
+        f"""
+        <div class="kh-result-card">
+            <div class="kh-result-label">현재 입력값 기준 예상 보험금 합계</div>
+            <div class="kh-result-amount">{escape(format_currency_value(total_estimate))}</div>
+            <div class="kh-result-note">
+                현재 입력값으로 계산한 1차 예상액입니다. 담보 간 중복보상 제한,
+                이미 받은 보험금, 최종 과실비율과 보험회사 심사를 반영하면 달라질 수 있습니다.
+                미입력 변수는 0원으로 확정한 것이 아니라 현재 예상액에 아직 반영하지 않은 값입니다.
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    action_items = []
+    fault_rate_text = str(result.get("fault_rate") or "")
+    if (
+        parse_fault_percentage(fault_rate_text) is None
+        or any(
+            marker in fault_rate_text
+            for marker in ["임의", "미확정", "아직 정해지지 않음", "아직 확인되지 않음"]
+        )
+    ):
+        action_items.append(
+            "최종 과실비율: 보험회사 협의서, 과실비율 분쟁심의 결과 또는 판결·조정자료"
+        )
+
+    injury_names = {
+        "대인배상Ⅰ",
+        "대인배상Ⅱ",
+        "자기신체사고",
+        "자동차상해",
+        "무보험자동차에의한상해",
+    }
+    selected_names = {
+        item.get("담보명")
+        for item in selected_coverages
+    }
+    if selected_names & injury_names:
+        action_items.extend([
+            "치료 관련 자료: 진단서, 진료비 계산서·영수증, 입·퇴원확인서와 향후 통원계획",
+            "소득 관련 자료: 급여명세서, 소득금액증명원 또는 과세표준증명원",
+        ])
+        if result.get("disability_grade") in {
+            None, "", "아직 확인되지 않음", "해당 없음"
+        }:
+            action_items.append(
+                "후유장해가 남는 경우: 치료 종결 후 발급된 후유장해진단서와 장해평가 자료"
+            )
+
+    if "무보험자동차에의한상해" in selected_names:
+        action_items.append(
+            "무보험자동차상해 검토: 상대 차량 보험가입사실과 대인배상 가입 범위"
+        )
+
+    if "자기차량손해" in selected_names:
+        action_items.append(
+            "차량 손해 자료: 수리견적서·정비명세서·사고사진과 증권상 자기부담금"
+        )
+
+    for row in rows:
+        for item in row.get("추가 확인", []):
+            if item not in action_items:
+                action_items.append(item)
+
+    action_items = list(dict.fromkeys(action_items))
+    if action_items:
+        items_html = "".join(
+            f"<li>{escape(str(item))}</li>"
+            for item in action_items
+        )
+        st.markdown("#### 금액을 더 정확하게 만들기 위해 준비할 자료")
+        st.markdown(
+            f"""
+            <div class="kh-result-card">
+                <div class="kh-result-label">다음 행동</div>
+                <ol class="kh-action-list">{items_html}</ol>
+                <div class="kh-result-note">
+                    자료를 확인한 뒤 위 입력값을 고치고 다시 계산하면 예상 금액이 즉시 갱신됩니다.
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with st.expander("계산에 적용한 조건과 약관 근거 보기", expanded=False):
+        detail_rows = []
+        for row in rows:
+            detail_rows.append({
+                "담보": row.get("가입담보명", ""),
+                "손해액": row.get("실제 손해비용", ""),
+                "자기부담금": row.get("자기부담금", ""),
+                "부상·장해·입원": (
+                    f"{row.get('부상급수', '')} · "
+                    f"{row.get('후유장애급수', '')} · "
+                    f"{row.get('입원일수', '')}"
+                ),
+                "과실비율": row.get("적용 과실비율", ""),
+                "약관 근거": (
+                    f"{row.get('조문명', '확인 필요')} · "
+                    f"{row.get('근거 PDF', '확인 필요')} "
+                    f"{row.get('PDF 페이지', '확인 필요')}쪽"
+                ),
+            })
         render_white_table(
-            [
-                "가입담보명",
-                "가입한도",
-                "실제 손해비용",
-                "자기부담금",
-                "후유장애급수",
-                "부상급수",
-                "입원일수",
-                "적용 과실비율",
-                "약관상 예상 지급액",
-                "청구 검토금액",
-                "적용 약관 규정 및 산정근거",
-            ],
-            analysis_table,
+            ["담보", "손해액", "자기부담금", "부상·장해·입원", "과실비율", "약관 근거"],
+            detail_rows,
         )
 
     payload = st.session_state.get("policy_analysis_payload")
@@ -2694,17 +3478,373 @@ def render_policy_analysis_result(result):
                 payload["result"],
                 payload["rows"],
                 payload["excluded_rows"],
-                payload["total_estimate"],
+                total_estimate,
             )
             st.download_button(
-                label="엑셀 보상분석표 다운로드",
+                label="보상금 산정표 엑셀로 받기",
                 data=excel_data,
-                file_name="보상분석표.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                key="download_policy_analysis_excel_v1",
+                file_name="입력값_기준_보상금_산정표.xlsx",
+                mime=(
+                    "application/vnd.openxmlformats-officedocument."
+                    "spreadsheetml.sheet"
+                ),
+                key="download_policy_analysis_excel_v3",
+                width="content",
             )
         except RuntimeError as exc:
             st.warning(str(exc))
+
+
+# =========================================================
+# 보험증권 사진 자동 판독
+# =========================================================
+
+def normalize_detected_insurance_type(value):
+    text = str(value or "").replace(" ", "")
+    if "이륜" in text or "오토바이" in text:
+        return "이륜차 자동차보험"
+    if "영업" in text:
+        return "영업용 자동차보험"
+    if "업무" in text:
+        return "업무용 자동차보험"
+    if "개인" in text:
+        return "개인용 자동차보험"
+    return None
+
+
+def normalize_ocr_coverage_name(value):
+    name = str(value or "").strip()
+    mapping = {
+        "무보험자동차상해": "무보험자동차에의한상해",
+        "무보험차상해": "무보험자동차에의한상해",
+        "무보험자동차에의한상해": "무보험자동차에의한상해",
+        "자동차상해특약": "자동차상해",
+        "자동차상해": "자동차상해",
+    }
+    return mapping.get(name, name)
+
+
+def apply_policy_ocr_to_form(validated):
+    """
+    보험증권 OCR 결과를 화면 입력값에 연결한다.
+
+    원칙:
+    - 보험증권 원문을 보존한다.
+    - 내부 분석용 표준 담보명은 별도로 사용한다.
+    - 숫자로 변환되지 않는 '무한', '법정한도' 등의 원문도 버리지 않는다.
+    - OCR에서 확인되지 않은 담보를 임의로 선택하지 않는다.
+    """
+    basic = validated.get("basic_info") or {}
+
+    detected_type = normalize_detected_insurance_type(
+        basic.get("보험종류")
+        or basic.get("차량종류")
+        or basic.get("보험상품명")
+    )
+
+    if detected_type:
+        st.session_state["insurance_type_select"] = detected_type
+    else:
+        detected_type = st.session_state.get(
+            "insurance_type_select",
+            INSURANCE_TYPE_OPTIONS[0],
+        )
+
+    storage_key = make_storage_key(detected_type)
+
+    insurer_key = (
+        f"{storage_key}_insurer_v2_20260925_001"
+    )
+    product_key = (
+        f"{storage_key}_product_20260928_001"
+    )
+    period_key = (
+        f"{storage_key}_period_20260925_001"
+    )
+
+    if basic.get("보험회사"):
+        st.session_state[insurer_key] = str(
+            basic.get("보험회사")
+        ).strip()
+
+    if basic.get("보험상품명"):
+        st.session_state[product_key] = str(
+            basic.get("보험상품명")
+        ).strip()
+
+    if basic.get("보험기간"):
+        st.session_state[period_key] = str(
+            basic.get("보험기간")
+        ).strip()
+
+    coverage_names = COVERAGES_BY_TYPE.get(
+        detected_type,
+        [],
+    )
+
+    meta = {}
+    source_coverages = []
+
+    for item in validated.get("coverages") or []:
+        if not isinstance(item, dict):
+            continue
+
+        original_name = str(
+            item.get("original_coverage_name")
+            or ""
+        ).strip()
+
+        standard = normalize_ocr_coverage_name(
+            item.get("standard_coverage_name")
+            or original_name
+        )
+
+        original_limit = str(
+            item.get("original_limit")
+            or ""
+        ).strip()
+
+        deductible_original = str(
+            item.get("deductible")
+            or ""
+        ).strip()
+
+        special_conditions = str(
+            item.get("special_conditions")
+            or ""
+        ).strip()
+
+        source_text = str(
+            item.get("source_text")
+            or ""
+        ).strip()
+
+        limit_won = item.get(
+            "limit_amount_won"
+        )
+
+        deductible_won = parse_amount_to_won(
+            deductible_original
+        )
+
+        source_record = {
+            "original_coverage_name": original_name,
+            "standard_coverage_name": standard,
+            "original_limit": original_limit,
+            "limit_amount_won": limit_won,
+            "deductible": deductible_original,
+            "deductible_amount_won": deductible_won,
+            "special_conditions": special_conditions,
+            "source_text": source_text,
+            "confidence": item.get("confidence"),
+            "needs_review": bool(
+                item.get("needs_review")
+            ),
+        }
+
+        source_coverages.append(
+            source_record
+        )
+
+        # 현재 앱의 표준 담보와 연결되지 않는 항목도
+        # source_coverages에는 그대로 보존한다.
+        if standard not in coverage_names:
+            continue
+
+        index = coverage_names.index(
+            standard
+        )
+
+        st.session_state[
+            get_coverage_selection_key(
+                standard,
+                index,
+            )
+        ] = True
+
+        # 숫자로 명확하게 변환되는 경우에는
+        # 기존 금액 입력칸에도 자동 입력한다.
+        if (
+            isinstance(limit_won, int)
+            and limit_won >= 0
+        ):
+            st.session_state[
+                get_coverage_amount_key(
+                    standard,
+                    index,
+                )
+            ] = str(limit_won)
+
+        if (
+            isinstance(deductible_won, int)
+            and deductible_won >= 0
+        ):
+            st.session_state[
+                get_coverage_deductible_key(
+                    standard,
+                    index,
+                )
+            ] = str(deductible_won)
+
+        notes = []
+
+        if original_name and original_name != standard:
+            notes.append(
+                f"증권 표기: {original_name}"
+            )
+
+        if (
+            original_limit
+            and limit_won is None
+        ):
+            notes.append(
+                f"가입금액·보상한도 원문: {original_limit}"
+            )
+
+        if (
+            deductible_original
+            and deductible_won is None
+        ):
+            notes.append(
+                f"자기부담금 원문: {deductible_original}"
+            )
+
+        if special_conditions:
+            notes.append(
+                f"특약·조건: {special_conditions}"
+            )
+
+        if item.get("needs_review"):
+            notes.append(
+                "사진 판독 확인 필요"
+            )
+
+        meta[standard] = {
+            "original_name": (
+                original_name or standard
+            ),
+            "original_limit": original_limit,
+            "limit_amount_won": limit_won,
+            "deductible_original": (
+                deductible_original
+            ),
+            "deductible_amount_won": (
+                deductible_won
+            ),
+            "special_conditions": (
+                special_conditions
+            ),
+            "source_text": source_text,
+            "notes": " · ".join(notes),
+            "needs_review": bool(
+                item.get("needs_review")
+            ),
+        }
+
+    # 다음 단계의 '보험증권 입력내용 확인·수정' 화면에서
+    # 증권 원문 전체를 사용할 수 있도록 별도로 보관한다.
+    st.session_state[
+        "policy_ocr_source_coverages"
+    ] = source_coverages
+
+    # 기존 보상분석과의 호환성을 위해 유지한다.
+    st.session_state[
+        "policy_ocr_coverage_meta"
+    ] = meta
+
+
+def process_policy_image_upload(uploaded_image):
+    try:
+        image_bytes = uploaded_image.getvalue()
+    except Exception as exc:
+        st.session_state["policy_ocr_error"] = f"사진 파일을 읽지 못했습니다: {exc}"
+        return False
+
+    if not image_bytes:
+        st.session_state["policy_ocr_error"] = "보험증권 사진이 비어 있습니다. 다시 촬영해 주세요."
+        return False
+
+    image_hash = hashlib.sha256(image_bytes).hexdigest()
+    if (
+        image_hash == st.session_state.get("policy_ocr_image_hash")
+        and st.session_state.get("policy_ocr_result")
+    ):
+        apply_policy_ocr_to_form(st.session_state["policy_ocr_result"])
+        return True
+
+    mime_type = getattr(uploaded_image, "type", "") or "image/jpeg"
+    suffix_map = {
+        "image/jpeg": ".jpg",
+        "image/jpg": ".jpg",
+        "image/png": ".png",
+        "image/webp": ".webp",
+        "image/heic": ".heic",
+        "image/heif": ".heif",
+    }
+
+    # 브라우저가 HEIC/HEIF MIME 형식을 정확히 보내지 않는 경우에도
+    # 원래 파일명의 확장자를 확인하여 원본 형식을 보존한다.
+    original_name = str(
+        getattr(uploaded_image, "name", "") or ""
+    )
+    original_suffix = Path(original_name).suffix.lower()
+
+    if original_suffix in {
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".webp",
+        ".heic",
+        ".heif",
+    }:
+        suffix = original_suffix
+    else:
+        suffix = suffix_map.get(
+            mime_type.lower(),
+            ".jpg",
+        )
+    temp_path = ""
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
+            temp_file.write(image_bytes)
+            temp_path = temp_file.name
+
+        raw_result = read_policy_image(
+            temp_path,
+            api_key=get_openai_key(),
+        )
+        validated = validate_policy_result(raw_result)
+        st.session_state["policy_ocr_result"] = validated
+        st.session_state["policy_ocr_image_hash"] = image_hash
+        st.session_state["policy_ocr_error"] = ""
+        apply_policy_ocr_to_form(validated)
+        return True
+    except Exception as exc:
+        st.session_state["policy_ocr_error"] = str(exc)
+        return False
+    finally:
+        if temp_path:
+            try:
+                os.unlink(temp_path)
+            except OSError:
+                pass
+
+
+def infer_accident_preconditions(accident_text):
+    text = str(accident_text or "")
+    inferred = {}
+    rules = [
+        (r"무면허", "사고 운전자 면허 상태", "무면허"),
+        (r"면허\s*정지", "사고 운전자 면허 상태", "면허정지 중"),
+        (r"면허\s*취소", "사고 운전자 면허 상태", "면허취소 상태"),
+        (r"음주\s*운전|술을?\s*(마시|먹).{0,12}운전", "음주운전 여부", "예"),
+        (r"마약|약물\s*운전", "마약·약물운전 여부", "예"),
+        (r"뺑소니|사고.{0,8}도주|조치.{0,8}없이.{0,8}떠", "사고발생 후 조치의무 위반 여부", "예"),
+    ]
+    for pattern, label, value in rules:
+        if re.search(pattern, text, flags=re.IGNORECASE):
+            inferred[label] = value
+    return inferred
 
 
 initialize_state()
@@ -2884,6 +4024,25 @@ if not st.session_state.get("homepage_started", False):
         }
 
 
+        .kh-click-cue {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            margin-top: 1.15rem;
+            padding: 0.7rem 1rem;
+            border: 1px solid #bfdbfe;
+            border-radius: 999px;
+            background: #eff6ff;
+            color: #1d4ed8;
+            font-size: 0.95rem;
+            font-weight: 750;
+        }
+
+        .kh-click-cue .kh-pointer {
+            font-size: 1.35rem;
+        }
+
         .kh-cta-guide {
             max-width: 680px;
             margin: 2.5rem auto 1.1rem;
@@ -2927,8 +4086,12 @@ if not st.session_state.get("homepage_started", False):
             transform: translateY(-1px);
         }
 
-        div[data-testid="stButton"] > button p {
+        div[data-testid="stButton"] > button,
+        div[data-testid="stButton"] > button p,
+        div[data-testid="stButton"] > button span {
             color: #ffffff !important;
+            opacity: 1 !important;
+            cursor: pointer !important;
         }
 
         @media (max-width: 720px) {
@@ -2964,19 +4127,19 @@ if not st.session_state.get("homepage_started", False):
 
                 <h1>
                     사고 뒤,<br>
-                    <span class="kh-highlight">약관을 이해하는</span><br>
-                    가장 차분한 방법
+                    <span class="kh-highlight">약관에 근거한</span><br>
+                    예상 보험금
                 </h1>
 
                 <p>
-                    사고내용을 말하고 실제 가입담보를 선택하세요.
-                    복잡한 자동차보험 약관에서 지금 확인해야 할 보상 항목과
-                    관련 원문을 찾아드립니다.
+                    사고내용을 말하고 보험증권을 촬영하세요.
+                    보험회사·보험기간·가입담보를 사진에서 자동으로 읽어 채운 뒤,
+                    사용자는 입력된 내용을 확인하고 수정하면 됩니다.
                 </p>
 
                 <div class="kh-trust-row">
                     <span class="kh-trust">음성으로 간편 입력</span>
-                    <span class="kh-trust">실제 가입담보 중심</span>
+                    <span class="kh-trust">보험증권 사진 자동입력</span>
                     <span class="kh-trust">약관 원문과 페이지 확인</span>
                 </div>
             </section>
@@ -2995,14 +4158,14 @@ if not st.session_state.get("homepage_started", False):
 
                 <div class="kh-step">
                     <div class="kh-step-number">2</div>
-                    <h3>가입담보 선택하기</h3>
-                    <p>개인용·업무용·영업용·이륜차 중 보험 종류와 실제 가입담보를 선택합니다.</p>
+                    <h3>보험증권 촬영하기</h3>
+                    <p>보험증권을 사진으로 찍으면 보험회사·보험기간·가입담보와 한도를 자동으로 읽어 입력합니다.</p>
                 </div>
 
                 <div class="kh-step">
                     <div class="kh-step-number">3</div>
-                    <h3>약관 근거 확인하기</h3>
-                    <p>입력정보에 맞는 보상 검토 내용과 관련 약관 원문 및 PDF 페이지를 확인합니다.</p>
+                    <h3>확인하고 분석하기</h3>
+                    <p>자동 입력된 내용을 사용자가 확인한 뒤 사고내용과 담보를 연결해 관련 약관과 보상 항목을 검토합니다.</p>
                 </div>
             </div>
         </div>
@@ -3013,18 +4176,15 @@ if not st.session_state.get("homepage_started", False):
         """
         <div class="kh-cta-guide">
             <h2>내 보험의 보상 내용을 확인해 보세요</h2>
-            <p>
-                사고내용과 실제 가입담보를 입력하면
-                약관을 기준으로 확인할 보상 항목을 정리합니다.
-            </p>
         </div>
         """
     )
 
     if st.button(
-        "보상 내역 확인 시작  →",
+        "🖱️  여기를 눌러 보상 확인 시작  →",
         key="homepage_start_button",
-        use_container_width=True,
+        type="primary",
+        width="stretch",
     ):
         st.session_state.homepage_started = True
         st.rerun()
@@ -3052,12 +4212,7 @@ st.title(
 
 st.caption(
     "사고내용과 실제 가입담보를 확인해 "
-    "약관상 예상 보험금의 계산 준비를 돕습니다."
-)
-
-st.warning(
-    "합의금, 근거 없는 보험금, "
-    "AI가 임의로 정한 과실률은 계산하지 않습니다."
+    "현재 입력값 기준 예상 보험금과 다음에 준비할 자료를 보여드립니다."
 )
 
 st.subheader(
@@ -3118,17 +4273,59 @@ accident_input = st.text_area(
 )
 
 st.subheader(
-    "2. 보험 종류와 사용자 입장"
+    "2. 보험증권 촬영 및 자동입력"
 )
 
-selected_insurance_type = st.selectbox(
-    "보험 종류 선택",
-    options=INSURANCE_TYPE_OPTIONS,
-    index=0,
-    help=(
-        "선택한 보험 종류에 맞는 "
-        "가입담보 입력표가 표시됩니다."
-    ),
+st.caption(
+    "보험증권을 촬영하면 보험회사·보험상품명·보험종류·보험기간·가입담보·가입한도를 읽어 아래 입력칸에 자동으로 채웁니다. "
+    "개인정보는 보상분석에 필요하지 않은 항목을 가려서 처리하며, 자동입력 결과는 반드시 한 번 확인해 주세요."
+)
+
+policy_upload = st.file_uploader(
+    "이미 찍어 둔 보험증권 사진이 있으면 선택",
+    type=["jpg", "jpeg", "png", "webp", "heic", "heif"],
+    key="policy_image_upload",
+)
+
+policy_source = policy_upload
+
+if policy_source is not None:
+    if st.button(
+        "보험증권 읽어서 자동입력",
+        key="read_policy_image_button",
+        use_container_width=True,
+    ):
+        with st.spinner("보험증권의 가입정보를 읽고 있습니다..."):
+            if process_policy_image_upload(policy_source):
+                st.success("보험증권을 읽었습니다. 아래 자동입력 내용을 확인해 주세요.")
+                st.rerun()
+
+if st.session_state.get("policy_ocr_error"):
+    st.error(
+        "보험증권을 읽지 못했습니다. "
+        + st.session_state.get("policy_ocr_error", "")
+    )
+ocr_result = st.session_state.get("policy_ocr_result")
+if ocr_result:
+    basic = ocr_result.get("basic_info") or {}
+    st.success("보험증권 자동입력 결과가 준비되었습니다. 아래에서 잘못 읽힌 부분만 수정하세요.")
+    summary_rows = [
+        {"항목": "보험회사", "자동 판독": basic.get("보험회사") or "확인 필요"},
+        {"항목": "보험상품명", "자동 판독": basic.get("보험상품명") or "확인 필요"},
+        {"항목": "보험종류", "자동 판독": basic.get("보험종류") or "확인 필요"},
+        {"항목": "보험기간", "자동 판독": basic.get("보험기간") or "확인 필요"},
+    ]
+    render_white_table(["항목", "자동 판독"], summary_rows)
+    if ocr_result.get("document_review_required"):
+        st.caption("사진에서 흐리거나 표준 담보와 정확히 연결되지 않은 항목은 아래에서 직접 확인해 주세요.")
+
+st.subheader("3. 나의 입장")
+
+# 보험종류는 보험증권 OCR 결과를 내부적으로 사용한다.
+# 사용자가 별도로 선택하는 화면은 표시하지 않는다.
+selected_insurance_type = st.session_state.get(
+    "insurance_type_select",
+    INSURANCE_TYPE_OPTIONS[0],
 )
 
 selected_position = st.radio(
@@ -3138,12 +4335,23 @@ selected_position = st.radio(
 )
 
 st.subheader(
-    "3. 보험회사와 가입담보 입력"
+    "4. 가입내용 확인"
+)
+
+policy_name_by_type = {
+    "개인용 자동차보험": "개인용 약관.pdf",
+    "업무용 자동차보험": "업무용 약관.pdf",
+    "영업용 자동차보험": "영업용 약관.pdf",
+    "이륜차 자동차보험": "이륜차 약관.pdf",
+}
+st.caption(
+    f"현재 적용 보험종류: {selected_insurance_type} · "
+    f"계산 및 약관 검색: {policy_name_by_type.get(selected_insurance_type, '확인 필요')}"
 )
 
 st.caption(
-    "보험회사와 보험기간을 입력하고 "
-    "실제 가입한 담보만 선택하세요."
+    "보험증권 사진을 읽은 경우 아래 항목이 자동으로 채워집니다. "
+    "사용자는 잘못 읽힌 부분만 수정하면 됩니다."
 )
 
 storage_key = make_storage_key(
@@ -3157,6 +4365,13 @@ insurer = st.text_input(
     autocomplete="off",
 )
 
+insurance_product = st.text_input(
+    "보험 상품명",
+    key=f"{storage_key}_product_20260928_001",
+    placeholder="보험증권에서 자동입력되거나 직접 입력",
+    autocomplete="off",
+)
+
 insurance_period = st.text_input(
     "보험기간",
     key=f"{storage_key}_period_20260925_001",
@@ -3167,79 +4382,297 @@ insurance_period = st.text_input(
 )
 
 st.markdown(
-    "### 가입담보 입력표"
+    "#### 가입담보"
 )
 
 st.caption(
-    "담보를 선택하지 않아도 사고내용은 기록할 수 있습니다. "
-    "가입담보를 선택하면 가입금액과 자기부담금 "
-    "입력칸이 바로 나타납니다."
+    "사진에서 읽은 내용입니다. 증권과 다른 부분만 표 안에서 고쳐 주세요."
+)
+
+ocr_source_coverages = st.session_state.get(
+    "policy_ocr_source_coverages",
+    [],
+)
+
+editor_seed_key = (
+    f"policy_editor_seed_{selected_insurance_type}"
+)
+
+current_image_hash = st.session_state.get(
+    "policy_ocr_image_hash",
+    "",
+)
+
+seed_hash_key = (
+    f"{editor_seed_key}_image_hash"
+)
+
+# 새로운 보험증권을 읽었을 때만
+# 편집표의 초기값을 OCR 결과로 다시 만든다.
+if (
+    current_image_hash
+    and st.session_state.get(seed_hash_key)
+    != current_image_hash
+):
+    editor_rows = []
+
+    for item in ocr_source_coverages:
+        if not isinstance(item, dict):
+            continue
+
+        original_name = str(
+            item.get("original_coverage_name")
+            or ""
+        ).strip()
+
+        if not original_name:
+            continue
+
+        standard_name = normalize_ocr_coverage_name(
+            item.get("standard_coverage_name")
+            or original_name
+        )
+
+        editor_rows.append(
+            {
+                "선택": True,
+                "보험증권 담보명": original_name,
+                "증권상 가입금액·보상한도": str(
+                    item.get("original_limit")
+                    or ""
+                ).strip(),
+                "증권상 자기부담금": str(
+                    item.get("deductible")
+                    or ""
+                ).strip(),
+                "특약·조건": str(
+                    item.get("special_conditions")
+                    or ""
+                ).strip(),
+                "앱 연결 담보": (
+                    standard_name
+                    if standard_name
+                    in COVERAGES_BY_TYPE.get(
+                        selected_insurance_type,
+                        [],
+                    )
+                    else ""
+                ),
+                "확인상태": (
+                    "확인 필요"
+                    if item.get("needs_review")
+                    else "자동 판독"
+                ),
+            }
+        )
+
+    st.session_state[editor_seed_key] = (
+        editor_rows
+    )
+    st.session_state[seed_hash_key] = (
+        current_image_hash
+    )
+
+# 사진을 사용하지 않았을 때는
+# 빈 표에서 직접 입력할 수 있도록 한다.
+if editor_seed_key not in st.session_state:
+    st.session_state[editor_seed_key] = []
+
+editor_rows = st.session_state.get(
+    editor_seed_key,
+    [],
+)
+
+edited_policy_rows = st.data_editor(
+    editor_rows,
+    key=(
+        f"policy_excel_editor_"
+        f"{selected_insurance_type}"
+    ),
+    num_rows="dynamic",
+    use_container_width=True,
+    hide_index=True,
+    column_order=[
+        "선택",
+        "보험증권 담보명",
+        "증권상 가입금액·보상한도",
+        "증권상 자기부담금",
+        "특약·조건",
+    ],
+    column_config={
+        "선택": st.column_config.CheckboxColumn(
+            "선택",
+            help=(
+                "보상분석에 사용할 담보만 "
+                "체크하세요."
+            ),
+            default=True,
+        ),
+        "보험증권 담보명": (
+            st.column_config.TextColumn(
+                "보험증권 담보명",
+                help=(
+                    "보험증권에 적힌 담보명을 "
+                    "그대로 확인·수정합니다."
+                ),
+                width="medium",
+            )
+        ),
+        "증권상 가입금액·보상한도": (
+            st.column_config.TextColumn(
+                "증권상 가입금액·보상한도",
+                help=(
+                    "무한, 법정한도 등도 "
+                    "증권 표현 그대로 유지합니다."
+                ),
+                width="medium",
+            )
+        ),
+        "증권상 자기부담금": (
+            st.column_config.TextColumn(
+                "증권상 자기부담금",
+                width="medium",
+            )
+        ),
+        "특약·조건": (
+            st.column_config.TextColumn(
+                "특약·조건",
+                width="large",
+            )
+        ),
+        "앱 연결 담보": (
+            st.column_config.TextColumn(
+                "앱 연결 담보",
+                help=(
+                    "기존 보상분석 규칙과 연결되는 "
+                    "내부 담보명입니다. 연결되지 않은 "
+                    "담보는 빈칸으로 둡니다."
+                ),
+                width="medium",
+            )
+        ),
+        "확인상태": (
+            st.column_config.TextColumn(
+                "확인상태",
+                width="small",
+            )
+        ),
+    },
+)
+
+# 사용자가 표에서 수정한 현재 값을
+# 다음 rerun에서도 유지한다.
+if hasattr(
+    edited_policy_rows,
+    "to_dict",
+):
+    edited_rows_list = (
+        edited_policy_rows.to_dict(
+            orient="records"
+        )
+    )
+else:
+    edited_rows_list = list(
+        edited_policy_rows or []
+    )
+
+st.session_state[editor_seed_key] = (
+    edited_rows_list
 )
 
 selected_coverages = []
 
-coverage_names = COVERAGES_BY_TYPE.get(
-    selected_insurance_type,
-    [],
-)
+for row in edited_rows_list:
+    if not row.get("선택", True):
+        continue
 
-for index, coverage_name in enumerate(
-    coverage_names
-):
-    coverage_key = get_coverage_selection_key(
-        coverage_name,
-        index,
+    original_name = str(
+        row.get("보험증권 담보명")
+        or ""
+    ).strip()
+
+    if not original_name:
+        continue
+
+    source_limit = str(
+        row.get(
+            "증권상 가입금액·보상한도"
+        )
+        or ""
+    ).strip()
+
+    source_deductible = str(
+        row.get("증권상 자기부담금")
+        or ""
+    ).strip()
+
+    special_conditions = str(
+        row.get("특약·조건")
+        or ""
+    ).strip()
+
+    linked_name = str(
+        row.get("앱 연결 담보")
+        or ""
+    ).strip()
+
+    if not linked_name:
+        candidate = normalize_ocr_coverage_name(
+            original_name
+        )
+
+        if candidate in COVERAGES_BY_TYPE.get(
+            selected_insurance_type,
+            [],
+        ):
+            linked_name = candidate
+
+    limit_won = parse_amount_to_won(
+        source_limit
     )
 
-    selected = st.checkbox(
-        coverage_name,
-        key=coverage_key,
+    deductible_won = parse_amount_to_won(
+        source_deductible
     )
 
-    if selected:
-        amount_col, deductible_col = st.columns(2)
-
-        with amount_col:
-            amount_key = get_coverage_amount_key(
-                coverage_name,
-                index,
-            )
-            amount_value = render_money_input(
-                "가입금액·보상한도 직접 입력",
-                amount_key,
-            )
-
-        with deductible_col:
-            deductible_key = get_coverage_deductible_key(
-                coverage_name,
-                index,
-            )
-            deductible_value = render_money_input(
-                "자기부담금 직접 입력",
-                deductible_key,
-            )
-
-        saved_amount = format_currency_value(
-            amount_value
-        )
-        saved_deductible = format_currency_value(
-            deductible_value
-        )
-
-        selected_coverages.append(
-            {
-                "담보명": coverage_name,
-                "가입금액·보상한도": (
-                    saved_amount
-                ),
-                "자기부담금": (
-                    saved_deductible
-                ),
-                "출처 상태": (
-                    "사용자 직접 선택"
-                ),
-            }
-        )
+    # 기존 보상분석은 표에서 실제로 확인된
+    # 원문을 바탕으로 만들어진 이 데이터만 사용한다.
+    selected_coverages.append(
+        {
+            "담보명": (
+                linked_name
+                or original_name
+            ),
+            "증권 표기 담보명": (
+                original_name
+            ),
+            "증권 원문 가입금액·보상한도": (
+                source_limit
+            ),
+            "가입금액·보상한도": (
+                str(limit_won)
+                if limit_won is not None
+                else source_limit
+            ),
+            "증권 원문 자기부담금": (
+                source_deductible
+            ),
+            "자기부담금": (
+                str(deductible_won)
+                if deductible_won is not None
+                else source_deductible
+            ),
+            "특약/비고": (
+                special_conditions
+            ),
+            "출처 상태": (
+                "보험증권 확인·수정표"
+            ),
+            "보상분석 연결 여부": bool(
+                linked_name
+            ),
+        }
+    )
 
 selected_names = {
     item["담보명"]
@@ -3251,9 +4684,27 @@ if (
     and "자동차상해" in selected_names
 ):
     st.warning(
-        "자기신체사고와 자동차상해가 모두 선택되었습니다. "
-        "실제 보험증권을 다시 확인해 주세요."
+        "자기신체사고와 자동차상해가 모두 있습니다. "
+        "보험증권 원문을 다시 확인해 주세요."
     )
+
+unlinked_names = [
+    item.get("증권 표기 담보명")
+    for item in selected_coverages
+    if not item.get(
+        "보상분석 연결 여부"
+    )
+]
+
+if unlinked_names:
+    st.info(
+        "현재 약관 분석 규칙과 자동 연결되지 않은 담보: "
+        + ", ".join(unlinked_names)
+        + " · 이 담보들은 다른 담보로 임의 변환하지 않고 "
+        "증권 원문을 그대로 보존합니다."
+    )
+
+st.subheader("5. 예상 보험금 계산값 입력")
 
 st.caption(
     "부상급수는 사고 당시의 상해 급수이고, 후유장애급수는 치료 후 남은 장애에 관한 급수로 서로 다릅니다. "
@@ -3282,40 +4733,102 @@ hospital_days = st.number_input(
     help="입원하지 않았다면 0일로 입력하세요. 음수와 소수는 입력할 수 없습니다.",
 )
 
-st.markdown("### 보험금 산정 중요 전제조건")
-st.caption("아래 전제조건은 약관상 배상책임과 자기부담금 산정에 영향을 줄 수 있습니다. 확인되지 않은 값은 ‘확인 필요’로 남겨두세요.")
+with st.expander("보험금에 영향을 줄 수 있는 조건 확인", expanded=False):
+    st.caption("확인되지 않은 값은 그대로 두고, 알고 있는 내용만 선택하세요.")
 
-preconditions = {}
-precondition_options = {
-    "상대 차량 보험가입 상태": ["의무보험만 가입", "대인배상Ⅱ까지 가입", "무보험", "확인되지 않음", "상대 차량 없음"],
-    "무보험자동차상해 적용 검토": ["해당 없음", "적용 검토 필요", "확인되지 않음"],
-    "사고 운전자 면허 상태": ["유효한 면허", "무면허", "면허정지 중", "면허취소 상태", "확인되지 않음"],
-    "음주운전 여부": ["아니요", "예", "확인되지 않음"],
-    "마약·약물운전 여부": ["아니요", "예", "확인되지 않음"],
-    "사고발생 후 조치의무 위반 여부": ["아니요", "예", "확인되지 않음"],
-    "운전자 범위 한정특약 위반 여부": ["아니요", "예", "확인되지 않음"],
-    "운전자 연령 한정특약 위반 여부": ["아니요", "예", "확인되지 않음"],
-    "피보험자동차 해당 여부": ["예", "아니요", "확인되지 않음"],
-    "차량 사용에 대한 피보험자의 허락 여부": ["허락받음", "허락받지 않음", "확인되지 않음", "해당 없음"],
-    "보험증권상 차량 용도와 실제 사용 목적 일치 여부": ["일치함", "일치하지 않음", "확인되지 않음"],
-    "고의사고 여부": ["아니요", "예", "확인되지 않음"],
-    "안전벨트 또는 안전모 착용 여부": ["착용", "미착용", "확인되지 않음", "해당 없음"],
-}
+    preconditions = {}
+    precondition_options = {
+        "상대 차량 보험가입 상태": ["의무보험만 가입", "대인배상Ⅱ까지 가입", "무보험", "확인되지 않음", "상대 차량 없음"],
+        "무보험자동차상해 적용 검토": ["해당 없음", "적용 검토 필요", "확인되지 않음"],
+        "사고 운전자 면허 상태": ["유효한 면허", "무면허", "면허정지 중", "면허취소 상태", "확인되지 않음"],
+        "음주운전 여부": ["아니요", "예", "확인되지 않음"],
+        "마약·약물운전 여부": ["아니요", "예", "확인되지 않음"],
+        "사고발생 후 조치의무 위반 여부": ["아니요", "예", "확인되지 않음"],
+        "운전자 범위 한정특약 위반 여부": ["아니요", "예", "확인되지 않음"],
+        "운전자 연령 한정특약 위반 여부": ["아니요", "예", "확인되지 않음"],
+        "피보험자동차 해당 여부": ["예", "아니요", "확인되지 않음"],
+        "차량 사용에 대한 피보험자의 허락 여부": ["허락받음", "허락받지 않음", "확인되지 않음", "해당 없음"],
+        "보험증권상 차량 용도와 실제 사용 목적 일치 여부": ["일치함", "일치하지 않음", "확인되지 않음"],
+        "고의사고 여부": ["아니요", "예", "확인되지 않음"],
+        "안전벨트 또는 안전모 착용 여부": ["착용", "미착용", "확인되지 않음", "해당 없음"],
+    }
 
-columns = st.columns(2)
-for idx, (label, options) in enumerate(precondition_options.items()):
-    with columns[idx % 2]:
-        value = st.selectbox(label, options, index=options.index("확인되지 않음") if "확인되지 않음" in options else 0, help=f"{label}에 대한 확인 상태입니다.")
-        preconditions[label] = value
+    inferred_preconditions = infer_accident_preconditions(accident_input)
+    if inferred_preconditions:
+        inferred_text = ", ".join(
+            f"{label}: {value}"
+            for label, value in inferred_preconditions.items()
+        )
+        st.caption(
+            "사고내용에서 자동으로 확인한 항목: " + inferred_text
+            + " · 잘못 이해한 항목은 아래에서 수정하세요."
+        )
 
-other_insurance_amount = st.text_input(
-    "다른 보험이나 상대 보험사에서 이미 받은 금액",
-    value="0",
-    help="쉼표가 자동으로 표시됩니다. 중복 지급 검토용입니다.",
-)
-preconditions["다른 보험이나 상대 보험사에서 이미 받은 금액"] = format_currency_value(other_insurance_amount)
+    columns = st.columns(2)
+    for idx, (label, options) in enumerate(precondition_options.items()):
+        widget_key = f"precondition_{idx}_v1"
+        if widget_key not in st.session_state:
+            inferred_value = inferred_preconditions.get(label)
+            if inferred_value in options:
+                st.session_state[widget_key] = inferred_value
+            elif "확인되지 않음" in options:
+                st.session_state[widget_key] = "확인되지 않음"
+            else:
+                st.session_state[widget_key] = options[0]
+        with columns[idx % 2]:
+            value = st.selectbox(
+                label,
+                options,
+                key=widget_key,
+                help=f"{label}에 대한 확인 상태입니다.",
+            )
+            preconditions[label] = value
 
-preconditions["사고일"] = "사고 당시 적용 약관을 판단하는 기준일로 사용"
+    if "무보험자동차에의한상해" in selected_names:
+        st.markdown("##### 무보험자동차에 의한 상해 약관 계산 항목")
+        st.caption(
+            "개인용 자동차보험 약관 제20조의 계산식과 공제항목입니다. "
+            "확인된 금액만 입력하면 현재 입력값 기준 예상액에 반영됩니다. "
+            "빈칸은 0원으로 확정하지 않고, 아직 반영하지 않은 추가 확인 변수로 안내합니다."
+        )
+        uninsured_policy_fields = [
+            (
+                "약관상 비용(손해방지·경감비용 및 권리보전·행사비용)",
+                "uninsured_policy_costs_v1",
+            ),
+            (
+                "공제 1. 대인배상Ⅰ·책임공제·정부보장사업에서 지급될 수 있는 금액",
+                "uninsured_deduction_d1_v1",
+            ),
+            (
+                "공제 2. 배상의무자 차량의 대인배상Ⅱ·공제계약에서 지급될 수 있는 금액",
+                "uninsured_deduction_obligor_d2_v1",
+            ),
+            (
+                "공제 3. 탑승 차량의 대인배상Ⅱ·공제계약에서 지급될 수 있는 금액",
+                "uninsured_deduction_occupied_d2_v1",
+            ),
+            (
+                "공제 4. 배상의무자에게 이미 받은 손해배상금",
+                "uninsured_deduction_received_obligor_v1",
+            ),
+            (
+                "공제 5. 제3자가 부담할 금액 중 이미 받은 금액",
+                "uninsured_deduction_received_third_party_v1",
+            ),
+        ]
+        for policy_label, policy_key in uninsured_policy_fields:
+            preconditions[policy_label] = render_money_input(
+                policy_label,
+                policy_key,
+                help_text=(
+                    "약관 또는 보험회사 확인자료에 있는 금액만 입력하세요. "
+                    "모르면 빈칸으로 두세요."
+                ),
+            )
+
+    preconditions["사고일"] = "사고 당시 적용 약관을 판단하는 기준일로 사용"
+
 
 st.markdown("### 사용자 측 적용 과실비율")
 user_fault_rate = st.selectbox(
@@ -3355,7 +4868,7 @@ render_actual_cost_inputs(
 )
 
 submitted = st.button(
-    "입력내용 확인",
+    "예상 보험금 계산하기",
     key="confirm_inputs",
 )
 
@@ -3368,6 +4881,7 @@ if submitted:
                 selected_insurance_type
             ),
             insurer=insurer,
+            insurance_product=insurance_product,
             insurance_period=(
                 insurance_period
             ),
@@ -3385,7 +4899,6 @@ if submitted:
     render_input_review_tables(result)
     render_policy_analysis_result(result)
 
-    render_policy_question_section(result)
 
 
 # =========================================================
@@ -3399,14 +4912,6 @@ result = st.session_state.get(
 if result and not submitted:
     render_input_review_tables(result)
     render_policy_analysis_result(result)
-    render_policy_question_section(result)
-
-    st.info(
-        "현재 단계는 음성변환과 가입정보 입력을 "
-        "안정화한 단계입니다. "
-        "약관상 예상 보험금은 해당 보험사의 실제 약관 PDF에서 "
-        "지급기준·면책·공제·한도를 검증한 뒤 계산해야 합니다."
-    )
 
 
 st.divider()
