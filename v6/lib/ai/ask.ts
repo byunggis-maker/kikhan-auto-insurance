@@ -1,20 +1,21 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import type { ProductLine } from "@/lib/claim/types";
-import type { LawArticle } from "@/lib/law/client";
+import { NEEDS_UPDATE, asOfText, type LawRecord } from "@/lib/law/data";
+import { refsFromText } from "@/lib/law/refs";
 import { maskText } from "@/lib/privacy/mask";
 import { searchTerms, type TermsData, type TermsHit } from "@/lib/terms/search";
 import { AI_MODEL, ProviderError, estimateCost } from "./anthropic";
 import { maskDeep, type Usage } from "./documents";
 
 // 라운드 9: 결과 화면의 '이 사고로 약관 묻기'. 지금 입력된 사고 사실과 함께 묻고, 변호사형 순서(결론 → 쟁점 → 해석 → 근거 → 서류·다음 행동)로 답한다.
-// 근거는 앱에 들어 있는 약관 원문 검색 결과(lib/terms)와 법령 API 결과(lib/law)에서만 인용한다.
+// 근거는 앱에 들어 있는 약관 원문 검색 결과(lib/terms)와 앱에 들어 있는 법령 원문(data/laws, 라운드 9d)에서만 인용한다. 법령 API는 부르지 않는다.
 // 답변의 근거는 서버가 다시 대조한다: 보내지 않은 쪽을 인용하면 "원문에서 확인되지 않음"으로 바꾸고, 원문에 없는 인용 문구는 지운다.
 
 export const ASK_NOTICE = "추정이며 확정 금액은 보험사가 정합니다.";
 export const NOT_FOUND = "원문에서 확인되지 않음";
-/** 법령 API 인증값(LAW_API_OC)이 없어 법령 원문을 아예 가져오지 않았을 때(라운드 9b) */
-export const LAW_NOT_CONNECTED = "법령 원문 연결 전";
+/** 앱에 든 법령 원문(stale: 받은 지 180일이 넘음) */
+export type LawSource = LawRecord & { stale: boolean };
 export const MAX_QUESTION = 500;
 export const MAX_FACTS = 6000;
 
@@ -32,7 +33,7 @@ export const answerSchema = z.object({
   nextSteps: z.array(z.string()).describe("확인할 서류와 다음 행동"),
 });
 export type Answer = z.infer<typeof answerSchema>;
-export type VerifiedBasis = z.infer<typeof basisSchema> & { verified: boolean; url?: string };
+export type VerifiedBasis = z.infer<typeof basisSchema> & { verified: boolean; url?: string; asOf?: string; stale?: boolean };
 export type VerifiedAnswer = Omit<Answer, "basis"> & { basis: VerifiedBasis[]; notice: string; sources: { product: string; pages: number[]; laws: string[] } };
 
 export const ASK_INSTRUCTIONS = `너는 한국 자동차보험 보상 전문 변호사다. 사용자가 입력한 사고 사실에 약관을 적용해 답한다.
@@ -70,24 +71,24 @@ export function topicTerms(question: string): string[] {
   return [...new Set(TOPICS.filter(([re]) => re.test(question)).flatMap(([, t]) => t))];
 }
 
-export function buildPrompt(question: string, facts: string, hits: TermsHit[], laws: LawArticle[]): string {
+export function buildPrompt(question: string, facts: string, hits: TermsHit[], laws: LawSource[]): string {
   const terms = hits.length ? hits.map((h) => `<page product="${h.product}" print="${h.page}">\n${h.text}\n</page>`).join("\n") : "(찾은 쪽 없음)";
-  const law = laws.length ? laws.map((l) => `<law name="${l.lawName}" article="${l.heading}">\n${l.text}\n</law>`).join("\n") : "(법령 원문 없음: 법령·판례는 citation에 조문 번호를 짓지 말고 '원문에서 확인되지 않음'으로 쓴다)";
+  const law = laws.length ? laws.map((l) => `<law name="${l.lawName}" article="${l.heading}" asof="${l.fetchedAt.slice(0, 10)}">\n${l.text}\n</law>`).join("\n") : "(앱에 든 법령 원문 없음: 법령은 citation에 조문 번호를 짓지 말고 '원문에서 확인되지 않음'으로 쓴다)";
   return `[사고 사실]\n${facts}\n\n[약관 원문 발췌]\n${terms}\n\n[법령 원문]\n${law}\n\n[질문]\n${question}`;
 }
 
 export const squash = (text: string) => text.normalize("NFKC").replace(/[\s"'“”‘’「」『』]+/g, "");
 
 /** 근거를 보낸 자료와 대조한다. 대조되지 않은 근거는 '원문에서 확인되지 않음'으로 바꾸고, 빠진 종류(법령·판례)는 그렇다고 적는다 */
-export function verifyAnswer(answer: Answer, hits: TermsHit[], laws: LawArticle[], lawConnected = true): VerifiedAnswer {
-  const lawMissing = lawConnected ? NOT_FOUND : LAW_NOT_CONNECTED;
-  // 법령 이름이 긴 것부터 맞춘다("…보장법 시행령"이 "…보장법"보다 먼저)
-  const byName = [...laws].sort((a, b) => b.lawName.length - a.lawName.length);
-  const findLaw = (citation: string) => {
-    const c = squash(citation);
-    const name = byName.find((l) => c.includes(squash(l.lawName)))?.lawName;
-    return name ? byName.find((l) => l.lawName === name && c.includes(squash(l.heading.replace(/\(.*$/, "")))) : undefined;
+export function verifyAnswer(answer: Answer, hits: TermsHit[], laws: LawSource[]): VerifiedAnswer {
+  // 인용한 조문을 refs로 읽어 앱에 든 원문과 id로 맞춘다. 원문이 없는 조문이면 "원문 갱신 필요"(라운드 9d), 있는데 대조가 안 되면 "원문에서 확인되지 않음"
+  // 그 법의 원문이 앱에 하나도 없으면 갱신 필요, 그 법의 원문은 있는데 이 조문이 없으면(지어낸 조문 등) 확인되지 않음
+  const missingFor = (citation: string) => {
+    const refs = refsFromText(citation);
+    if (!refs.length) return laws.length ? NOT_FOUND : NEEDS_UPDATE;
+    return refs.some((r) => laws.some((l) => l.lawName === r.lawName)) ? NOT_FOUND : NEEDS_UPDATE;
   };
+  const lawMissing = laws.length ? NOT_FOUND : NEEDS_UPDATE;
   const basis: VerifiedBasis[] = answer.basis.map((b) => {
     if (b.kind === "약관" || b.kind === "지급기준") {
       const page = hits.find((h) => h.page === b.page);
@@ -95,12 +96,15 @@ export function verifyAnswer(answer: Answer, hits: TermsHit[], laws: LawArticle[
       return { ...b, quote: b.quote && squash(page.text).includes(squash(b.quote)) ? b.quote : "", verified: true };
     }
     if (b.kind === "법령") {
-      const law = findLaw(b.citation);
-      const plain = b.citation.replace(` — ${NOT_FOUND}`, "").replace(` — ${LAW_NOT_CONNECTED}`, "");
-      return law ? { ...b, page: null, quote: b.quote && squash(law.text).includes(squash(b.quote)) ? b.quote : "", verified: true, url: law.url } : { ...b, citation: `${plain} — ${lawMissing}`, page: null, quote: "", verified: false };
+      const ids = refsFromText(b.citation).map((r) => r.id);
+      const law = laws.find((l) => ids.includes(l.id));
+      const plain = b.citation.replace(` — ${NOT_FOUND}`, "").replace(` — ${NEEDS_UPDATE}`, "");
+      return law
+        ? { ...b, page: null, quote: b.quote && squash(law.text).includes(squash(b.quote)) ? b.quote : "", verified: true, url: law.url, asOf: asOfText(law), stale: law.stale }
+        : { ...b, citation: `${plain} — ${missingFor(plain)}`, page: null, quote: "", verified: false };
     }
     // 판례: 앱이 판례 원문을 보내지 않으므로 사건번호를 그대로 믿지 않는다
-    return { ...b, citation: `판례 — ${lawMissing}`, page: null, quote: "", verified: false };
+    return { ...b, citation: `판례 — ${NOT_FOUND}`, page: null, quote: "", verified: false };
   });
   const seen = new Set<string>();
   const unique = basis.filter((b) => {
@@ -109,8 +113,8 @@ export function verifyAnswer(answer: Answer, hits: TermsHit[], laws: LawArticle[
     seen.add(key);
     return true;
   });
-  if (!unique.some((b) => b.kind === "법령" && b.verified)) unique.push({ kind: "법령", citation: `자동차손해배상 보장법·시행령 별표, 상법 — ${lawMissing}`, page: null, quote: "", verified: false });
-  if (!unique.some((b) => b.kind === "판례")) unique.push({ kind: "판례", citation: `관련 판례 — ${lawMissing}`, page: null, quote: "", verified: false });
+  if (!unique.some((b) => b.kind === "법령" && b.verified)) unique.push({ kind: "법령", citation: `자동차손해배상 보장법·시행령 별표, 민법, 상법 — ${lawMissing}`, page: null, quote: "", verified: false });
+  if (!unique.some((b) => b.kind === "판례")) unique.push({ kind: "판례", citation: `관련 판례 — ${NOT_FOUND}`, page: null, quote: "", verified: false });
   return {
     ...answer,
     basis: unique,
@@ -144,10 +148,10 @@ export function claudeAsk(apiKey: string): AskCall {
 }
 
 /** 질문 하나에 답한다. 질문·사고 사실은 개인정보를 가린 뒤에만 제공자에게 보낸다 */
-export async function askTerms(input: { question: string; facts: string; productLine: ProductLine | null }, deps: { data: TermsData; laws: LawArticle[]; lawConnected?: boolean; call: AskCall }) {
+export async function askTerms(input: { question: string; facts: string; productLine: ProductLine | null }, deps: { data: TermsData; laws: LawSource[]; call: AskCall }) {
   const question = maskText(input.question.slice(0, MAX_QUESTION));
   const facts = maskText(input.facts.slice(0, MAX_FACTS));
   const hits = searchTerms(deps.data, input.productLine, question, topicTerms(question), 10);
   const { parsed, usage } = await deps.call({ system: ASK_INSTRUCTIONS, text: buildPrompt(question, facts, hits, deps.laws) });
-  return { answer: maskDeep(verifyAnswer(parsed, hits, deps.laws, deps.lawConnected ?? deps.laws.length > 0)), usage };
+  return { answer: maskDeep(verifyAnswer(parsed, hits, deps.laws)), usage };
 }

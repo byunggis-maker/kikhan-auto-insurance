@@ -4,11 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import { KEY_NOTICE } from "@/lib/ai/anthropic";
 import type { Claim } from "@/lib/claim/types";
 import { calculateScenarios } from "@/lib/engine/fault-scenarios";
-import { TO_COUNTERPARTY_NOTE, UNCALCULATED_STATUS, buildReview, type Review } from "@/lib/report/review";
+import { PARTIAL_NOTE, TO_COUNTERPARTY_NOTE, UNCALCULATED_STATUS, buildReview, totalText, type Review } from "@/lib/report/review";
 import { clearChecked, loadChecked, saveChecked } from "@/lib/state/checklist";
 import { askFacts } from "@/lib/ui/askFacts";
 import { ASSUMPTION_TEXT, standardFillable, unknownLabels, withAssumptions } from "@/lib/ui/flow";
-import { AskTerms } from "../ai/AskTerms";
+import { asOfText, lawsInText, todaySeoul } from "@/lib/law/data";
+import { AskTerms, NeedsUpdate } from "../ai/AskTerms";
 import { manwon } from "../fields";
 
 // MASTER.md 8장 보상 검토서(7단계). 위에서 결론(세 숫자·받을 곳별), 아래로 근거(담보·시나리오·입력 필요·서류·다음 할 일).
@@ -16,16 +17,21 @@ import { manwon } from "../fields";
 
 const won = (n: number) => `${n.toLocaleString("ko-KR")}원`;
 
-function Big({ label, value, sub, tone }: { label: string; value: number; sub?: string; tone?: "estimate" | "burden" }) {
+function Big({ label, value, sub, tone, partial = false }: { label: string; value: number; sub?: string; tone?: "estimate" | "burden"; partial?: boolean }) {
   const color = tone === "estimate" ? "border-estimate-line bg-estimate text-estimate-ink" : tone === "burden" ? "border-ink bg-white text-ink" : "border-ink bg-ink text-white";
   return (
     <div className={`rounded-2xl border-2 px-4 py-3 ${color}`}>
       <p className="text-sm font-bold">{label}</p>
-      <p className="text-3xl font-bold tracking-tight">{manwon(value)}</p>
+      <p className="text-3xl font-bold tracking-tight">{totalText(manwon(value), partial)}</p>
       <p className="text-sm font-semibold opacity-90">
-        {won(value)}
+        {totalText(won(value), partial)}
         {sub ? ` · ${sub}` : ""}
       </p>
+      {partial && (
+        <p className="text-sm font-bold" data-partial>
+          {PARTIAL_NOTE}
+        </p>
+      )}
     </div>
   );
 }
@@ -88,6 +94,43 @@ function Line({ line }: { line: Review["cards"][number]["lines"][number] }) {
         ))}
       </details>
     </li>
+  );
+}
+
+/**
+ * 라운드 9d: 검토서 근거에 나온 법령 조문. 앱에 든 원문(data/laws)이 있으면 원문과 기준일, 없거나 180일이 넘으면 "원문 갱신 필요".
+ * 법령 API는 부르지 않는다(칸 PC에서 npm run laws:fetch로 받아 넣는다).
+ */
+function LawSection({ review }: { review: Review }) {
+  const text = [...review.cards.flatMap((c) => c.lines.map((l) => l.basis)), ...review.standards, ...review.notices].join("\n");
+  const laws = lawsInText(text, todaySeoul());
+  if (!laws.length) return null;
+  return (
+    <Section title="근거 법령">
+      <ul className={`${box} space-y-2 p-4 text-sm font-semibold`} data-laws>
+        {laws.map(({ ref, record, stale }) => (
+          <li key={ref.id} data-law={ref.id}>
+            {record ? (
+              <details>
+                <summary className="cursor-pointer font-bold">
+                  {record.lawName} {record.heading}
+                  {stale && <NeedsUpdate />}
+                </summary>
+                <p className="mt-1 whitespace-pre-line text-xs">{record.text}</p>
+                <p className="mt-1 text-xs text-ink-soft" data-law-asof>
+                  {asOfText(record)}
+                </p>
+              </details>
+            ) : (
+              <p>
+                {ref.lawName} {ref.label}
+                <NeedsUpdate />
+              </p>
+            )}
+          </li>
+        ))}
+      </ul>
+    </Section>
   );
 }
 
@@ -180,8 +223,8 @@ export function Step7Review({ claim: input, goTo }: { claim: Claim; goTo: (scree
         <p className="rounded-xl border-2 border-ink bg-white p-4 font-bold">{review.blocked}</p>
       ) : (
         <div className="space-y-2">
-          <Big label="확정 기준 받을 돈" value={review.top.receiveConfirmed} sub="서류로 확인한 금액만" />
-          <Big label="추정 포함 받을 돈" value={review.top.receiveWithEstimates} sub={review.top.receiveEstimatePart ? `추정분 ${manwon(review.top.receiveEstimatePart)}` : undefined} tone="estimate" />
+          <Big label="확정 기준 받을 돈" value={review.top.receiveConfirmed} sub="서류로 확인한 금액만" partial={review.partial} />
+          <Big label="추정 포함 받을 돈" partial={review.partial} value={review.top.receiveWithEstimates} sub={review.top.receiveEstimatePart ? `추정분 ${manwon(review.top.receiveEstimatePart)}` : undefined} tone="estimate" />
           <Big label="내가 낼 돈" value={review.top.burdenWithEstimates} sub={review.top.burdenConfirmed !== review.top.burdenWithEstimates ? `확정 기준 ${manwon(review.top.burdenConfirmed)}` : undefined} tone="burden" />
           {review.top.toCounterparty > 0 && (
             <div data-to-counterparty>
@@ -228,18 +271,18 @@ export function Step7Review({ claim: input, goTo }: { claim: Claim; goTo: (scree
         </ul>
       </Section>
 
-      <Section title="받을 곳별">
+      <Section title={review.partial ? `받을 곳별 · ${PARTIAL_NOTE}` : "받을 곳별"}>
         <ul className={`divide-y-2 divide-line ${box}`}>
           {review.byPayer.map((p) => (
             <li key={p.payer} className="px-4 py-3 font-bold">
               <span className="block">{p.payer}</span>
               <span className="mt-1 flex justify-between text-sm">
                 <span>확정</span>
-                <span>{manwon(p.confirmed)}</span>
+                <span>{totalText(manwon(p.confirmed), review.partial)}</span>
               </span>
               <span className="flex justify-between text-sm text-estimate-ink">
                 <span>추정 포함</span>
-                <span>{manwon(p.withEstimates)}</span>
+                <span>{totalText(manwon(p.withEstimates), review.partial)}</span>
               </span>
             </li>
           ))}
@@ -316,8 +359,8 @@ export function Step7Review({ claim: input, goTo }: { claim: Claim; goTo: (scree
             {review.scenarios.map((s) => (
               <div key={s.label} className={`grid grid-cols-[1.4fr_1fr_1fr_1fr] gap-2 border-b border-line px-3 py-2 font-bold tabular-nums last:border-b-0 ${s.faultPercent === review.faultPercent ? "bg-surface" : ""}`}>
                 <span>{s.label.replace("내 과실 ", "")}</span>
-                <span className="text-right">{manwon(s.receiveConfirmed)}</span>
-                <span className="text-right text-estimate-ink">{manwon(s.receiveWithEstimates)}</span>
+                <span className="text-right">{totalText(manwon(s.receiveConfirmed), review.partial)}</span>
+                <span className="text-right text-estimate-ink">{totalText(manwon(s.receiveWithEstimates), review.partial)}</span>
                 <span className="text-right">{manwon(s.burdenWithEstimates)}</span>
               </div>
             ))}
@@ -378,6 +421,8 @@ export function Step7Review({ claim: input, goTo }: { claim: Claim; goTo: (scree
           ))}
         </ol>
       </Section>
+
+      <LawSection review={review} />
 
       <AskTerms facts={askFacts(claim, assumptions, review)} productLine={claim.myPolicy.productLine} />
 

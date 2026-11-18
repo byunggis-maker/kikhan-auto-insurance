@@ -1,5 +1,5 @@
 import type { PDFFont, PDFPage, RGB } from "pdf-lib";
-import { TO_COUNTERPARTY_NOTE, UNCALCULATED_STATUS, type Review } from "@/lib/report/review";
+import { PARTIAL_NOTE, TO_COUNTERPARTY_NOTE, UNCALCULATED_STATUS, totalText, type Review } from "@/lib/report/review";
 
 // MASTER.md 8장 PDF 저장: A4 세로. 브라우저 인쇄가 아니라 파일을 만든다.
 // 한글은 Pretendard TTF를 넣는다(쓴 글자만 담는 subset이라 파일이 작다). OTF(CFF)는 pdf-lib subset이 깨져 쓰지 않는다.
@@ -176,9 +176,9 @@ export async function reviewToPdf(review: Review, fonts: PdfFonts): Promise<Uint
   if (review.blocked) text(review.blocked, { size: 12, bold: true, gap: 6 });
   else {
     const boxes = [
-      { label: "확정 기준 받을 돈", value: review.top.receiveConfirmed, sub: "서류로 확인한 금액만", color: INK, fill: rgb(1, 1, 1) },
-      { label: "추정 포함 받을 돈", value: review.top.receiveWithEstimates, sub: `추정분 ${won(review.top.receiveEstimatePart)}`, color: ESTIMATE, fill: ESTIMATE_BG },
-      { label: "내가 낼 돈(추정 포함)", value: review.top.burdenWithEstimates, sub: `확정 기준 ${won(review.top.burdenConfirmed)}`, color: INK, fill: rgb(1, 1, 1) },
+      { label: "확정 기준 받을 돈", value: review.top.receiveConfirmed, partial: review.partial, sub: "서류로 확인한 금액만", color: INK, fill: rgb(1, 1, 1) },
+      { label: "추정 포함 받을 돈", value: review.top.receiveWithEstimates, partial: review.partial, sub: `추정분 ${won(review.top.receiveEstimatePart)}`, color: ESTIMATE, fill: ESTIMATE_BG },
+      { label: "내가 낼 돈(추정 포함)", value: review.top.burdenWithEstimates, partial: false, sub: `확정 기준 ${won(review.top.burdenConfirmed)}`, color: INK, fill: rgb(1, 1, 1) },
     ];
     const gap = 8;
     const boxWidth = (WIDTH - gap * 2) / 3;
@@ -188,10 +188,11 @@ export async function reviewToPdf(review: Review, fonts: PdfFonts): Promise<Uint
       const x = MARGIN + i * (boxWidth + gap);
       page.drawRectangle({ x, y: y - boxHeight, width: boxWidth, height: boxHeight, color: box.fill, borderColor: box.color, borderWidth: 1.5 });
       page.drawText(box.label, { x: x + 8, y: y - 16, size: 9, font: bold, color: box.color });
-      page.drawText(won(box.value), { x: x + 8, y: y - 38, size: 16, font: bold, color: box.color });
+      page.drawText(safe(totalText(won(box.value), box.partial)), { x: x + 8, y: y - 38, size: box.partial ? 13 : 16, font: bold, color: box.color });
       page.drawText(safe(box.sub), { x: x + 8, y: y - 54, size: 8, font: regular, color: box.color });
     });
     y -= boxHeight + 8;
+    if (review.partial) text(PARTIAL_NOTE, { size: 10, bold: true });
     if (review.top.toCounterparty > 0) {
       text(`내 보험이 상대방에게 줄 돈(추정 포함)*: ${won(review.top.toCounterparty)}`, { size: 10, bold: true });
       text(`* ${TO_COUNTERPARTY_NOTE}`, { size: 8, color: SOFT });
@@ -202,11 +203,12 @@ export async function reviewToPdf(review: Review, fonts: PdfFonts): Promise<Uint
   for (const line of review.standards) text(`· ${line}`, { size: 9 });
 
   heading("받을 곳별 합계");
+  if (review.partial) text(PARTIAL_NOTE, { size: 9, bold: true });
   if (review.byPayer.length || review.uncalculated.length)
     table(
       ["받을 곳", "확정", "추정 포함"],
       [
-        ...review.byPayer.map((p) => [{ value: p.payer, bold: true }, { value: won(p.confirmed) }, { value: won(p.withEstimates), color: ESTIMATE }]),
+        ...review.byPayer.map((p) => [{ value: p.payer, bold: true }, { value: totalText(won(p.confirmed), review.partial) }, { value: totalText(won(p.withEstimates), review.partial), color: ESTIMATE }]),
         // 라운드 9c: 앱이 계산하지 않은 줄은 0원 대신 '미계산'
         ...review.uncalculated.map((u) => [{ value: `${u.payer}(${u.card})`, bold: true }, { value: UNCALCULATED_STATUS }, { value: UNCALCULATED_STATUS }]),
       ],
@@ -254,7 +256,7 @@ export async function reviewToPdf(review: Review, fonts: PdfFonts): Promise<Uint
     heading("과실 시나리오");
     table(
       ["경우", "받을 돈(확정)", "받을 돈(추정 포함)", "내가 낼 돈(추정 포함)"],
-      review.scenarios.map((s) => [{ value: s.label, bold: s.faultPercent === review.faultPercent }, { value: won(s.receiveConfirmed) }, { value: won(s.receiveWithEstimates), color: ESTIMATE }, { value: won(s.burdenWithEstimates) }]),
+      review.scenarios.map((s) => [{ value: s.label, bold: s.faultPercent === review.faultPercent }, { value: totalText(won(s.receiveConfirmed), review.partial) }, { value: totalText(won(s.receiveWithEstimates), review.partial), color: ESTIMATE }, { value: won(s.burdenWithEstimates) }]),
       [WIDTH - 330, 110, 110, 110],
     );
   }

@@ -1,4 +1,4 @@
-import { TO_COUNTERPARTY_NOTE, UNCALCULATED_STATUS, type Review } from "@/lib/report/review";
+import { PARTIAL_NOTE, TO_COUNTERPARTY_NOTE, UNCALCULATED_STATUS, totalText, type Review } from "@/lib/report/review";
 
 // MASTER.md 8장 엑셀 저장: 시트 3개(요약, 담보별 상세, 필요 서류). 금액은 숫자 셀(#,##0), 계산식·조항은 글자 열.
 // exceljs는 크므로 저장 버튼을 누를 때만 불러온다(dynamic import).
@@ -44,12 +44,15 @@ export async function reviewToXlsx(review: Review): Promise<Uint8Array> {
     row.getCell(3).numFmt = MONEY;
     return row;
   };
-  money(summary.addRow(["받을 돈", review.top.receiveConfirmed, review.top.receiveWithEstimates])).font = { bold: true };
+  // 라운드 9d: 미계산이 있으면 합계를 숫자 칸(확정처럼 보임) 대신 "○원 + 미계산" 글자로 두고 옆에 문구
+  const total = (n: number) => (review.partial ? totalText(`${n.toLocaleString("ko-KR")}원`, true) : n);
+  const note = review.partial ? PARTIAL_NOTE : "";
+  money(summary.addRow(["받을 돈", total(review.top.receiveConfirmed), total(review.top.receiveWithEstimates), note])).font = { bold: true };
   money(summary.addRow(["내가 낼 돈", review.top.burdenConfirmed, review.top.burdenWithEstimates])).font = { bold: true };
   if (review.top.toCounterparty > 0) money(summary.addRow(["내 보험이 상대방에게 줄 돈*", null, review.top.toCounterparty, `* ${TO_COUNTERPARTY_NOTE}`]));
   summary.addRow([]);
   summary.addRow(["받을 곳별"]).font = { bold: true };
-  for (const p of review.byPayer) money(summary.addRow([p.payer, p.confirmed, p.withEstimates]));
+  for (const p of review.byPayer) money(summary.addRow([p.payer, total(p.confirmed), total(p.withEstimates), note]));
   // 라운드 9c: 앱이 계산하지 않은 줄은 0 대신 '미계산'
   for (const u of review.uncalculated) summary.addRow([`${u.payer}(${u.card} ${u.label})`, UNCALCULATED_STATUS, UNCALCULATED_STATUS, u.text]);
   if (review.burdens.length) {
@@ -60,7 +63,7 @@ export async function reviewToXlsx(review: Review): Promise<Uint8Array> {
   summary.addRow([]);
   summary.addRow(["과실 시나리오", "받을 돈(확정)", "받을 돈(추정 포함)", "내가 낼 돈(추정 포함)"]).font = { bold: true };
   for (const s of review.scenarios) {
-    const row = summary.addRow([s.label, s.receiveConfirmed, s.receiveWithEstimates, s.burdenWithEstimates]);
+    const row = summary.addRow([s.label, total(s.receiveConfirmed), total(s.receiveWithEstimates), s.burdenWithEstimates]);
     money(row).getCell(4).numFmt = MONEY;
   }
   for (const [heading, items] of [

@@ -4,11 +4,10 @@ import { emptyClaim, type Claim } from "@/lib/claim/types";
 import { UNCALCULATED } from "@/lib/engine/calculate";
 import { calculate } from "@/lib/engine/dual-run";
 import { reviewToXlsx } from "@/lib/export/excel";
-import { clearLawCache, fetchLawArticles, SITE } from "@/lib/law/client";
 import { JOINT_NOTICE, RIDE_ALONG_NOTICE, TO_COUNTERPARTY_NOTE, buildReview } from "@/lib/report/review";
 import { counterpartyOf, setItem, setOtherCount, setPersonFacts } from "@/lib/ui/flow";
 
-// 라운드 9c: 상대 차량 동승자 안내(부진정연대·호의동승), 미계산 2건(상대 운전자 가족 동승자, 무보험 상대 차 동승자), 법령 API Referer.
+// 라운드 9c: 상대 차량 동승자 안내(부진정연대·호의동승), 미계산 2건(상대 운전자 가족 동승자, 무보험 상대 차 동승자).
 
 const base = (status: "full" | "uninsured" = "full"): Claim => ({
   ...emptyClaim(),
@@ -61,19 +60,5 @@ describe("미계산 2건", () => {
     const detail = book.getWorksheet("담보별 상세")!;
     const row = detail.getRows(2, detail.rowCount - 1)!.find((r) => r.getCell(3).value === "상대 보험")!;
     expect([row.getCell(4).value, row.getCell(5).value, row.getCell(6).value]).toEqual(["미계산", "미계산", "미계산"]);
-  });
-});
-
-describe("법령 API 요청", () => {
-  it("등록 도메인을 Referer로 싣는다", async () => {
-    clearLawCache();
-    const headers: unknown[] = [];
-    const fetch = (async (_: unknown, init?: RequestInit) => {
-      headers.push(init?.headers);
-      return Response.json({});
-    }) as typeof globalThis.fetch;
-    await fetchLawArticles({ fetch, env: { LAW_API_OC: "test" }, now: () => 0 });
-    expect(headers.length).toBeGreaterThan(0);
-    expect(headers.every((h) => (h as Record<string, string>).Referer === SITE)).toBe(true);
   });
 });

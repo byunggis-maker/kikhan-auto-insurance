@@ -4,7 +4,17 @@ import { useEffect, useRef, useState } from "react";
 import { SERVER_SPEECH_ENABLED } from "@/lib/ai/features";
 import type { VerifiedAnswer } from "@/lib/ai/ask";
 import type { ProductLine } from "@/lib/claim/types";
+import { NEEDS_UPDATE } from "@/lib/law/data";
 import { VoiceInput } from "./VoiceInput";
+
+/** 라운드 9d: 법령 원문이 없거나 받은 지 180일이 넘었을 때의 배지(계산은 막지 않는다) */
+export function NeedsUpdate() {
+  return (
+    <span className="ml-2 inline-block rounded-full border-2 border-ink px-2 text-xs font-bold" data-law-badge>
+      {NEEDS_UPDATE}
+    </span>
+  );
+}
 
 // 라운드 9: 결과 화면 아래 '이 사고로 약관 묻기'. 지금 입력된 사고 사실(facts)을 함께 보내고,
 // 결론 → 쟁점 → 해석 → 근거 규정 → 확인할 서류·다음 행동 순서로 보여 준다. 맨 아래 한 줄은 늘 같은 고지다.
@@ -122,6 +132,13 @@ export function AskTerms({ facts, productLine }: { facts: string; productLine: P
                   · [{b.kind}] {b.citation}
                   {b.page !== null ? ` (${a.sources.product} 약관 인쇄 ${b.page}쪽)` : ""}
                   {b.quote && <span className="block pl-3 text-xs text-ink-soft">“{b.quote}”</span>}
+                  {/* 라운드 9d: 앱에 든 법령 원문의 기준일, 오래됐거나 없으면 갱신 필요 배지 */}
+                  {b.asOf && (
+                    <span className="block pl-3 text-xs text-ink-soft" data-law-asof>
+                      {b.asOf}
+                    </span>
+                  )}
+                  {(b.stale || b.citation.endsWith(NEEDS_UPDATE)) && <NeedsUpdate />}
                   {b.url && (
                     <a className="block pl-3 text-xs underline" href={b.url} target="_blank" rel="noreferrer">
                       국가법령정보센터

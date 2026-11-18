@@ -47,6 +47,8 @@ export type Review = {
   checklist: ReviewChecklist[];
   /** 라운드 9c: 앱이 계산하지 않은 줄(받을 곳·사람·사유). 총괄표·엑셀에 '미계산'으로 보인다 */
   uncalculated: { payer: string; card: string; label: string; text: string }[];
+  /** 라운드 9d: 미계산 줄이 있어 합계(받을 돈·받을 곳별·시나리오의 받을 돈)가 확정되지 않았는지 */
+  partial: boolean;
   nextSteps: string[];
   notices: string[];
   blocked: string | null;
@@ -58,6 +60,11 @@ export const UNCALCULATED_STATUS = STATUS.not_implemented;
 /** 라운드 9c: 상대 차량 동승자(공동불법행위) 안내 */
 export const JOINT_NOTICE = "피해자는 두 보험사 중 어느 쪽에든 손해 전액을 청구할 수 있습니다(부진정연대). 위 비율은 보험사 간 정산 기준입니다.";
 export const RIDE_ALONG_NOTICE = "동승자가 호의동승(대가 없이 태워 준 경우)이면 손해배상금이 감액될 수 있습니다(별표5 동승자 유형별 감액비율). 이 계산에는 감액을 넣지 않았습니다.";
+/** 라운드 9d: '미계산' 줄이 하나라도 있으면 합계 옆에 붙이는 문구와 표시(화면·엑셀·PDF 공통, 여기 한 곳에서 관리) */
+export const PARTIAL_NOTE = "일부 미계산 포함 — 실제 금액은 이보다 클 수 있음";
+export const PARTIAL_SUFFIX = " + 미계산";
+/** 합계 글자: 미계산이 있으면 숫자 뒤에 " + 미계산"을 붙여 확정 금액처럼 보이지 않게 한다 */
+export const totalText = (text: string, partial: boolean) => (partial ? `${text}${PARTIAL_SUFFIX}` : text);
 export const TO_COUNTERPARTY_NOTE = "최종 분담 기준입니다. 피해자가 청구하면 내 보험사가 먼저 전액 지급한 뒤 상대 보험사에 구상할 수 있습니다.";
 const PAYER_ORDER: Payer[] = ["counterparty_insurer", "government", "own_insurer"];
 
@@ -222,6 +229,7 @@ export function buildReview(claim: Claim, results: Result[], index: number, unkn
     scenarios: scenarioRows(results),
     missing,
     checklist: checklist(claim, result, checked),
+    partial: result.lines.some((l) => l.status === "not_implemented"),
     uncalculated: result.lines.filter((l) => l.status === "not_implemented").map((l) => ({ payer: PAYER_LABELS[l.payer], card: l.cardLabel, label: l.label, text: l.formula })),
     nextSteps: nextSteps(claim, result, missing.length),
     // 같은 안내가 사람마다 반복되지 않게 한 번씩만. 일용근로자 임금 안내는 위 standards에 있다

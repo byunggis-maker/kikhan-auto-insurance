@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { ASK_NOTICE, NOT_FOUND, askTerms, verifyAnswer, type Answer, type AskCall } from "@/lib/ai/ask";
+import { NEEDS_UPDATE } from "@/lib/law/data";
 import { migrate } from "@/lib/claim/persist";
 import { emptyClaim, type Property } from "@/lib/claim/types";
 import { estimateVehicleValue, residualPercent } from "@/lib/claim/vehicleValue";
 import { propertyLoss } from "@/lib/engine/losses";
-import { parseArticle } from "@/lib/law/client";
+import { parseArticle } from "@/lib/law/parse";
 import data from "@/lib/terms/data.json";
 import { searchTerms, terms, type TermsData } from "@/lib/terms/search";
 import { newProperty, setItem } from "@/lib/ui/flow";
@@ -89,7 +90,8 @@ describe("약관 질의 근거 대조", () => {
     expect(v.basis[0]).toMatchObject({ verified: true, page: 80, quote: "사고 직전 가액의 120%를 한도로 지급함" });
     expect(v.basis[1]).toMatchObject({ verified: false, page: null, quote: "" });
     expect(v.basis[1].citation).toContain(NOT_FOUND);
-    expect(v.basis[2].citation).toContain(NOT_FOUND);
+    // 라운드 9d: 앱에 그 법의 원문이 없으면 "원문 갱신 필요"
+    expect(v.basis[2].citation).toContain(NEEDS_UPDATE);
     expect(v.basis[3].citation).toBe(`판례 — ${NOT_FOUND}`);
     expect(v.basis.some((b) => b.citation.includes("2099다12345"))).toBe(false);
     expect(v.notice).toBe(ASK_NOTICE);

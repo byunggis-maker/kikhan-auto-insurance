@@ -10,7 +10,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "typecheck": "next typegen && tsc --noEmit"
+    "typecheck": "next typegen && tsc --noEmit",
+    "laws:fetch": "node scripts/fetch-laws.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.0.0",
