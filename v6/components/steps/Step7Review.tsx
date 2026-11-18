@@ -8,7 +8,7 @@ import { PARTIAL_NOTE, TO_COUNTERPARTY_NOTE, UNCALCULATED_STATUS, buildReview, t
 import { clearChecked, loadChecked, saveChecked } from "@/lib/state/checklist";
 import { askFacts } from "@/lib/ui/askFacts";
 import { ASSUMPTION_TEXT, standardFillable, unknownLabels, withAssumptions } from "@/lib/ui/flow";
-import { asOfText, lawsInText, todaySeoul } from "@/lib/law/data";
+import { asOfText, lawsByIds, todaySeoul } from "@/lib/law/data";
 import { AskTerms, NeedsUpdate } from "../ai/AskTerms";
 import { manwon } from "../fields";
 
@@ -98,16 +98,16 @@ function Line({ line }: { line: Review["cards"][number]["lines"][number] }) {
 }
 
 /**
- * 라운드 9d: 검토서 근거에 나온 법령 조문. 앱에 든 원문(data/laws)이 있으면 원문과 기준일, 없거나 180일이 넘으면 "원문 갱신 필요".
- * 법령 API는 부르지 않는다(칸 PC에서 npm run laws:fetch로 받아 넣는다).
+ * 라운드 9e: 카드의 판단에 쓴 법령 조문(review.cards[].laws). 앱에 든 원문(data/laws)이 있으면 원문과 기준일,
+ * 없거나 180일이 넘으면 "원문 갱신 필요". 법령 API는 부르지 않는다(칸 PC에서 npm run laws:fetch로 받아 넣는다).
  */
-function LawSection({ review }: { review: Review }) {
-  const text = [...review.cards.flatMap((c) => c.lines.map((l) => l.basis)), ...review.standards, ...review.notices].join("\n");
-  const laws = lawsInText(text, todaySeoul());
+function CardLaws({ ids }: { ids: string[] }) {
+  const laws = lawsByIds(ids, todaySeoul());
   if (!laws.length) return null;
   return (
-    <Section title="근거 법령">
-      <ul className={`${box} space-y-2 p-4 text-sm font-semibold`} data-laws>
+    <div className="mt-3 border-t-2 border-line pt-2 text-sm font-semibold" data-laws>
+      <p className="text-xs font-bold text-ink-soft">근거 법령</p>
+      <ul className="mt-1 space-y-1">
         {laws.map(({ ref, record, stale }) => (
           <li key={ref.id} data-law={ref.id}>
             {record ? (
@@ -130,7 +130,7 @@ function LawSection({ review }: { review: Review }) {
           </li>
         ))}
       </ul>
-    </Section>
+    </div>
   );
 }
 
@@ -223,12 +223,13 @@ export function Step7Review({ claim: input, goTo }: { claim: Claim; goTo: (scree
         <p className="rounded-xl border-2 border-ink bg-white p-4 font-bold">{review.blocked}</p>
       ) : (
         <div className="space-y-2">
-          <Big label="확정 기준 받을 돈" value={review.top.receiveConfirmed} sub="서류로 확인한 금액만" partial={review.partial} />
-          <Big label="추정 포함 받을 돈" partial={review.partial} value={review.top.receiveWithEstimates} sub={review.top.receiveEstimatePart ? `추정분 ${manwon(review.top.receiveEstimatePart)}` : undefined} tone="estimate" />
+          <Big label="확정 기준 받을 돈" value={review.top.receiveConfirmed} sub="서류로 확인한 금액만" partial={review.top.receivePartial} />
+          <Big label="추정 포함 받을 돈" partial={review.top.receivePartial} value={review.top.receiveWithEstimates} sub={review.top.receiveEstimatePart ? `추정분 ${manwon(review.top.receiveEstimatePart)}` : undefined} tone="estimate" />
           <Big label="내가 낼 돈" value={review.top.burdenWithEstimates} sub={review.top.burdenConfirmed !== review.top.burdenWithEstimates ? `확정 기준 ${manwon(review.top.burdenConfirmed)}` : undefined} tone="burden" />
           {review.top.toCounterparty > 0 && (
             <div data-to-counterparty>
-              <p className="text-sm font-bold">내 보험이 상대방에게 줄 돈(추정 포함)*: {manwon(review.top.toCounterparty)}</p>
+              <p className="text-sm font-bold">내 보험이 상대방에게 줄 돈(추정 포함)*: {totalText(manwon(review.top.toCounterparty), review.top.toCounterpartyPartial)}</p>
+              {review.top.toCounterpartyPartial && <p className="text-xs font-bold">{PARTIAL_NOTE}</p>}
               <p className="text-xs font-semibold text-ink-soft">* {TO_COUNTERPARTY_NOTE}</p>
             </div>
           )}
@@ -271,18 +272,18 @@ export function Step7Review({ claim: input, goTo }: { claim: Claim; goTo: (scree
         </ul>
       </Section>
 
-      <Section title={review.partial ? `받을 곳별 · ${PARTIAL_NOTE}` : "받을 곳별"}>
+      <Section title={review.byPayer.some((p) => p.partial) ? `받을 곳별 · ${PARTIAL_NOTE}` : "받을 곳별"}>
         <ul className={`divide-y-2 divide-line ${box}`}>
           {review.byPayer.map((p) => (
             <li key={p.payer} className="px-4 py-3 font-bold">
               <span className="block">{p.payer}</span>
               <span className="mt-1 flex justify-between text-sm">
                 <span>확정</span>
-                <span>{totalText(manwon(p.confirmed), review.partial)}</span>
+                <span>{totalText(manwon(p.confirmed), p.partial)}</span>
               </span>
               <span className="flex justify-between text-sm text-estimate-ink">
                 <span>추정 포함</span>
-                <span>{totalText(manwon(p.withEstimates), review.partial)}</span>
+                <span>{totalText(manwon(p.withEstimates), p.partial)}</span>
               </span>
             </li>
           ))}
@@ -324,6 +325,7 @@ export function Step7Review({ claim: input, goTo }: { claim: Claim; goTo: (scree
                   · {n}
                 </p>
               ))}
+              <CardLaws ids={card.laws} />
             </section>
           ))}
         </div>
@@ -359,8 +361,8 @@ export function Step7Review({ claim: input, goTo }: { claim: Claim; goTo: (scree
             {review.scenarios.map((s) => (
               <div key={s.label} className={`grid grid-cols-[1.4fr_1fr_1fr_1fr] gap-2 border-b border-line px-3 py-2 font-bold tabular-nums last:border-b-0 ${s.faultPercent === review.faultPercent ? "bg-surface" : ""}`}>
                 <span>{s.label.replace("내 과실 ", "")}</span>
-                <span className="text-right">{totalText(manwon(s.receiveConfirmed), review.partial)}</span>
-                <span className="text-right text-estimate-ink">{totalText(manwon(s.receiveWithEstimates), review.partial)}</span>
+                <span className="text-right">{totalText(manwon(s.receiveConfirmed), s.receivePartial)}</span>
+                <span className="text-right text-estimate-ink">{totalText(manwon(s.receiveWithEstimates), s.receivePartial)}</span>
                 <span className="text-right">{manwon(s.burdenWithEstimates)}</span>
               </div>
             ))}
@@ -421,8 +423,6 @@ export function Step7Review({ claim: input, goTo }: { claim: Claim; goTo: (scree
           ))}
         </ol>
       </Section>
-
-      <LawSection review={review} />
 
       <AskTerms facts={askFacts(claim, assumptions, review)} productLine={claim.myPolicy.productLine} />
 

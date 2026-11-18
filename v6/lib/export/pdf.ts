@@ -176,8 +176,8 @@ export async function reviewToPdf(review: Review, fonts: PdfFonts): Promise<Uint
   if (review.blocked) text(review.blocked, { size: 12, bold: true, gap: 6 });
   else {
     const boxes = [
-      { label: "확정 기준 받을 돈", value: review.top.receiveConfirmed, partial: review.partial, sub: "서류로 확인한 금액만", color: INK, fill: rgb(1, 1, 1) },
-      { label: "추정 포함 받을 돈", value: review.top.receiveWithEstimates, partial: review.partial, sub: `추정분 ${won(review.top.receiveEstimatePart)}`, color: ESTIMATE, fill: ESTIMATE_BG },
+      { label: "확정 기준 받을 돈", value: review.top.receiveConfirmed, partial: review.top.receivePartial, sub: "서류로 확인한 금액만", color: INK, fill: rgb(1, 1, 1) },
+      { label: "추정 포함 받을 돈", value: review.top.receiveWithEstimates, partial: review.top.receivePartial, sub: `추정분 ${won(review.top.receiveEstimatePart)}`, color: ESTIMATE, fill: ESTIMATE_BG },
       { label: "내가 낼 돈(추정 포함)", value: review.top.burdenWithEstimates, partial: false, sub: `확정 기준 ${won(review.top.burdenConfirmed)}`, color: INK, fill: rgb(1, 1, 1) },
     ];
     const gap = 8;
@@ -192,9 +192,10 @@ export async function reviewToPdf(review: Review, fonts: PdfFonts): Promise<Uint
       page.drawText(safe(box.sub), { x: x + 8, y: y - 54, size: 8, font: regular, color: box.color });
     });
     y -= boxHeight + 8;
-    if (review.partial) text(PARTIAL_NOTE, { size: 10, bold: true });
+    if (review.top.receivePartial) text(PARTIAL_NOTE, { size: 10, bold: true });
     if (review.top.toCounterparty > 0) {
-      text(`내 보험이 상대방에게 줄 돈(추정 포함)*: ${won(review.top.toCounterparty)}`, { size: 10, bold: true });
+      text(`내 보험이 상대방에게 줄 돈(추정 포함)*: ${totalText(won(review.top.toCounterparty), review.top.toCounterpartyPartial)}`, { size: 10, bold: true });
+      if (review.top.toCounterpartyPartial) text(PARTIAL_NOTE, { size: 9, bold: true });
       text(`* ${TO_COUNTERPARTY_NOTE}`, { size: 8, color: SOFT });
     }
   }
@@ -203,12 +204,12 @@ export async function reviewToPdf(review: Review, fonts: PdfFonts): Promise<Uint
   for (const line of review.standards) text(`· ${line}`, { size: 9 });
 
   heading("받을 곳별 합계");
-  if (review.partial) text(PARTIAL_NOTE, { size: 9, bold: true });
+  if (review.byPayer.some((p) => p.partial)) text(PARTIAL_NOTE, { size: 9, bold: true });
   if (review.byPayer.length || review.uncalculated.length)
     table(
       ["받을 곳", "확정", "추정 포함"],
       [
-        ...review.byPayer.map((p) => [{ value: p.payer, bold: true }, { value: totalText(won(p.confirmed), review.partial) }, { value: totalText(won(p.withEstimates), review.partial), color: ESTIMATE }]),
+        ...review.byPayer.map((p) => [{ value: p.payer, bold: true }, { value: totalText(won(p.confirmed), p.partial) }, { value: totalText(won(p.withEstimates), p.partial), color: ESTIMATE }]),
         // 라운드 9c: 앱이 계산하지 않은 줄은 0원 대신 '미계산'
         ...review.uncalculated.map((u) => [{ value: `${u.payer}(${u.card})`, bold: true }, { value: UNCALCULATED_STATUS }, { value: UNCALCULATED_STATUS }]),
       ],
@@ -256,7 +257,7 @@ export async function reviewToPdf(review: Review, fonts: PdfFonts): Promise<Uint
     heading("과실 시나리오");
     table(
       ["경우", "받을 돈(확정)", "받을 돈(추정 포함)", "내가 낼 돈(추정 포함)"],
-      review.scenarios.map((s) => [{ value: s.label, bold: s.faultPercent === review.faultPercent }, { value: totalText(won(s.receiveConfirmed), review.partial) }, { value: totalText(won(s.receiveWithEstimates), review.partial), color: ESTIMATE }, { value: won(s.burdenWithEstimates) }]),
+      review.scenarios.map((s) => [{ value: s.label, bold: s.faultPercent === review.faultPercent }, { value: totalText(won(s.receiveConfirmed), s.receivePartial) }, { value: totalText(won(s.receiveWithEstimates), s.receivePartial), color: ESTIMATE }, { value: won(s.burdenWithEstimates) }]),
       [WIDTH - 330, 110, 110, 110],
     );
   }

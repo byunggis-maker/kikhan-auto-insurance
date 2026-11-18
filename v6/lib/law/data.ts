@@ -1,5 +1,5 @@
 import index from "@/data/laws/index.json";
-import { refsFromText, type LawRef } from "./refs";
+import { refById, type LawRef } from "./refs";
 
 // 라운드 9d: 앱에 들어 있는 법령 원문(data/laws/index.json, 칸 PC에서 npm run laws:fetch로 받는다). 앱은 법령 API를 부르지 않는다.
 // 원문이 없거나 받은 지 180일이 넘으면 "원문 갱신 필요"(계산은 막지 않는다).
@@ -22,11 +22,13 @@ export const asOfText = (r: LawRecord) => `원문 기준일: ${r.fetchedAt.slice
 
 export type LawView = { ref: LawRef; record: LawRecord | null; stale: boolean };
 
-/** 글자(검토서 근거 등)에 나온 법령 조문과 앱에 든 원문. 원문이 없거나 오래됐으면 stale = true */
-export function lawsInText(text: string, today: string, data: LawIndex = LAW_INDEX): LawView[] {
-  return refsFromText(text).map((ref) => {
-    const record = data.articles.find((a) => a.id === ref.id) ?? null;
-    return { ref, record, stale: !record || isStale(record.fetchedAt, today) };
+/** 조문 id 목록 → 앱에 든 원문(라운드 9e: 카드마다 연결된 조문) */
+export function lawsByIds(ids: string[], today: string, data: LawIndex = LAW_INDEX): LawView[] {
+  return ids.flatMap((id) => {
+    const ref = refById(id);
+    if (!ref) return [];
+    const record = data.articles.find((a) => a.id === id) ?? null;
+    return [{ ref, record, stale: !record || isStale(record.fetchedAt, today) }];
   });
 }
 

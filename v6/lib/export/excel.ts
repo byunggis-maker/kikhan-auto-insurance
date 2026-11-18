@@ -45,14 +45,16 @@ export async function reviewToXlsx(review: Review): Promise<Uint8Array> {
     return row;
   };
   // 라운드 9d: 미계산이 있으면 합계를 숫자 칸(확정처럼 보임) 대신 "○원 + 미계산" 글자로 두고 옆에 문구
-  const total = (n: number) => (review.partial ? totalText(`${n.toLocaleString("ko-KR")}원`, true) : n);
-  const note = review.partial ? PARTIAL_NOTE : "";
-  money(summary.addRow(["받을 돈", total(review.top.receiveConfirmed), total(review.top.receiveWithEstimates), note])).font = { bold: true };
+  // 라운드 9e: 범위 안에 미계산이 있는 칸만 "○원 + 미계산" 글자, 나머지는 숫자 칸(#,##0)
+  const total = (n: number, partial: boolean) => (partial ? totalText(`${n.toLocaleString("ko-KR")}원`, true) : n);
+  const note = (partial: boolean) => (partial ? PARTIAL_NOTE : "");
+  const receivePartial = review.top.receivePartial;
+  money(summary.addRow(["받을 돈", total(review.top.receiveConfirmed, receivePartial), total(review.top.receiveWithEstimates, receivePartial), note(receivePartial)])).font = { bold: true };
   money(summary.addRow(["내가 낼 돈", review.top.burdenConfirmed, review.top.burdenWithEstimates])).font = { bold: true };
-  if (review.top.toCounterparty > 0) money(summary.addRow(["내 보험이 상대방에게 줄 돈*", null, review.top.toCounterparty, `* ${TO_COUNTERPARTY_NOTE}`]));
+  if (review.top.toCounterparty > 0) money(summary.addRow(["내 보험이 상대방에게 줄 돈*", null, total(review.top.toCounterparty, review.top.toCounterpartyPartial), `* ${TO_COUNTERPARTY_NOTE}${review.top.toCounterpartyPartial ? ` ${PARTIAL_NOTE}` : ""}`]));
   summary.addRow([]);
   summary.addRow(["받을 곳별"]).font = { bold: true };
-  for (const p of review.byPayer) money(summary.addRow([p.payer, total(p.confirmed), total(p.withEstimates), note]));
+  for (const p of review.byPayer) money(summary.addRow([p.payer, total(p.confirmed, p.partial), total(p.withEstimates, p.partial), note(p.partial)]));
   // 라운드 9c: 앱이 계산하지 않은 줄은 0 대신 '미계산'
   for (const u of review.uncalculated) summary.addRow([`${u.payer}(${u.card} ${u.label})`, UNCALCULATED_STATUS, UNCALCULATED_STATUS, u.text]);
   if (review.burdens.length) {
@@ -63,7 +65,7 @@ export async function reviewToXlsx(review: Review): Promise<Uint8Array> {
   summary.addRow([]);
   summary.addRow(["과실 시나리오", "받을 돈(확정)", "받을 돈(추정 포함)", "내가 낼 돈(추정 포함)"]).font = { bold: true };
   for (const s of review.scenarios) {
-    const row = summary.addRow([s.label, total(s.receiveConfirmed), total(s.receiveWithEstimates), s.burdenWithEstimates]);
+    const row = summary.addRow([s.label, total(s.receiveConfirmed, s.receivePartial), total(s.receiveWithEstimates, s.receivePartial), s.burdenWithEstimates]);
     money(row).getCell(4).numFmt = MONEY;
   }
   for (const [heading, items] of [

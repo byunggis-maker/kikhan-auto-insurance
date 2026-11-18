@@ -66,3 +66,11 @@ export function wantedRefs(codeTexts: string[]): LawRef[] {
   for (const ref of [...refsFromText(BASE_CITATIONS.join("\n")), ...codeTexts.flatMap(refsFromText)]) if (!all.has(ref.id)) all.set(ref.id, ref);
   return [...all.values()].sort((a, b) => a.id.localeCompare(b.id, "en", { numeric: true }));
 }
+
+/** "civil-760", "commercial-726-2", "decree-annex-1" → 조문 */
+export function refById(id: string): LawRef | null {
+  const m = /^(act|decree|civil|commercial)-(annex-)?(\d+)(?:-(\d+))?$/.exec(id);
+  if (!m) return null;
+  const law = m[1] as LawKey;
+  return m[2] ? annexRef(law, Number(m[3])) : articleRef(law, Number(m[3]), m[4] ? Number(m[4]) : 0);
+}

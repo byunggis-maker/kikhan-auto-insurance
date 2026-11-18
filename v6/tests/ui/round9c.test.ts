@@ -42,14 +42,14 @@ describe("미계산 2건", () => {
     const r = reviewOf(passenger("passenger_family"));
     const line = r.cards[0].lines.find((l) => l.payer === "상대 보험")!;
     expect(line).toMatchObject({ status: "미계산", formula: UNCALCULATED.family });
-    expect(r.uncalculated).toEqual([{ payer: "상대 보험", card: "상대 차량 탑승자 1", label: "대인배상Ⅰ", text: UNCALCULATED.family }]);
+    expect(r.uncalculated).toEqual([{ payer: "상대 보험", payerKey: "counterparty_insurer", card: "상대 차량 탑승자 1", mine: false, label: "대인배상Ⅰ", text: UNCALCULATED.family }]);
     expect(r.cards[0].lines.find((l) => l.payer === "내 보험")?.confirmed).toBe(300_000);
     expect(r.cards[0].notes).not.toContain(JOINT_NOTICE);
   });
 
   it("무보험 상대 차 동승자: 정부보장사업 청구 대상 미계산", () => {
     const r = reviewOf(passenger("passenger", "uninsured"));
-    expect(r.uncalculated).toEqual([{ payer: "정부보장사업", card: "상대 차량 탑승자 1", label: "대인Ⅰ 상당액(정부보장사업)", text: UNCALCULATED.government }]);
+    expect(r.uncalculated).toEqual([{ payer: "정부보장사업", payerKey: "government", card: "상대 차량 탑승자 1", mine: false, label: "대인Ⅰ 상당액(정부보장사업)", text: UNCALCULATED.government }]);
   });
 
   it("엑셀: 요약(받을 곳별)과 담보별 상세에 '미계산'", async () => {

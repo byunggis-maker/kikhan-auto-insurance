@@ -1,81 +1,16 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import ExcelJS from "exceljs";
-import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
 import { describe, expect, it } from "vitest";
 import { NOT_FOUND, verifyAnswer, type Answer, type LawSource } from "@/lib/ai/ask";
-import { emptyClaim, type Claim } from "@/lib/claim/types";
-import { calculate } from "@/lib/engine/dual-run";
-import { reviewToXlsx } from "@/lib/export/excel";
-import { PDF_FONT_FILES, reviewToPdf } from "@/lib/export/pdf";
-import { NEEDS_UPDATE, asOfText, isStale, lawsInText, type LawIndex } from "@/lib/law/data";
+import { NEEDS_UPDATE, asOfText, isStale, lawsByIds, type LawIndex } from "@/lib/law/data";
 import { SITE } from "@/lib/law/parse";
 import { refsFromText, wantedRefs } from "@/lib/law/refs";
-import { PARTIAL_NOTE, buildReview } from "@/lib/report/review";
-import { counterpartyOf, setItem, setOtherCount, setPersonFacts, setVictimCount } from "@/lib/ui/flow";
 import { LawFetchError, codeTexts, fetchLaws, readOc, writeLaws } from "../../scripts/fetch-laws.ts";
 import { TEST_TMP } from "../setup";
 
-// 라운드 9d: 미계산 합계 안전장치, 법령 원문 미리받기(스크립트·앱 묶음·원문 기준일·갱신 필요).
+// 라운드 9d: 법령 원문 미리받기(스크립트·앱 묶음·원문 기준일·갱신 필요).
 
-const base = (status: "full" | "uninsured" = "full"): Claim => ({
-  ...emptyClaim(),
-  accident: { ...emptyClaim().accident, occurredAt: "2026-10-01", type: "car_car" },
-  myPolicy: { ...emptyClaim().myPolicy, productLine: "personal", coverages: [{ coverage: "liability_bodily_1", limit: null, injuryLimit: null, deathLimit: null, disabilityLimit: null }, { coverage: "liability_bodily_2", limit: "unlimited", injuryLimit: null, deathLimit: null, disabilityLimit: null }] },
-  counterpartyPolicy: counterpartyOf(emptyClaim(), status),
-});
-/** 피보험자(나)와 상대 차량 동승자 1명이 다친 사고(둘 다 5급, 위자료 100만 원 확정) */
-const passenger = (seat: "passenger" | "passenger_family", status: "full" | "uninsured" = "full") => {
-  const c = setPersonFacts(setOtherCount(setVictimCount(base(status), "driver", 1), 1), "other-1", { seat });
-  const graded = { ...c, victims: c.victims.map((v) => ({ ...v, injuryGrade: 5 })) };
-  return setItem(setItem(graded, "other-1", "solatium_injury", { confirmed: 1_000_000 }), "driver-1", "solatium_injury", { confirmed: 1_000_000 });
-};
-const partialWon = (n: number) => `${n.toLocaleString("ko-KR")}원 + 미계산`;
-const reviewOf = (c: Claim) => buildReview(c, [calculate(c, 30)], 0);
-const FONT_DIR = "node_modules/pretendard/dist/public/static/alternative";
-const fonts = { regular: new Uint8Array(readFileSync(`${FONT_DIR}/${PDF_FONT_FILES.regular}`)), bold: new Uint8Array(readFileSync(`${FONT_DIR}/${PDF_FONT_FILES.bold}`)) };
-
-async function pdfText(bytes: Uint8Array) {
-  const doc = await pdfjs.getDocument({ data: bytes, verbosity: 0 }).promise;
-  let all = "";
-  for (let i = 1; i <= doc.numPages; i++) all += (await (await doc.getPage(i)).getTextContent()).items.map((x) => ("str" in x ? x.str : "")).join("") + "\n";
-  return all;
-}
-
-describe("미계산 합계 안전장치", () => {
-  for (const [name, claim] of [
-    ["상대 운전자 가족 동승자", () => passenger("passenger_family")],
-    ["무보험 상대 차 동승자", () => passenger("passenger", "uninsured")],
-  ] as const) {
-    it(`${name}: 합계가 확정 숫자로 보이지 않는다(엑셀·PDF)`, async () => {
-      const review = reviewOf(claim());
-      expect(review.partial).toBe(true);
-      const book = new ExcelJS.Workbook();
-      await book.xlsx.load((await reviewToXlsx(review)).buffer as ArrayBuffer);
-      const summary = book.getWorksheet("요약")!;
-      const receive = summary.getRows(1, summary.rowCount)!.find((r) => r.getCell(1).value === "받을 돈")!;
-      expect(review.top.receiveConfirmed).toBeGreaterThan(0);
-      expect([receive.getCell(2).value, receive.getCell(3).value]).toEqual([partialWon(review.top.receiveConfirmed), partialWon(review.top.receiveWithEstimates)]);
-      expect(receive.getCell(4).value).toBe(PARTIAL_NOTE);
-      const payer = review.byPayer[0];
-      const byPayer = summary.getRows(1, summary.rowCount)!.find((r) => r.getCell(1).value === payer.payer)!;
-      expect(byPayer.getCell(3).value).toBe(partialWon(payer.withEstimates));
-      const text = (await pdfText(await reviewToPdf(review, fonts))).replace(/\s+/g, "");
-      expect(text).toContain(partialWon(review.top.receiveConfirmed).replace(/\s+/g, ""));
-      expect(text).toContain(PARTIAL_NOTE.replace(/\s+/g, ""));
-    });
-  }
-
-  it("미계산이 없으면 그대로 숫자", async () => {
-    const review = reviewOf(passenger("passenger"));
-    expect(review.partial).toBe(false);
-    const book = new ExcelJS.Workbook();
-    await book.xlsx.load((await reviewToXlsx(review)).buffer as ArrayBuffer);
-    const summary = book.getWorksheet("요약")!;
-    expect(summary.getRows(1, summary.rowCount)!.find((r) => r.getCell(1).value === "받을 돈")!.getCell(2).value).toBe(review.top.receiveConfirmed);
-    expect(review.top.receiveConfirmed).toBeGreaterThan(0);
-  });
-});
+// 미계산 합계 시험은 라운드 9e에서 범위 규칙으로 바꿔 tests/ui/round9e.test.ts로 옮겼다
 
 describe("앱이 인용하는 법령 조문 목록", () => {
   it("코드 글자에서 법 이름·조문·가지번호·시행령 별표를 찾는다", () => {
@@ -152,7 +87,7 @@ describe("앱의 법령 원문 표시", () => {
   const data: LawIndex = { generatedAt: "2026-11-19", wanted: ["act-30", "act-5"], articles: [record] };
 
   it("원문이 있으면 원문 기준일과 시행일, 없거나 180일이 넘으면 '원문 갱신 필요'", () => {
-    const views = lawsInText("자동차손해배상보장법 제30조 / 자동차손해배상보장법 제5조", "2026-11-20", data);
+    const views = lawsByIds(["act-30", "act-5"], "2026-11-20", data);
     expect(views.map((v) => [v.ref.id, v.record !== null, v.stale])).toEqual([
       ["act-30", true, false],
       ["act-5", false, true],

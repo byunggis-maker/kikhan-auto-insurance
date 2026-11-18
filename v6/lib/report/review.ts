@@ -5,6 +5,7 @@ import { ACCIDENT_TYPE_LABELS, COVERAGE_LABELS, PAYERS, PAYER_LABELS, positionOf
 import type { Amounts, Result } from "@/lib/engine/types";
 import { maskText } from "@/lib/privacy/mask";
 import { checklistKey } from "@/lib/state/checklist";
+import { refsFromText } from "@/lib/law/refs";
 import { recognitionLabel } from "@/lib/ui/recognize";
 
 // MASTER.md 8장 보상 검토서의 내용. 화면(7단계)·엑셀·PDF가 모두 이 모델 하나를 쓴다(숫자가 서로 어긋나지 않게).
@@ -27,7 +28,8 @@ export type ReviewLine = {
   flags: string[];
 };
 
-export type ReviewCard = { label: string; actualLoss: Amounts; paid: Amounts; uncovered: Amounts; lines: ReviewLine[]; notes: string[] };
+/** laws: 이 카드의 판단에 쓴 법령 조문 id(라운드 9e, lib/law/refs.ts). 결과 화면이 카드 아래에 원문·기준일을 보인다 */
+export type ReviewCard = { label: string; actualLoss: Amounts; paid: Amounts; uncovered: Amounts; lines: ReviewLine[]; notes: string[]; laws: string[] };
 export type ReviewChecklist = { payer: string; coverage: string; docs: { key: string; label: string; clause27: number; checked: boolean }[] };
 
 export type Review = {
@@ -38,17 +40,19 @@ export type Review = {
   edition: string;
   /** 계산에 쓴 기준과 대조 안내(약관 판, 일용근로자 임금 적용일) */
   standards: string[];
-  top: { receiveConfirmed: number; receiveWithEstimates: number; receiveEstimatePart: number; burdenConfirmed: number; burdenWithEstimates: number; toCounterparty: number };
-  byPayer: { payer: string; confirmed: number; withEstimates: number }[];
+  top: { receiveConfirmed: number; receiveWithEstimates: number; receiveEstimatePart: number; burdenConfirmed: number; burdenWithEstimates: number; toCounterparty: number; receivePartial: boolean; toCounterpartyPartial: boolean };
+  byPayer: { payer: string; confirmed: number; withEstimates: number; partial: boolean }[];
   cards: ReviewCard[];
   burdens: { label: string; confirmed: number; withEstimates: number; formula: string; basis: string }[];
-  scenarios: { label: string; faultPercent: number; receiveConfirmed: number; receiveWithEstimates: number; burdenWithEstimates: number }[];
+  scenarios: { label: string; faultPercent: number; receiveConfirmed: number; receiveWithEstimates: number; burdenWithEstimates: number; receivePartial: boolean }[];
   missing: string[];
   checklist: ReviewChecklist[];
   /** 라운드 9c: 앱이 계산하지 않은 줄(받을 곳·사람·사유). 총괄표·엑셀에 '미계산'으로 보인다 */
-  uncalculated: { payer: string; card: string; label: string; text: string }[];
-  /** 라운드 9d: 미계산 줄이 있어 합계(받을 돈·받을 곳별·시나리오의 받을 돈)가 확정되지 않았는지 */
-  partial: boolean;
+  /**
+   * 라운드 9c·9e: 앱이 계산하지 않은 줄. card·mine = 받는 사람(mine: 피보험자 측 사람·물건), payer·payerKey = 내는 곳.
+   * 합계의 "+ 미계산"은 이 줄이 그 합계의 범위에 들 때만 붙인다(PARTIAL_SCOPE)
+   */
+  uncalculated: { payer: string; payerKey: Payer; card: string; mine: boolean; label: string; text: string }[];
   nextSteps: string[];
   notices: string[];
   blocked: string | null;
@@ -63,7 +67,19 @@ export const RIDE_ALONG_NOTICE = "동승자가 호의동승(대가 없이 태워
 /** 라운드 9d: '미계산' 줄이 하나라도 있으면 합계 옆에 붙이는 문구와 표시(화면·엑셀·PDF 공통, 여기 한 곳에서 관리) */
 export const PARTIAL_NOTE = "일부 미계산 포함 — 실제 금액은 이보다 클 수 있음";
 export const PARTIAL_SUFFIX = " + 미계산";
-/** 합계 글자: 미계산이 있으면 숫자 뒤에 " + 미계산"을 붙여 확정 금액처럼 보이지 않게 한다 */
+/**
+ * 라운드 9e: "+ 미계산"을 붙이는 범위. 미계산 줄(받는 사람 side, 내는 곳 payer)이 그 합계에 들어갈 줄일 때만 붙인다.
+ * - 나의 받을 돈·받을 곳별: 받는 사람이 피보험자 측(side "mine")인 미계산(받을 곳별은 그 내는 곳만)
+ * - 내 보험이 상대방에게 줄 돈: 받는 사람이 상대 측이고 내는 곳이 내 보험인 미계산
+ */
+type ScopeLine = { status: string; side: "mine" | "counterparty"; payer: Payer };
+const uncalc = (l: ScopeLine) => l.status === "not_implemented";
+export const PARTIAL_SCOPE = {
+  receive: (lines: ScopeLine[]) => lines.some((l) => uncalc(l) && l.side === "mine"),
+  payer: (lines: ScopeLine[], payer: Payer) => lines.some((l) => uncalc(l) && l.side === "mine" && l.payer === payer),
+  toCounterparty: (lines: ScopeLine[]) => lines.some((l) => uncalc(l) && l.side === "counterparty" && l.payer === "own_insurer"),
+};
+/** 합계 글자: 범위 안에 미계산이 있으면 숫자 뒤에 " + 미계산"을 붙여 확정 금액처럼 보이지 않게 한다 */
 export const totalText = (text: string, partial: boolean) => (partial ? `${text}${PARTIAL_SUFFIX}` : text);
 export const TO_COUNTERPARTY_NOTE = "최종 분담 기준입니다. 피해자가 청구하면 내 보험사가 먼저 전액 지급한 뒤 상대 보험사에 구상할 수 있습니다.";
 const PAYER_ORDER: Payer[] = ["counterparty_insurer", "government", "own_insurer"];
@@ -143,7 +159,7 @@ function standardsLines(claim: Claim, result: Result): string[] {
 
 /** 과실 시나리오 표. 상대 대인Ⅱ 가입 여부를 모르면 "없음" 경우를 한 줄씩 더한다(결정 기록 D-19) */
 function scenarioRows(results: Result[]): Review["scenarios"] {
-  const row = (r: Result, label: string) => ({ label, faultPercent: r.faultPercent, receiveConfirmed: r.totals.receive.confirmed, receiveWithEstimates: r.totals.receive.withEstimates, burdenWithEstimates: r.totals.burden.withEstimates });
+  const row = (r: Result, label: string) => ({ label, faultPercent: r.faultPercent, receiveConfirmed: r.totals.receive.confirmed, receiveWithEstimates: r.totals.receive.withEstimates, burdenWithEstimates: r.totals.burden.withEstimates, receivePartial: PARTIAL_SCOPE.receive(r.lines) });
   return results.flatMap((r) =>
     r.bodily2Scenarios
       ? [row(r, `내 과실 ${r.faultPercent}% · 상대 대인Ⅱ 있음`), row(r.bodily2Scenarios.withoutBodily2, `내 과실 ${r.faultPercent}% · 상대 대인Ⅱ 없음`)]
@@ -156,6 +172,18 @@ function vehicleValueNote(claim: Claim, cardId: string): string[] {
   const p = claim.properties.find((x) => x.id === cardId);
   if (!p || p.valueAtAccident === null || !p.valueSource) return [];
   return [p.valueSource === "estimate" ? `사고 직전 가액(추정) ${p.valueAtAccident.toLocaleString("ko-KR")}원 — ${ESTIMATE_DISCLAIMER}` : `사고 직전 가액 ${p.valueAtAccident.toLocaleString("ko-KR")}원(증권 차량가액)`];
+}
+
+/**
+ * 라운드 9e: 카드에 이어 보일 법령 조문. 그 카드의 근거 글자에 인용된 조문 + 그 카드에서 실제로 쓴 판단의 기본 조문만.
+ * - 부진정연대 안내(공동불법행위)가 붙은 카드 → 민법 제760조
+ * - 과실상계로 실제로 줄인 지급 줄("× (100 − N)%", N > 0)이 있는 카드 → 민법 제396조·제763조
+ */
+export function cardLaws(card: { lines: { status: string; formula: string; basis: string }[]; notes: string[] }): string[] {
+  const ids = refsFromText([...card.lines.map((l) => l.basis), ...card.notes].join("\n")).map((r) => r.id);
+  if (card.notes.includes(JOINT_NOTICE)) ids.push("civil-760");
+  if (card.lines.some((l) => l.status === "지급" && /×\s*\(100\s*−\s*[1-9]\d*\)%/.test(l.formula))) ids.push("civil-396", "civil-763");
+  return [...new Set(ids)];
 }
 
 /** 라운드 9c: 동승자 안내. 상대 차량 동승자로 두 보험사에 나눠 계산했으면 부진정연대 안내, 동승자면 호의동승 감액 안내(계산에는 넣지 않음) */
@@ -202,8 +230,10 @@ export function buildReview(claim: Claim, results: Result[], index: number, unkn
       burdenConfirmed: result.totals.burden.confirmed,
       burdenWithEstimates: result.totals.burden.withEstimates,
       toCounterparty: result.totals.toCounterparty.withEstimates,
+      receivePartial: PARTIAL_SCOPE.receive(result.lines),
+      toCounterpartyPartial: PARTIAL_SCOPE.toCounterparty(result.lines),
     },
-    byPayer: PAYERS.filter((p) => result.totals.byPayer[p].withEstimates > 0 || result.totals.byPayer[p].confirmed > 0).map((p) => ({ payer: PAYER_LABELS[p], confirmed: result.totals.byPayer[p].confirmed, withEstimates: result.totals.byPayer[p].withEstimates })),
+    byPayer: PAYERS.filter((p) => result.totals.byPayer[p].withEstimates > 0 || result.totals.byPayer[p].confirmed > 0 || PARTIAL_SCOPE.payer(result.lines, p)).map((p) => ({ payer: PAYER_LABELS[p], confirmed: result.totals.byPayer[p].confirmed, withEstimates: result.totals.byPayer[p].withEstimates, partial: PARTIAL_SCOPE.payer(result.lines, p) })),
     cards: result.cards.map((card) => ({
       label: card.label,
       actualLoss: card.actualLoss,
@@ -224,13 +254,12 @@ export function buildReview(claim: Claim, results: Result[], index: number, unkn
           flags: [...l.flags, ...(l.alternative ? [`다른 경우: ${l.alternative.label} → ${l.alternative.withEstimates.toLocaleString("ko-KR")}원`] : [])],
         })),
       notes: [...vehicleValueNote(claim, card.cardId), ...passengerNotes(claim, result, card.cardId), ...result.notes.filter((n) => n.cardId === card.cardId).map((n) => n.text), ...card.notes],
-    })),
+    })).map((card) => ({ ...card, laws: cardLaws(card) })),
     burdens: result.burdens.map((b) => ({ label: b.label, confirmed: b.confirmed, withEstimates: b.withEstimates, formula: b.formula, basis: b.basis })),
     scenarios: scenarioRows(results),
     missing,
     checklist: checklist(claim, result, checked),
-    partial: result.lines.some((l) => l.status === "not_implemented"),
-    uncalculated: result.lines.filter((l) => l.status === "not_implemented").map((l) => ({ payer: PAYER_LABELS[l.payer], card: l.cardLabel, label: l.label, text: l.formula })),
+    uncalculated: result.lines.filter((l) => l.status === "not_implemented").map((l) => ({ payer: PAYER_LABELS[l.payer], payerKey: l.payer, card: l.cardLabel, mine: l.side === "mine", label: l.label, text: l.formula })),
     nextSteps: nextSteps(claim, result, missing.length),
     // 같은 안내가 사람마다 반복되지 않게 한 번씩만. 일용근로자 임금 안내는 위 standards에 있다
     notices: [...assumptionNotes, ...[...new Set(result.notices)].filter((n) => !n.startsWith(WAGE_USED))],
