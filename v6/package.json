@@ -11,7 +11,9 @@
     "lint": "eslint",
     "test": "vitest run",
     "typecheck": "next typegen && tsc --noEmit",
-    "laws:fetch": "node scripts/fetch-laws.ts"
+    "laws:fetch": "node scripts/fetch-laws.ts",
+    "verify": "npm run test && npm run typecheck && npm run lint && npm run build",
+    "deploy": "npm run verify && npx vercel@latest --prod --yes --scope byunggis-6992"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.0.0",
