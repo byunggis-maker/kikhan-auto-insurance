@@ -41,3 +41,6 @@ export function estimateVehicleValue(vehicleClass: VehicleClass, modelYear: numb
 export function modelYears(accidentYear: number): number[] {
   return Array.from({ length: 21 }, (_, i) => accidentYear - i);
 }
+
+/** 추정값 옆에 늘 붙이는 한 줄(라운드 9b) */
+export const ESTIMATE_DISCLAIMER = "보험개발원 차량기준가액이 아닌 앱 자체 추정치입니다";

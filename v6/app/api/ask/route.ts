@@ -2,7 +2,7 @@ import { InputError, NO_STORE, hasApiKey, invalidResponse, unavailableResponse }
 import { MAX_FACTS, MAX_QUESTION, askTerms, claudeAsk, type AskCall } from "@/lib/ai/ask";
 import { LimitError, clientIp, counted, limitedResponse } from "@/lib/ai/limits";
 import { PRODUCT_LINES, type ProductLine } from "@/lib/claim/types";
-import { fetchLawArticles } from "@/lib/law/client";
+import { fetchLawArticles, lawConnected } from "@/lib/law/client";
 import data from "@/lib/terms/data.json";
 import type { TermsData } from "@/lib/terms/search";
 
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     const productLine = (PRODUCT_LINES as readonly string[]).includes(body?.productLine as string) ? (body!.productLine as ProductLine) : null;
     const call = counted(clientIp(request), claudeAsk(process.env.ANTHROPIC_API_KEY!.trim())) as AskCall;
     const laws = await fetchLawArticles();
-    const result = await askTerms({ question, facts, productLine }, { data: data as TermsData, laws, call });
+    const result = await askTerms({ question, facts, productLine }, { data: data as TermsData, laws, lawConnected: lawConnected(), call });
     return Response.json({ ok: true, ...result }, { headers: NO_STORE });
   } catch (error) {
     if (error instanceof InputError) return invalidResponse(error.status, error.message);

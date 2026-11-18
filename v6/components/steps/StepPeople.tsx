@@ -1,7 +1,7 @@
 "use client";
 
-import type { Property, Victim } from "@/lib/claim/types";
-import { setPropertyCount, setVictimCount } from "@/lib/ui/flow";
+import { VICTIM_POSITIONS, VICTIM_POSITION_LABELS, positionOf, type Property, type Victim } from "@/lib/claim/types";
+import { setOtherCount, setPersonFacts, setPropertyCount, setVictimCount } from "@/lib/ui/flow";
 import { Counter, Select } from "../fields";
 import type { ScreenProps } from "./types";
 
@@ -22,9 +22,7 @@ export function StepPeople({ screen, claim, update }: ScreenProps) {
         <section className="space-y-1">
           <h3 className="font-bold">다친 사람</h3>
           <Counter label="피보험자(나)" value={count("driver")} max={1} onChange={(n) => update((c) => setVictimCount(c, "driver", n))} />
-          <Counter label="가족 동승자" hint="배우자·자녀·부모 등" value={count("family_passenger")} onChange={(n) => update((c) => setVictimCount(c, "family_passenger", n))} />
-          <Counter label="남 동승자" hint="친구·동료 등" value={count("other_passenger")} onChange={(n) => update((c) => setVictimCount(c, "other_passenger", n))} />
-          <Counter label="상대방" hint="상대 차량 운전자·동승자·보행자" value={count("counterparty")} onChange={(n) => update((c) => setVictimCount(c, "counterparty", n))} />
+          <Counter label="다른 다친 사람" hint="내 차 동승자·상대 차량 탑승자·보행자" value={claim.victims.filter((v) => v.role !== "driver").length} onChange={(n) => update((c) => setOtherCount(c, n))} />
         </section>
         <section className="space-y-1">
           <h3 className="font-bold">부서진 물건</h3>
@@ -36,32 +34,40 @@ export function StepPeople({ screen, claim, update }: ScreenProps) {
     );
 
   if (screen.kind !== "person" || !victim) return null;
+  const position = positionOf(victim);
   const outcome = victim.died ? "died" : victim.disabilityGrade != null ? "disability" : victim.died === false ? "recovered" : null;
   return (
     <div className="space-y-3">
-      {victim.role === "family_passenger" && (
+      {victim.role !== "driver" && (
+        // 라운드 9b: 위치에 따라 받을 곳(내 대인배상·상대 대인배상·자기신체사고·자동차상해)이 달라진다
+        <Select label="다친 사람의 위치" unknown={null} options={VICTIM_POSITIONS.map((p) => ({ value: p, label: VICTIM_POSITION_LABELS[p] }))} value={position === "driver" ? null : position} onChange={(p) => p && update((c) => setPersonFacts(c, victim.id, { position: p }))} />
+      )}
+      {position === "my_vehicle" && (
         <Select
           label="기명피보험자와의 관계"
+          unknown={null}
           options={[
             { value: "spouse" as const, label: "배우자" },
             { value: "child" as const, label: "자녀" },
             { value: "parent" as const, label: "부모" },
             { value: "other_family" as const, label: "그 밖의 가족(형제·자매 등)" },
+            { value: "none" as const, label: "가족 아님(친구·동료 등)" },
           ]}
-          value={victim.relationToNamedInsured === "spouse" || victim.relationToNamedInsured === "child" || victim.relationToNamedInsured === "parent" || victim.relationToNamedInsured === "other_family" ? victim.relationToNamedInsured : null}
-          onChange={(relationToNamedInsured) => setVictim({ relationToNamedInsured })}
+          value={victim.relationToNamedInsured === "self" ? null : victim.relationToNamedInsured}
+          onChange={(relationToNamedInsured) => relationToNamedInsured && update((c) => setPersonFacts(c, victim.id, { relationToNamedInsured }))}
         />
       )}
-      {victim.role === "counterparty" && (
+      {position === "counterparty_vehicle" && (
         <Select
-          label="사고 때 하던 일"
+          label="상대 차량의 어느 자리"
           options={[
-            { value: "driver" as const, label: "자동차 운전(이륜차 제외)" },
-            { value: "other" as const, label: "그 밖(이륜차 운전·탑승·보행)" },
+            { value: "car" as const, label: "운전자(자동차)" },
+            { value: "bike" as const, label: "운전자(이륜차)" },
+            { value: "passenger" as const, label: "동승자" },
           ]}
-          value={victim.vehicleDriver === true ? "driver" : victim.vehicleDriver === false ? "other" : null}
+          value={victim.seat === "passenger" ? "passenger" : victim.seat === "driver" ? (victim.vehicleDriver ? "car" : "bike") : null}
           // 경상 구상은 자동차(이륜자동차 제외) 운전자에게만 적용된다(별표4 (*1))
-          onChange={(role) => setVictim({ vehicleDriver: role === null ? null : role === "driver" })}
+          onChange={(seat) => update((c) => setPersonFacts(c, victim.id, seat === null ? { seat: null, vehicleDriver: null } : { seat: seat === "passenger" ? "passenger" : "driver", vehicleDriver: seat === "car" }))}
         />
       )}
       <Select label="상해 급별(진단서·보험사 안내)" options={GRADES} value={victim.injuryGrade} onChange={(injuryGrade) => setVictim({ injuryGrade })} />

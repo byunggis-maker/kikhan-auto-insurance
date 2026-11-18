@@ -174,6 +174,10 @@ export type LossItem = z.infer<typeof lossItemSchema>;
 // ── 사람 카드 ──
 export const VICTIM_ROLES = ["driver", "family_passenger", "other_passenger", "counterparty"] as const;
 export const VICTIM_ROLE_LABELS: Record<(typeof VICTIM_ROLES)[number], string> = { driver: "피보험자(나)", family_passenger: "가족 동승자", other_passenger: "남 동승자", counterparty: "상대방" };
+/** 운전자 본인 외의 다친 사람의 위치(라운드 9b) */
+export const VICTIM_POSITIONS = ["my_vehicle", "counterparty_vehicle", "pedestrian"] as const;
+export const VICTIM_POSITION_LABELS: Record<(typeof VICTIM_POSITIONS)[number], string> = { my_vehicle: "내 차 동승자", counterparty_vehicle: "상대 차량 탑승자", pedestrian: "보행자" };
+
 /** 기명피보험자와의 관계. 부모·배우자·자녀는 내 대인Ⅱ 면책(MASTER.md 6장 (1)) */
 export const RELATIONS = ["self", "spouse", "parent", "child", "other_family", "none"] as const;
 
@@ -225,6 +229,10 @@ export const victimSchema = z.object({
   losses: z.array(lossItemSchema),
   /** 사용자가 직접 넣는 이 사람 손해 합계 추정 */
   userTotal: moneySchema.nullable(),
+  // 라운드 9b: 운전자 본인 외의 사람이 어디에 있었는지(받을 곳이 달라진다). 없으면 역할로 정한다(positionOf)
+  position: z.enum(VICTIM_POSITIONS).nullable().optional(),
+  /** 상대 차량 탑승자일 때 운전석·동승석 */
+  seat: z.enum(["driver", "passenger"]).nullable().optional(),
 });
 export type Victim = z.infer<typeof victimSchema>;
 
@@ -350,4 +358,11 @@ export function emptyClaim(): Claim {
     pendingNarrative: null,
     policyRead: [],
   };
+}
+
+/** 다친 사람의 위치. 예전 저장값(position 없음)은 역할로 정한다 */
+export function positionOf(victim: Victim): (typeof VICTIM_POSITIONS)[number] | "driver" {
+  if (victim.role === "driver") return "driver";
+  if (victim.position) return victim.position;
+  return victim.role === "counterparty" ? "counterparty_vehicle" : "my_vehicle";
 }

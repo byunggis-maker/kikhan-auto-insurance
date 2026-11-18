@@ -4,7 +4,7 @@ import { useState } from "react";
 import { COVERAGE_DOCUMENTS, DOCUMENTS, type DocumentId } from "@/lib/claim/lossItems";
 import { dailyWageFor } from "@/lib/claim/standards";
 import { OCCUPATIONS, OCCUPATION_LABELS, VEHICLE_CLASSES, VEHICLE_CLASS_LABELS, type Property, type Victim } from "@/lib/claim/types";
-import { estimateVehicleValue, modelYears } from "@/lib/claim/vehicleValue";
+import { ESTIMATE_DISCLAIMER, estimateVehicleValue, modelYears } from "@/lib/claim/vehicleValue";
 import { claimDate, setItem, visibleItems } from "@/lib/ui/flow";
 import { addRecognitions, claimRecognitions, lossGroup, randomId } from "@/lib/ui/recognize";
 import { DocumentUpload } from "../ai/DocumentUpload";
@@ -148,6 +148,7 @@ function VehicleValue({ claim, property, setProperty }: { claim: ScreenProps["cl
       {estimate && (
         <p className="rounded-xl border-2 border-estimate-line bg-estimate p-2 text-sm font-bold text-estimate-ink" data-vehicle-value="estimate">
           사고 직전 가액(추정) {manwon(estimate.value)} · {estimate.formula}
+          <span className="mt-1 block">{ESTIMATE_DISCLAIMER}</span>
         </p>
       )}
     </div>

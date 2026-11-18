@@ -1,5 +1,6 @@
 import { COVERAGE_DOCUMENTS, DOCUMENTS, lossItemDef, type DocumentId } from "@/lib/claim/lossItems";
 import { STANDARDS_AS_OF, dailyWageFor } from "@/lib/claim/standards";
+import { ESTIMATE_DISCLAIMER } from "@/lib/claim/vehicleValue";
 import { ACCIDENT_TYPE_LABELS, COVERAGE_LABELS, PAYERS, PAYER_LABELS, type Claim, type Coverage, type Payer } from "@/lib/claim/types";
 import type { Amounts, Result } from "@/lib/engine/types";
 import { maskText } from "@/lib/privacy/mask";
@@ -135,6 +136,13 @@ function scenarioRows(results: Result[]): Review["scenarios"] {
   );
 }
 
+/** 앱이 추정한 사고 직전 가액(라운드 9b: 추정값 옆에 앱 자체 추정치라고 밝힌다) */
+function vehicleValueNote(claim: Claim, cardId: string): string[] {
+  const p = claim.properties.find((x) => x.id === cardId);
+  if (!p || p.valueAtAccident === null || !p.valueSource) return [];
+  return [p.valueSource === "estimate" ? `사고 직전 가액(추정) ${p.valueAtAccident.toLocaleString("ko-KR")}원 — ${ESTIMATE_DISCLAIMER}` : `사고 직전 가액 ${p.valueAtAccident.toLocaleString("ko-KR")}원(증권 차량가액)`];
+}
+
 /** 문자열을 모두 개인정보 가림 처리한다 */
 function deepMask<T>(value: T): T {
   if (typeof value === "string") return maskText(value) as T;
@@ -190,7 +198,7 @@ export function buildReview(claim: Claim, results: Result[], index: number, unkn
           exclusion: l.status === "excluded" ? l.formula : "",
           flags: [...l.flags, ...(l.alternative ? [`다른 경우: ${l.alternative.label} → ${l.alternative.withEstimates.toLocaleString("ko-KR")}원`] : [])],
         })),
-      notes: [...result.notes.filter((n) => n.cardId === card.cardId).map((n) => n.text), ...card.notes],
+      notes: [...vehicleValueNote(claim, card.cardId), ...result.notes.filter((n) => n.cardId === card.cardId).map((n) => n.text), ...card.notes],
     })),
     burdens: result.burdens.map((b) => ({ label: b.label, confirmed: b.confirmed, withEstimates: b.withEstimates, formula: b.formula, basis: b.basis })),
     scenarios: scenarioRows(results),

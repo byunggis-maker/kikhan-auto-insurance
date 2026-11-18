@@ -1,6 +1,6 @@
 import { documentsFor, itemsFor, lossItemDef, type LossItemDef } from "@/lib/claim/lossItems";
 import { STANDARDS_AS_OF } from "@/lib/claim/standards";
-import { emptyLossItem, type Claim, type Coverage, type Policy, type PolicyCoverage, type Property, type Victim } from "@/lib/claim/types";
+import { VICTIM_POSITION_LABELS, emptyLossItem, positionOf, type Claim, type Coverage, type Policy, type PolicyCoverage, type Property, type Victim } from "@/lib/claim/types";
 import { pickValue } from "@/lib/engine/losses";
 
 // MASTER.md 7장 입력 7단계의 화면 순서와 상태 변경. React와 분리해 테스트한다(tests/ui/flow.test.ts).
@@ -147,6 +147,53 @@ export function newVictim(role: Victim["role"], n: number, claim: Claim): Victim
     losses: [],
     userTotal: null,
   };
+}
+
+// ── 라운드 9b: 운전자 본인 외의 다친 사람(위치 드롭다운 하나로 역할을 정한다) ──
+type Position = NonNullable<Victim["position"]>;
+const FAMILY = new Set(["spouse", "child", "parent", "other_family"]);
+
+/** 위치마다 1부터 번호를 붙여 이름을 다시 정한다(예: 상대 차량 탑승자 1, 보행자 1) */
+function relabel(victims: Victim[]): Victim[] {
+  const seen: Record<string, number> = {};
+  return victims.map((v) => {
+    if (v.role === "driver" || !v.position) return v;
+    seen[v.position] = (seen[v.position] ?? 0) + 1;
+    return { ...v, label: `${VICTIM_POSITION_LABELS[v.position]} ${seen[v.position]}` };
+  });
+}
+
+/** 위치·관계·좌석에서 계산이 쓰는 역할을 정한다 */
+function withRole(v: Victim): Victim {
+  const position = positionOf(v);
+  if (position === "driver") return v;
+  if (position === "my_vehicle") {
+    const family = FAMILY.has(v.relationToNamedInsured ?? "");
+    return { ...v, role: family ? "family_passenger" : "other_passenger", relationToNamedInsured: family ? v.relationToNamedInsured : "none", vehicleDriver: false, seat: null };
+  }
+  if (position === "pedestrian") return { ...v, role: "counterparty", relationToNamedInsured: null, vehicleDriver: false, seat: null };
+  return { ...v, role: "counterparty", relationToNamedInsured: null, vehicleDriver: v.seat === "passenger" ? false : v.vehicleDriver };
+}
+
+/** 운전자 본인 외의 다친 사람 수를 맞춘다. 새 사람의 위치는 차대사람이면 보행자, 아니면 상대 차량 탑승자 */
+export function setOtherCount(claim: Claim, count: number): Claim {
+  const driver = claim.victims.filter((v) => v.role === "driver");
+  const others = claim.victims.filter((v) => v.role !== "driver").slice(0, count);
+  const used = new Set(claim.victims.map((v) => v.id));
+  for (let k = 1; others.length < count; k++) {
+    const id = `other-${k}`;
+    if (used.has(id)) continue;
+    used.add(id);
+    const position: Position = claim.accident.type === "car_person" ? "pedestrian" : "counterparty_vehicle";
+    others.push(withRole({ ...newVictim("counterparty", k, claim), id, position, seat: null }));
+  }
+  return { ...claim, victims: [...driver, ...relabel(others.map((v) => (v.position ? v : { ...v, position: positionOf(v) as Position })))] };
+}
+
+/** 위치·관계·좌석을 바꾼다(역할과 이름이 함께 바뀐다) */
+export function setPersonFacts(claim: Claim, id: string, change: Partial<Pick<Victim, "position" | "relationToNamedInsured" | "seat" | "vehicleDriver">>): Claim {
+  const victims = claim.victims.map((v) => (v.id === id ? withRole({ ...v, position: v.position ?? (positionOf(v) as Position), ...change }) : v));
+  return { ...claim, victims: relabel(victims) };
 }
 
 export function newProperty(role: Property["role"], n: number, claim?: Claim): Property {

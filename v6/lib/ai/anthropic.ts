@@ -14,9 +14,26 @@ export const AI_UNAVAILABLE_MESSAGE = "이 기능은 준비 중입니다. 직접
 
 const filled = (value: string | undefined) => typeof value === "string" && value.trim() !== "";
 
-/** 서류 인식(Claude)을 쓸 수 있는지. 서버에서만 부른다(브라우저에는 키가 없다) */
-export function hasApiKey(env: Env = process.env): boolean {
-  return filled(env.ANTHROPIC_API_KEY);
+/** 서류 인식(Claude)을 쓸 수 있는지. 서버에서만 부른다(브라우저에는 키가 없다). 키가 만료됐으면(AI_KEY_EXPIRES) 쓸 수 없다 */
+export function hasApiKey(env: Env = process.env, now = new Date()): boolean {
+  return filled(env.ANTHROPIC_API_KEY) && keyState(env, now) !== "expired";
+}
+
+/** 키 만료 안내를 보여 주기 시작하는 날수(만료일 7일 전부터) */
+export const KEY_NOTICE_DAYS = 7;
+export const KEY_NOTICE = "문서 읽기·약관 질의 기능 점검 예정";
+
+/**
+ * 라운드 9b: 키 만료일(환경변수 AI_KEY_EXPIRES, YYYY-MM-DD, 한국 시간)과 오늘을 비교한다.
+ * 만료일 당일까지는 쓸 수 있고(만료 7일 전부터 "soon"), 다음 날부터 "expired". 값이 없거나 모양이 틀리면 "ok"
+ */
+export function keyState(env: Env = process.env, now = new Date()): "ok" | "soon" | "expired" {
+  const expires = env.AI_KEY_EXPIRES?.trim();
+  if (!expires || !/^\d{4}-\d{2}-\d{2}$/.test(expires)) return "ok";
+  const today = new Date(now.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  if (today > expires) return "expired";
+  const days = (Date.parse(expires) - Date.parse(today)) / 86_400_000;
+  return days <= KEY_NOTICE_DAYS ? "soon" : "ok";
 }
 
 /** 음성→문자(V2와 같은 OpenAI 전사 API)를 쓸 수 있는지 */

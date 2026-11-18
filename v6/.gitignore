@@ -38,3 +38,6 @@ next-env.d.ts
 
 # 테스트 임시 파일(tests/setup.ts). v6 밖에는 어떤 파일도 만들지 않는다(D-10)
 /tmp-test/
+
+# 라운드 9b: 실제 증권·서류(개인정보). 절대 커밋하지 않는다
+/tests/fixtures/private/

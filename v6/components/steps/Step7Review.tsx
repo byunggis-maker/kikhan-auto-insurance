@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { KEY_NOTICE } from "@/lib/ai/anthropic";
 import type { Claim } from "@/lib/claim/types";
 import { calculateScenarios } from "@/lib/engine/fault-scenarios";
 import { buildReview, type Review } from "@/lib/report/review";
@@ -130,6 +131,14 @@ export function Step7Review({ claim: input, goTo }: { claim: Claim; goTo: (scree
     setCheckSaved(saveChecked(next));
   };
   const fillable = useMemo(() => standardFillable(claim), [claim]);
+  // 라운드 9b: 키 만료 7일 전부터 맨 아래에 작게 안내한다(만료 뒤에는 각 기능이 '준비 중'을 보여 준다)
+  const [keySoon, setKeySoon] = useState(false);
+  useEffect(() => {
+    fetch("/api/ai-status")
+      .then((r) => r.json())
+      .then((d: { state?: string }) => setKeySoon(d.state === "soon"))
+      .catch(() => {});
+  }, []);
   const [saving, setSaving] = useState<SaveState>(null);
 
   const save = async (kind: "xlsx" | "pdf") => {
@@ -347,6 +356,11 @@ export function Step7Review({ claim: input, goTo }: { claim: Claim; goTo: (scree
             <p key={n}>※ {n}</p>
           ))}
         </section>
+      )}
+      {keySoon && (
+        <p className="text-xs font-semibold text-ink-soft" data-key-notice>
+          {KEY_NOTICE}
+        </p>
       )}
     </div>
   );

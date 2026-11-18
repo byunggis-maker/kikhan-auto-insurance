@@ -65,7 +65,8 @@ function merge(claim: Claim, faultPercent: number): Result {
     totals: {
       receive: receiveLines.reduce((sum, line) => add(sum, line), ZERO),
       byPayer,
-      toCounterparty: paidLines.filter((line) => line.side === "counterparty").reduce((sum, line) => add(sum, line), ZERO),
+      // 내 보험이 상대방에게 주는 돈만(상대 차량 동승자가 상대 차량 보험에서 받는 돈은 빼고, 라운드 9b)
+      toCounterparty: paidLines.filter((line) => line.side === "counterparty" && line.payer === "own_insurer").reduce((sum, line) => add(sum, line), ZERO),
       burden: burdens.reduce((sum, burden) => add(sum, burden), ZERO),
     },
     notices: [...new Set([...estimated.notices, ...confirmed.notices])],

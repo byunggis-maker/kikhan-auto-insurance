@@ -1,7 +1,7 @@
 import { STANDARDS_EDITION, editionFor, latestEdition } from "@/lib/claim/editions";
 import { paymentLabel } from "@/lib/claim/payer";
 import { ACCIDENT_BURDEN, BASIS_TEXT, COMPULSORY, STANDARDS_AS_OF, compulsoryRuleItems, dailyWageFor } from "@/lib/claim/standards";
-import type { Claim, Coverage, InsuranceStatus, Limit, Policy, PolicyCoverage, Property, Victim } from "@/lib/claim/types";
+import { positionOf, type Claim, type Coverage, type InsuranceStatus, type Limit, type Policy, type PolicyCoverage, type Property, type Victim } from "@/lib/claim/types";
 import { allocate, autoInjury, compulsoryBodily, excess, minorInjuryShare, ownDamagePay, propertyLiability, selfInjury, won, type Paid } from "./adjust";
 import { capToLoss } from "./dedupe";
 import { checkExclusions, type Exclusions } from "./exclusions";
@@ -154,8 +154,19 @@ export function runOnce(claim: Claim, faultPercent: number, mode: ValueMode): Ru
         if (share > 0)
           notes.push({ key: `${id}:minor_share`, cardId: id, label: "경상 본인 부담분", amount: share, text: `상대방(경상 ${victim.injuryGrade}급 차량운전자)의 본인 과실분 치료비 ${won(share)}은 상대방의 자동차상해·자기신체사고에서 처리합니다`, basis: BASIS_TEXT.excessFault });
       }
+      // 라운드 9b: 상대 차량의 동승자는 상대 운전자 과실분(100 − 내 과실)%을 상대 차량의 대인배상에서도 받는다(공동불법행위, 내 차 남 동승자와 같은 나눔)
+      if (positionOf(victim) === "counterparty_vehicle" && victim.seat === "passenger" && f < 100) {
+        if (cpStatus === "unknown") out.push(makeLine(id, "liability_bodily_1", "counterparty", "needs_input", 0, "상대 차량의 보험 가입 여부를 입력하면 계산됩니다", BASIS_TEXT.bodily1Fault));
+        else if (cpStatus === "full" || cpStatus === "mandatory_only") {
+          const own = legacy(f, false);
+          const b1 = compulsoryBodily(own);
+          out.push(fromPaid(id, "liability_bodily_1", "counterparty", b1.paid, BASIS_TEXT.bodily1Fault, ["상대 차량 동승자: 상대 운전자 과실분은 상대 차량 보험에서 받습니다(어느 한쪽 보험사에 전액 청구할 수 있습니다)"]));
+          if (cpStatus === "full") out.push(fromPaid(id, "liability_bodily_2", "counterparty", excess(own, b1.at, coverageOf(cp, "liability_bodily_2")?.limit ?? "unlimited", 0, "상대 대인배상Ⅱ 가입금액").paid, BASIS_TEXT.excessFault));
+        }
+      }
       const capped = capToLoss(out, loss.actualLoss);
       for (const line of capped) {
+        if (line.payer !== "own_insurer") continue;
         if (line.coverage === "liability_bodily_1") myBodily1Total += line.amount;
         if (line.coverage === "liability_bodily_2") myBodily2Total += line.amount;
       }
