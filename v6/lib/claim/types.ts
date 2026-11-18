@@ -231,8 +231,8 @@ export const victimSchema = z.object({
   userTotal: moneySchema.nullable(),
   // 라운드 9b: 운전자 본인 외의 사람이 어디에 있었는지(받을 곳이 달라진다). 없으면 역할로 정한다(positionOf)
   position: z.enum(VICTIM_POSITIONS).nullable().optional(),
-  /** 상대 차량 탑승자일 때 운전석·동승석 */
-  seat: z.enum(["driver", "passenger"]).nullable().optional(),
+  /** 상대 차량 탑승자일 때 운전석·동승석. passenger_family: 상대 운전자의 가족 동승자(라운드 9c, 앱에서 미계산) */
+  seat: z.enum(["driver", "passenger", "passenger_family"]).nullable().optional(),
 });
 export type Victim = z.infer<typeof victimSchema>;
 

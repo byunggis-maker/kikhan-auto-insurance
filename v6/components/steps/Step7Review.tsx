@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { KEY_NOTICE } from "@/lib/ai/anthropic";
 import type { Claim } from "@/lib/claim/types";
 import { calculateScenarios } from "@/lib/engine/fault-scenarios";
-import { buildReview, type Review } from "@/lib/report/review";
+import { TO_COUNTERPARTY_NOTE, UNCALCULATED_STATUS, buildReview, type Review } from "@/lib/report/review";
 import { clearChecked, loadChecked, saveChecked } from "@/lib/state/checklist";
 import { askFacts } from "@/lib/ui/askFacts";
 import { ASSUMPTION_TEXT, standardFillable, unknownLabels, withAssumptions } from "@/lib/ui/flow";
@@ -55,6 +55,12 @@ function Line({ line }: { line: Review["cards"][number]["lines"][number] }) {
           {line.status !== "지급" ? ` · ${line.status}` : ""}
         </span>
       </p>
+      {line.status === UNCALCULATED_STATUS ? (
+        // 라운드 9c: 앱이 계산하지 않은 줄은 0원 대신 사유를 보인다
+        <p className="mt-2 rounded-lg border-2 border-ink px-3 py-2 text-sm font-bold" data-uncalculated>
+          {UNCALCULATED_STATUS}: {line.formula}
+        </p>
+      ) : (
       <dl className="mt-2 grid grid-cols-3 gap-2 text-right">
         <div>
           <dt className="text-xs font-bold">확정</dt>
@@ -69,6 +75,7 @@ function Line({ line }: { line: Review["cards"][number]["lines"][number] }) {
           <dd className="font-bold tabular-nums">{line.estimatePart.toLocaleString("ko-KR")}</dd>
         </div>
       </dl>
+      )}
       {line.exclusion && <p className="mt-2 text-sm font-bold">면책 사유: {line.exclusion}</p>}
       <details className="mt-2">
         <summary className="cursor-pointer text-sm font-bold">계산식·약관 조항</summary>
@@ -176,7 +183,17 @@ export function Step7Review({ claim: input, goTo }: { claim: Claim; goTo: (scree
           <Big label="확정 기준 받을 돈" value={review.top.receiveConfirmed} sub="서류로 확인한 금액만" />
           <Big label="추정 포함 받을 돈" value={review.top.receiveWithEstimates} sub={review.top.receiveEstimatePart ? `추정분 ${manwon(review.top.receiveEstimatePart)}` : undefined} tone="estimate" />
           <Big label="내가 낼 돈" value={review.top.burdenWithEstimates} sub={review.top.burdenConfirmed !== review.top.burdenWithEstimates ? `확정 기준 ${manwon(review.top.burdenConfirmed)}` : undefined} tone="burden" />
-          {review.top.toCounterparty > 0 && <p className="text-sm font-bold">내 보험이 상대방에게 줄 돈(추정 포함): {manwon(review.top.toCounterparty)}</p>}
+          {review.top.toCounterparty > 0 && (
+            <div data-to-counterparty>
+              <p className="text-sm font-bold">내 보험이 상대방에게 줄 돈(추정 포함)*: {manwon(review.top.toCounterparty)}</p>
+              <p className="text-xs font-semibold text-ink-soft">* {TO_COUNTERPARTY_NOTE}</p>
+            </div>
+          )}
+          {review.uncalculated.length > 0 && (
+            <p className="rounded-xl border-2 border-ink bg-white px-4 py-2 text-sm font-bold" data-uncalculated-summary>
+              {UNCALCULATED_STATUS} {review.uncalculated.length}건: {review.uncalculated.map((u) => `${u.card} ${u.label} — ${u.text}`).join(" / ")}
+            </p>
+          )}
         </div>
       )}
 
@@ -226,7 +243,18 @@ export function Step7Review({ claim: input, goTo }: { claim: Claim; goTo: (scree
               </span>
             </li>
           ))}
-          {review.byPayer.length === 0 && <li className="px-4 py-3 font-semibold">아직 받을 돈이 계산되지 않았습니다.</li>}
+          {review.uncalculated.map((u) => (
+            <li key={`${u.card}:${u.label}`} className="px-4 py-3 font-bold" data-uncalculated-payer>
+              <span className="block">
+                {u.payer} <span className="text-sm font-semibold text-ink-soft">({u.card})</span>
+              </span>
+              <span className="mt-1 flex justify-between text-sm">
+                <span>{u.label}</span>
+                <span>{UNCALCULATED_STATUS}</span>
+              </span>
+            </li>
+          ))}
+          {review.byPayer.length === 0 && review.uncalculated.length === 0 && <li className="px-4 py-3 font-semibold">아직 받을 돈이 계산되지 않았습니다.</li>}
         </ul>
       </Section>
 
@@ -238,7 +266,10 @@ export function Step7Review({ claim: input, goTo }: { claim: Claim; goTo: (scree
               <p className="text-sm font-semibold text-ink-soft">
                 실제손해 {manwon(card.actualLoss.confirmed)}
                 {card.actualLoss.withEstimates !== card.actualLoss.confirmed && <span className="text-estimate-ink"> / {manwon(card.actualLoss.withEstimates)}</span>}
-                {card.uncovered.withEstimates > 0 && ` · 보상 안 되는 손해 ${manwon(card.uncovered.withEstimates)}`}
+                {/* 라운드 9c: 미계산 줄이 있으면 남은 손해를 '보상 안 됨'으로 보이지 않는다 */}
+                {card.lines.some((l) => l.status === UNCALCULATED_STATUS)
+                  ? ` · 나머지 ${manwon(card.uncovered.withEstimates)}은 ${UNCALCULATED_STATUS}`
+                  : card.uncovered.withEstimates > 0 && ` · 보상 안 되는 손해 ${manwon(card.uncovered.withEstimates)}`}
               </p>
               <ul className="mt-1 divide-y-2 divide-line">
                 {card.lines.filter((line) => !emptyLine(line)).map((line) => (

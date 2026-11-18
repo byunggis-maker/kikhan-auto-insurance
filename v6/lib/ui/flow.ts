@@ -172,7 +172,7 @@ function withRole(v: Victim): Victim {
     return { ...v, role: family ? "family_passenger" : "other_passenger", relationToNamedInsured: family ? v.relationToNamedInsured : "none", vehicleDriver: false, seat: null };
   }
   if (position === "pedestrian") return { ...v, role: "counterparty", relationToNamedInsured: null, vehicleDriver: false, seat: null };
-  return { ...v, role: "counterparty", relationToNamedInsured: null, vehicleDriver: v.seat === "passenger" ? false : v.vehicleDriver };
+  return { ...v, role: "counterparty", relationToNamedInsured: null, vehicleDriver: v.seat === "passenger" || v.seat === "passenger_family" ? false : v.vehicleDriver };
 }
 
 /** 운전자 본인 외의 다친 사람 수를 맞춘다. 새 사람의 위치는 차대사람이면 보행자, 아니면 상대 차량 탑승자 */

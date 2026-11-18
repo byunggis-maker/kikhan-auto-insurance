@@ -1,7 +1,7 @@
 import { COVERAGE_DOCUMENTS, DOCUMENTS, lossItemDef, type DocumentId } from "@/lib/claim/lossItems";
 import { STANDARDS_AS_OF, dailyWageFor } from "@/lib/claim/standards";
 import { ESTIMATE_DISCLAIMER } from "@/lib/claim/vehicleValue";
-import { ACCIDENT_TYPE_LABELS, COVERAGE_LABELS, PAYERS, PAYER_LABELS, type Claim, type Coverage, type Payer } from "@/lib/claim/types";
+import { ACCIDENT_TYPE_LABELS, COVERAGE_LABELS, PAYERS, PAYER_LABELS, positionOf, type Claim, type Coverage, type Payer } from "@/lib/claim/types";
 import type { Amounts, Result } from "@/lib/engine/types";
 import { maskText } from "@/lib/privacy/mask";
 import { checklistKey } from "@/lib/state/checklist";
@@ -45,12 +45,20 @@ export type Review = {
   scenarios: { label: string; faultPercent: number; receiveConfirmed: number; receiveWithEstimates: number; burdenWithEstimates: number }[];
   missing: string[];
   checklist: ReviewChecklist[];
+  /** 라운드 9c: 앱이 계산하지 않은 줄(받을 곳·사람·사유). 총괄표·엑셀에 '미계산'으로 보인다 */
+  uncalculated: { payer: string; card: string; label: string; text: string }[];
   nextSteps: string[];
   notices: string[];
   blocked: string | null;
 };
 
-const STATUS = { paid: "지급", excluded: "보상 안 됨", needs_input: "입력 필요", not_implemented: "계산 준비 중" } as const;
+const STATUS = { paid: "지급", excluded: "보상 안 됨", needs_input: "입력 필요", not_implemented: "미계산" } as const;
+/** 라운드 9c: 앱이 계산하지 않은 줄의 상태 이름(화면·엑셀·PDF가 금액 대신 이 글자를 보인다) */
+export const UNCALCULATED_STATUS = STATUS.not_implemented;
+/** 라운드 9c: 상대 차량 동승자(공동불법행위) 안내 */
+export const JOINT_NOTICE = "피해자는 두 보험사 중 어느 쪽에든 손해 전액을 청구할 수 있습니다(부진정연대). 위 비율은 보험사 간 정산 기준입니다.";
+export const RIDE_ALONG_NOTICE = "동승자가 호의동승(대가 없이 태워 준 경우)이면 손해배상금이 감액될 수 있습니다(별표5 동승자 유형별 감액비율). 이 계산에는 감액을 넣지 않았습니다.";
+export const TO_COUNTERPARTY_NOTE = "최종 분담 기준입니다. 피해자가 청구하면 내 보험사가 먼저 전액 지급한 뒤 상대 보험사에 구상할 수 있습니다.";
 const PAYER_ORDER: Payer[] = ["counterparty_insurer", "government", "own_insurer"];
 
 /** 필요 서류 체크리스트: 받을 곳 × 담보마다 제27조 공통 서류 + 그 카드에 넣은 손해 항목의 서류 */
@@ -143,6 +151,16 @@ function vehicleValueNote(claim: Claim, cardId: string): string[] {
   return [p.valueSource === "estimate" ? `사고 직전 가액(추정) ${p.valueAtAccident.toLocaleString("ko-KR")}원 — ${ESTIMATE_DISCLAIMER}` : `사고 직전 가액 ${p.valueAtAccident.toLocaleString("ko-KR")}원(증권 차량가액)`];
 }
 
+/** 라운드 9c: 동승자 안내. 상대 차량 동승자로 두 보험사에 나눠 계산했으면 부진정연대 안내, 동승자면 호의동승 감액 안내(계산에는 넣지 않음) */
+function passengerNotes(claim: Claim, result: Result, cardId: string): string[] {
+  const v = claim.victims.find((x) => x.id === cardId);
+  if (!v || v.role === "driver") return [];
+  const position = positionOf(v);
+  const passenger = position === "my_vehicle" || (position === "counterparty_vehicle" && (v.seat === "passenger" || v.seat === "passenger_family"));
+  const split = position === "counterparty_vehicle" && result.lines.some((l) => l.cardId === cardId && l.payer === "counterparty_insurer" && l.status === "paid") && result.lines.some((l) => l.cardId === cardId && l.payer === "own_insurer" && l.status === "paid");
+  return [...(split ? [JOINT_NOTICE] : []), ...(passenger ? [RIDE_ALONG_NOTICE] : [])];
+}
+
 /** 문자열을 모두 개인정보 가림 처리한다 */
 function deepMask<T>(value: T): T {
   if (typeof value === "string") return maskText(value) as T;
@@ -198,12 +216,13 @@ export function buildReview(claim: Claim, results: Result[], index: number, unkn
           exclusion: l.status === "excluded" ? l.formula : "",
           flags: [...l.flags, ...(l.alternative ? [`다른 경우: ${l.alternative.label} → ${l.alternative.withEstimates.toLocaleString("ko-KR")}원`] : [])],
         })),
-      notes: [...vehicleValueNote(claim, card.cardId), ...result.notes.filter((n) => n.cardId === card.cardId).map((n) => n.text), ...card.notes],
+      notes: [...vehicleValueNote(claim, card.cardId), ...passengerNotes(claim, result, card.cardId), ...result.notes.filter((n) => n.cardId === card.cardId).map((n) => n.text), ...card.notes],
     })),
     burdens: result.burdens.map((b) => ({ label: b.label, confirmed: b.confirmed, withEstimates: b.withEstimates, formula: b.formula, basis: b.basis })),
     scenarios: scenarioRows(results),
     missing,
     checklist: checklist(claim, result, checked),
+    uncalculated: result.lines.filter((l) => l.status === "not_implemented").map((l) => ({ payer: PAYER_LABELS[l.payer], card: l.cardLabel, label: l.label, text: l.formula })),
     nextSteps: nextSteps(claim, result, missing.length),
     // 같은 안내가 사람마다 반복되지 않게 한 번씩만. 일용근로자 임금 안내는 위 standards에 있다
     notices: [...assumptionNotes, ...[...new Set(result.notices)].filter((n) => !n.startsWith(WAGE_USED))],

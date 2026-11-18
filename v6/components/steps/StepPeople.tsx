@@ -64,10 +64,11 @@ export function StepPeople({ screen, claim, update }: ScreenProps) {
             { value: "car" as const, label: "운전자(자동차)" },
             { value: "bike" as const, label: "운전자(이륜차)" },
             { value: "passenger" as const, label: "동승자" },
+            { value: "passenger_family" as const, label: "동승자(상대 운전자의 가족)" },
           ]}
-          value={victim.seat === "passenger" ? "passenger" : victim.seat === "driver" ? (victim.vehicleDriver ? "car" : "bike") : null}
+          value={victim.seat === "passenger" || victim.seat === "passenger_family" ? victim.seat : victim.seat === "driver" ? (victim.vehicleDriver ? "car" : "bike") : null}
           // 경상 구상은 자동차(이륜자동차 제외) 운전자에게만 적용된다(별표4 (*1))
-          onChange={(seat) => update((c) => setPersonFacts(c, victim.id, seat === null ? { seat: null, vehicleDriver: null } : { seat: seat === "passenger" ? "passenger" : "driver", vehicleDriver: seat === "car" }))}
+          onChange={(seat) => update((c) => setPersonFacts(c, victim.id, seat === null ? { seat: null, vehicleDriver: null } : { seat: seat === "passenger" || seat === "passenger_family" ? seat : "driver", vehicleDriver: seat === "car" }))}
         />
       )}
       <Select label="상해 급별(진단서·보험사 안내)" options={GRADES} value={victim.injuryGrade} onChange={(injuryGrade) => setVictim({ injuryGrade })} />

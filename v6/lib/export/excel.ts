@@ -1,4 +1,4 @@
-import type { Review } from "@/lib/report/review";
+import { TO_COUNTERPARTY_NOTE, UNCALCULATED_STATUS, type Review } from "@/lib/report/review";
 
 // MASTER.md 8장 엑셀 저장: 시트 3개(요약, 담보별 상세, 필요 서류). 금액은 숫자 셀(#,##0), 계산식·조항은 글자 열.
 // exceljs는 크므로 저장 버튼을 누를 때만 불러온다(dynamic import).
@@ -46,10 +46,12 @@ export async function reviewToXlsx(review: Review): Promise<Uint8Array> {
   };
   money(summary.addRow(["받을 돈", review.top.receiveConfirmed, review.top.receiveWithEstimates])).font = { bold: true };
   money(summary.addRow(["내가 낼 돈", review.top.burdenConfirmed, review.top.burdenWithEstimates])).font = { bold: true };
-  if (review.top.toCounterparty > 0) money(summary.addRow(["내 보험이 상대방에게 줄 돈", null, review.top.toCounterparty]));
+  if (review.top.toCounterparty > 0) money(summary.addRow(["내 보험이 상대방에게 줄 돈*", null, review.top.toCounterparty, `* ${TO_COUNTERPARTY_NOTE}`]));
   summary.addRow([]);
   summary.addRow(["받을 곳별"]).font = { bold: true };
   for (const p of review.byPayer) money(summary.addRow([p.payer, p.confirmed, p.withEstimates]));
+  // 라운드 9c: 앱이 계산하지 않은 줄은 0 대신 '미계산'
+  for (const u of review.uncalculated) summary.addRow([`${u.payer}(${u.card} ${u.label})`, UNCALCULATED_STATUS, UNCALCULATED_STATUS, u.text]);
   if (review.burdens.length) {
     summary.addRow([]);
     summary.addRow(["내가 낼 돈 내역", "확정 기준", "추정 포함", "계산식·근거"]).font = { bold: true };
@@ -91,7 +93,10 @@ export async function reviewToXlsx(review: Review): Promise<Uint8Array> {
   ];
   detail.getRow(1).font = { bold: true };
   for (const card of review.cards)
-    for (const l of card.lines) detail.addRow([card.label, l.label, l.payer, l.status, l.confirmed, l.withEstimates, l.estimatePart, l.formula, l.basis, l.exclusion, l.flags.join(" / ")]);
+    for (const l of card.lines) {
+      const none = l.status === UNCALCULATED_STATUS;
+      detail.addRow([card.label, l.label, l.payer, l.status, none ? UNCALCULATED_STATUS : l.confirmed, none ? UNCALCULATED_STATUS : l.withEstimates, none ? UNCALCULATED_STATUS : l.estimatePart, l.formula, l.basis, l.exclusion, l.flags.join(" / ")]);
+    }
   for (const col of [8, 9, 10, 11]) detail.getColumn(col).alignment = { wrapText: true, vertical: "top" };
   detail.views = [{ state: "frozen", ySplit: 1 }];
 

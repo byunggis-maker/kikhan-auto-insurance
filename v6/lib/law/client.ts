@@ -8,6 +8,8 @@
 
 const BASE = "https://www.law.go.kr/DRF";
 const CACHE_MS = 24 * 60 * 60 * 1000;
+/** open.law.go.kr에 등록할 도메인(이 앱의 배포 주소) */
+export const SITE = "https://kikhan-auto-compass-v6.vercel.app";
 /** 별표 한 개의 글자 수 상한(프롬프트가 너무 길어지지 않게) */
 const MAX_TEXT = 6000;
 
@@ -92,7 +94,8 @@ async function call(path: string, params: Record<string, string>, deps: LawDeps)
   const hit = cache.get(key);
   if (hit && deps.now() - hit.at < CACHE_MS) return hit.value;
   const url = `${BASE}/${path}?${new URLSearchParams({ OC: deps.env.LAW_API_OC!.trim(), type: "JSON", ...params })}`;
-  const response = await deps.fetch(url, { cache: "no-store", signal: AbortSignal.timeout(8000) });
+  // 라운드 9c: 신청 때 등록한 도메인을 Referer로 싣는다(도메인을 등록했어도 Referer가 없어 거절된 사례가 있음). IP 검사는 reports/round9c.md 4번
+  const response = await deps.fetch(url, { cache: "no-store", signal: AbortSignal.timeout(8000), headers: { Referer: SITE } });
   if (!response.ok) throw new Error("law");
   const value = await response.json();
   cache.set(key, { at: deps.now(), value });

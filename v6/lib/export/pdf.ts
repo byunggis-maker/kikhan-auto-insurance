@@ -1,5 +1,5 @@
 import type { PDFFont, PDFPage, RGB } from "pdf-lib";
-import type { Review } from "@/lib/report/review";
+import { TO_COUNTERPARTY_NOTE, UNCALCULATED_STATUS, type Review } from "@/lib/report/review";
 
 // MASTER.md 8장 PDF 저장: A4 세로. 브라우저 인쇄가 아니라 파일을 만든다.
 // 한글은 Pretendard TTF를 넣는다(쓴 글자만 담는 subset이라 파일이 작다). OTF(CFF)는 pdf-lib subset이 깨져 쓰지 않는다.
@@ -192,17 +192,24 @@ export async function reviewToPdf(review: Review, fonts: PdfFonts): Promise<Uint
       page.drawText(safe(box.sub), { x: x + 8, y: y - 54, size: 8, font: regular, color: box.color });
     });
     y -= boxHeight + 8;
-    if (review.top.toCounterparty > 0) text(`내 보험이 상대방에게 줄 돈(추정 포함): ${won(review.top.toCounterparty)}`, { size: 10, bold: true });
+    if (review.top.toCounterparty > 0) {
+      text(`내 보험이 상대방에게 줄 돈(추정 포함)*: ${won(review.top.toCounterparty)}`, { size: 10, bold: true });
+      text(`* ${TO_COUNTERPARTY_NOTE}`, { size: 8, color: SOFT });
+    }
   }
 
   heading("계산 기준");
   for (const line of review.standards) text(`· ${line}`, { size: 9 });
 
   heading("받을 곳별 합계");
-  if (review.byPayer.length)
+  if (review.byPayer.length || review.uncalculated.length)
     table(
       ["받을 곳", "확정", "추정 포함"],
-      review.byPayer.map((p) => [{ value: p.payer, bold: true }, { value: won(p.confirmed) }, { value: won(p.withEstimates), color: ESTIMATE }]),
+      [
+        ...review.byPayer.map((p) => [{ value: p.payer, bold: true }, { value: won(p.confirmed) }, { value: won(p.withEstimates), color: ESTIMATE }]),
+        // 라운드 9c: 앱이 계산하지 않은 줄은 0원 대신 '미계산'
+        ...review.uncalculated.map((u) => [{ value: `${u.payer}(${u.card})`, bold: true }, { value: UNCALCULATED_STATUS }, { value: UNCALCULATED_STATUS }]),
+      ],
       [WIDTH - 260, 130, 130],
     );
   else text("아직 받을 돈이 계산되지 않았습니다.", { size: 9 });
@@ -212,13 +219,14 @@ export async function reviewToPdf(review: Review, fonts: PdfFonts): Promise<Uint
   for (const card of review.cards) {
     ensure(60);
     text(card.label, { size: 11, bold: true });
-    text(`실제손해 확정 ${won(card.actualLoss.confirmed)} / 추정 포함 ${won(card.actualLoss.withEstimates)} · 보상 안 되는 손해 ${won(card.uncovered.withEstimates)}`, { size: 8.5, color: SOFT, gap: 2 });
+    text(`실제손해 확정 ${won(card.actualLoss.confirmed)} / 추정 포함 ${won(card.actualLoss.withEstimates)} · ${card.lines.some((l) => l.status === UNCALCULATED_STATUS) ? `나머지 ${won(card.uncovered.withEstimates)}은 ${UNCALCULATED_STATUS}` : `보상 안 되는 손해 ${won(card.uncovered.withEstimates)}`}`, { size: 8.5, color: SOFT, gap: 2 });
     const widths = [WIDTH - 300, 100, 100, 100];
     row(["담보 · 지급처", "확정", "추정 포함", "추정분"].map((value) => ({ value })), widths, true);
     for (const l of card.lines) {
       // 담보 줄과 그 아래 계산식이 쪽을 넘어 떨어지지 않게 한 덩어리 높이를 먼저 확보한다
       ensure(70);
-      row([{ value: `${l.label} · ${l.payer}${l.status === "지급" ? "" : ` · ${l.status}`}`, bold: true }, { value: won(l.confirmed), bold: true }, { value: won(l.withEstimates), color: ESTIMATE, bold: true }, { value: won(l.estimatePart), color: ESTIMATE }], widths);
+      const amount = (n: number) => (l.status === UNCALCULATED_STATUS ? UNCALCULATED_STATUS : won(n));
+      row([{ value: `${l.label} · ${l.payer}${l.status === "지급" ? "" : ` · ${l.status}`}`, bold: true }, { value: amount(l.confirmed), bold: true }, { value: amount(l.withEstimates), color: ESTIMATE, bold: true }, { value: amount(l.estimatePart), color: ESTIMATE }], widths);
       y -= 3;
       if (l.formula) text(`계산식: ${l.formula}`, { size: 8, indent: 6 });
       if (l.basis) text(`약관 조항: ${l.basis}`, { size: 8, indent: 6, color: SOFT });

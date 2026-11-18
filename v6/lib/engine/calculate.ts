@@ -18,6 +18,12 @@ import { personLoss, propertyLoss } from "./losses";
 import { withVerifiedProductLines } from "./rule-verification";
 import type { Run, RunBurden, RunCard, RunLine, RunNote, Side, ValueMode } from "./types";
 
+/** 라운드 9c: 앱이 계산하지 않는 경우의 표시 문구(0원 대신 '미계산') */
+export const UNCALCULATED = {
+  family: "상대 보험 대인배상Ⅱ 가족 면책 가능 — 대인배상Ⅰ 범위 확인 필요 (앱에서 미계산)",
+  government: "정부보장사업 청구 대상 (앱에서 미계산)",
+} as const;
+
 const VERIFICATION_TEXT = "이 보험 종류의 약관과 대조하지 않은 계산 기준이 들어 있습니다. 보험사에 확인하세요.";
 
 // MASTER.md 6장 계산 엔진. 사람 한 명·물건 한 개 단위로, 보상담당자의 순서대로 계산한다.
@@ -155,8 +161,12 @@ export function runOnce(claim: Claim, faultPercent: number, mode: ValueMode): Ru
           notes.push({ key: `${id}:minor_share`, cardId: id, label: "경상 본인 부담분", amount: share, text: `상대방(경상 ${victim.injuryGrade}급 차량운전자)의 본인 과실분 치료비 ${won(share)}은 상대방의 자동차상해·자기신체사고에서 처리합니다`, basis: BASIS_TEXT.excessFault });
       }
       // 라운드 9b: 상대 차량의 동승자는 상대 운전자 과실분(100 − 내 과실)%을 상대 차량의 대인배상에서도 받는다(공동불법행위, 내 차 남 동승자와 같은 나눔)
-      if (positionOf(victim) === "counterparty_vehicle" && victim.seat === "passenger" && f < 100) {
-        if (cpStatus === "unknown") out.push(makeLine(id, "liability_bodily_1", "counterparty", "needs_input", 0, "상대 차량의 보험 가입 여부를 입력하면 계산됩니다", BASIS_TEXT.bodily1Fault));
+      // 라운드 9c: 상대 차량이 무보험·뺑소니이거나 상대 운전자의 가족 동승자이면 상대 쪽은 계산하지 않고 '미계산'으로 둔다(0원으로 보이지 않게)
+      const seat = victim.seat;
+      if (positionOf(victim) === "counterparty_vehicle" && (seat === "passenger" || seat === "passenger_family") && f < 100) {
+        if (cpStatus === "uninsured" || cpStatus === "hit_and_run") out.push(makeLine(id, "liability_bodily_1", "counterparty", "not_implemented", 0, UNCALCULATED.government, BASIS_TEXT.government));
+        else if (seat === "passenger_family") out.push(makeLine(id, "liability_bodily_1", "counterparty", "not_implemented", 0, UNCALCULATED.family, BASIS_TEXT.familyBodily2));
+        else if (cpStatus === "unknown") out.push(makeLine(id, "liability_bodily_1", "counterparty", "needs_input", 0, "상대 차량의 보험 가입 여부를 입력하면 계산됩니다", BASIS_TEXT.bodily1Fault));
         else if (cpStatus === "full" || cpStatus === "mandatory_only") {
           const own = legacy(f, false);
           const b1 = compulsoryBodily(own);
